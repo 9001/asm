@@ -1,0 +1,60 @@
+#!/bin/ash
+# asm-bootstrap, ed <irc.rizon.net>, MIT-licensed, https://ocv.me/dev/alpine-svcmode/
+
+cat >/etc/profile.d/paths.sh <<'EOF'
+export AR=$(dirname /media/*/the.apkovl.tar.gz)
+export AP=$(df -h $AR | awk 'NR==2{sub(/.*\//,"",$1);print$1}')
+export AD=$(echo $AP | awk '/p[0-9]$/{sub(/p[0-9]$/,"");print;next} {sub(/[0-9]$/,"");print}')
+export SHELL=/bin/bash
+export HOME=/root
+EOF
+. /etc/profile.d/paths.sh
+cd
+
+# switch to shell after the first run
+[ -e /dev/shm/once ] && exec /bin/bash -l
+touch /dev/shm/once
+
+# load tty color scheme, announce we good
+. /etc/profile.d/bifrost.sh
+printf '\033[36m * %s ready\033[0m\n' "$(cat $AR/.alpine-release)"
+printf '\033[s\033[H'; cat /etc/motd; printf '\033[u'
+chvt 2; chvt 1
+
+# switch to bash + add loggers
+apk add -q util-linux bash tar
+sed -ri 's^/ash$^/bash^' /etc/passwd
+cp -p /etc/bin/* /usr/local/bin/
+export PATH="$PATH:/usr/local/bin/"
+
+# keymap and font
+setup-keymap us us-altgr-intl
+stty size | awk '$1<36{exit 1}' ||
+  (cd /etc/cfnt; setfont $(ls -1))
+
+# be noisy unless muted
+beeps() {
+  local d=$1; shift
+  [ ! -e $AR/sm/quiet ] &&
+    for f in $@; do beep -f $f -l $d; done ||
+    rmmod pcspkr 2>/dev/null
+}
+beeps 40 2000 1000
+
+# run the payload
+s=$AR/sm/asm.sh
+/bin/bash $s && err= || err=$?
+unlog
+
+# success? exit
+[ $err ] || {
+  beeps 70 523 784 1046
+  exit 0
+}
+
+# error; give shell
+printf "\n$s: \033[31mERROR $err\033[0m\n"
+apk add -q vim tmux hexdump screen &
+(beep -f 349 -l 200 -d 90 -r 2; rmmod pcspkr 2>/dev/null) &
+exec /bin/bash -l
+

@@ -1,0 +1,14 @@
+diff -wNarU4 a/setup-bootable b/setup-bootable
+--- a/setup-bootable	2021-01-11 13:43:16.000000000 +0100
++++ b/setup-bootable	2021-11-21 17:57:21.648901723 +0100
+@@ -152,9 +152,9 @@
+ 			initrd=*) initrds=${i#initrd=};;
+ 		esac
+ 	done
+ 
+-	for i in $initrds; do
++	for i in ${initrds//,/ }; do
+ 		if [ -e "$destdir"/$i ]; then
+ 			continue
+ 		fi
+ 		fname=${i##*/}

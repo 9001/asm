@@ -1,0 +1,2 @@
+#!/bin/bash
+adjtimex | awk '/tv_u?sec:/{printf "%s%06d",s,$2;s="."} END{print""}'

@@ -1,0 +1,111 @@
+#!/bin/bash
+set -e
+
+
+# dshred - writes predictable yet random-looking data to a disk
+# ed <irc.rizon.net>, MIT-licensed, https://github.com/9001/usr-local-bin
+# -- cryptographically secure unless you know the argv passwords? i think
+#
+# NOTE:
+#  this will abort (with no retries) if any of the writes fail,
+#  so use badblocks for a less cryptographically secure alternative
+#  as that will overwrite as much as possible while also being
+#  probably-most-definitely secure from data recovery
+#  (i am not in possession of an electron microsope to verify)
+
+
+bs=4096
+
+dev="${1##*/}"
+
+[ -z "$dev" ] && {
+	echo "need arg 1: sda/sdb/sdc/..."
+	exit 1
+}
+shift
+
+[ -z "$1" ] && {
+	echo "need arg 2+: seed words"
+	echo "(arg 2 can also be -bs <blocksize> followed by seed words)"
+	exit 1
+}
+
+force=
+while true
+do
+	[ "$1" = "-f" ] && {
+		force=1
+		shift
+		continue
+	}
+
+	[ "$1" = "-bs" ] && {
+		bs=$2
+		shift 2
+		echo "using bs=$bs"
+		printf '%s\n' "$bs" | grep -qE '^[0-9]+$' || {
+			echo bs must be numeric because effort
+			exit 1
+		}
+		continue
+	}
+	
+	break
+done
+
+# locate device in /sys/block
+pdev="$dev"
+blkpath="/sys/block/$dev"
+while [ ! -e "$blkpath" ]
+do
+	pdev="${pdev%?}"
+	blkpath="/sys/block/$pdev/$dev"
+done
+[ -z "$pdev" ] && {
+	echo bug
+	exit 1
+}
+
+# show smart data
+printf '\n\033[36mSMART:\033[0m\n'
+smartctl -i /dev/$pdev | awk '/^(Model Family|Device Model|Serial Number|User Capacity|Sector Sizes?|Rotation Rate):/' |
+tee /dev/stderr |
+grep -E " $bs bytes" || {
+	printf '\n\033[1;31mincorrect block size for this disk; use -bs 512 probably (see above)\033[0m\n'
+}
+
+# list all aliases for this disk
+printf '\n\033[36maliases:\033[0m\n'
+find /dev/disk/by-id -printf '%f %l\n' |
+awk -v v="$pdev" '$0~"/"v"$" {print $1}'
+
+# and lsblk info
+printf '\n\033[36mlsblk:\033[0m\n'
+lsblk "/dev/$pdev"
+
+# and blkid info
+printf '\n\033[36mtarget:\033[0m\n'
+blkid "/dev/$dev" || true
+printf '\033[36mon the same dev:\033[0m\n'
+blkid "/dev/$pdev"* || true
+
+echo
+printf 'ok? press enter:'
+[ $force ] ||
+	read -u1 -r
+
+sz=$(blockdev --getsize64 /dev/$dev)
+
+for pwd in "$@"; do
+	echo "shred $dev with $pwd"
+	
+	openssl enc -aes-256-cbc -iter 1 -pass pass:$pwd -nosalt < /dev/zero |
+	pv -Ss $((sz-1)) > /dev/$dev
+	#dd bs=$bs iflag=fullblock oflag=direct conv=noerror,notrunc of=/dev/$dev
+	
+	# conv=noerror is for failed reads, but looks like
+	# conv=sync,notrunc also aborts on failed writes?
+	# maybe that's due to the sync part, TODO
+done
+
+echo done

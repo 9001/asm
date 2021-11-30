@@ -1,0 +1,39 @@
+#!/bin/bash
+
+# etasync - shows ETA until all pending writes have flushed to disk
+# ed <irc.rizon.net>, MIT-licensed, https://github.com/9001/usr-local-bin
+
+maxage=100
+
+hist=()
+maxage=$((maxage*5))
+while true
+do
+	p=$(awk '/^Dirty:|^Writeback:/ {s+=$2} END {print s}' /proc/meminfo)
+	hist+=($p)
+	hlen=${#hist[@]}
+	#last=${hist[$((hlen-1))]}
+	last=${hist[0]}
+	[[ $hlen -ge $maxage ]] &&
+		#unset 'hist[$((hlen-1))]'
+		hist=("${hist[@]:1}")
+	
+	[[ $hlen -le 6 ]] &&
+		hlen=6
+
+	delta=$((last-p))
+	dtime=$((hlen/5))
+	kbps=$((delta/dtime))
+	
+	[[ $kbps -le 0 ]] &&
+		kbps=1
+	
+	sec=$((p/kbps))
+	min=$((sec/60))
+	sec=$((sec-(min*60)))
+	
+	printf '%s kB left, %s kbps, %s min %s sec  (%s hlen, %s dtime, %s)\n' $p $kbps $min $sec $hlen $dtime $last
+	
+	sleep 0.2
+done
+

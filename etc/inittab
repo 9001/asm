@@ -1,0 +1,19 @@
+# /etc/inittab
+
+# unmodified copy from alpine 3.14
+# except tty1 now runs the bootstrap
+
+::sysinit:/sbin/openrc sysinit
+::sysinit:/sbin/openrc boot
+::wait:/sbin/openrc default
+
+tty1::respawn:/bin/ash /etc/strap.sh
+tty2::respawn:/sbin/getty 38400 tty2
+tty3::respawn:/sbin/getty 38400 tty3
+tty4::respawn:/sbin/getty 38400 tty4
+tty5::respawn:/sbin/getty 38400 tty5
+tty6::respawn:/sbin/getty 38400 tty6
+
+::ctrlaltdel:/sbin/reboot
+::shutdown:/sbin/openrc shutdown
+

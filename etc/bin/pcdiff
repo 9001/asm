@@ -1,0 +1,7 @@
+#!/bin/bash
+set -e
+
+# pcdiff - diff coloring filter
+# ed <irc.rizon.net>, MIT-licensed, https://github.com/9001/usr-local-bin
+
+sed -r "$(printf 's/^-/\033[1;31m-/;s/^\+/\033[1;33m+/;s/^/\033[1;30m/;s/$/\033[0m/')"

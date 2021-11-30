@@ -1,0 +1,7 @@
+#!/bin/bash
+set -e
+
+# cdiff - colored diff
+# ed <irc.rizon.net>, MIT-licensed, https://github.com/9001/usr-local-bin
+
+diff -NarU7 "$@" | pcdiff

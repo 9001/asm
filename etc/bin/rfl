@@ -1,0 +1,7 @@
+#!/bin/bash
+set -e
+
+# rfl - recursive file listing with symlink-target, modes, size, owner/group, lastmod
+# ed <irc.rizon.net>, MIT-licensed, https://github.com/9001/usr-local-bin
+
+exec find "$@" \( -type f -or -type l \) -printf '%p // %l [%M/%s/%g:%u] @%T@\0' | tr '\n\0' ' \n' | sed -r 's/\.[0-9]+$//'

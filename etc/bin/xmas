@@ -1,0 +1,65 @@
+#!/bin/bash
+
+# dumb thing
+# ed <irc.rizon.net>, MIT-licensed, https://github.com/9001/usr-local-bin
+
+set -u
+set -e
+trap "echo -ne '\033[?25h\033[0m\033[H\033[J'; exit" INT TERM EXIT
+declare -ar rc=(
+	[0]=$(echo -e "\xe2\x96\x91")
+	[1]=$(echo -e "\xe2\x96\x92") 
+	[2]=$(echo -e "\xe2\x96\x93")
+	[3]=$(echo -e "\xe2\x96\x88")
+	[4]=$(echo -e "\xe2\x96\x88")
+	[5]=$(echo -e "\xe2\x96\x93")
+	[6]=$(echo -e "\xe2\x96\x92")
+	[7]=$(echo -e "\xe2\x96\x91")
+	[8]=" "
+)
+declare -a rx ry ra rf
+declare -ir f=30 tn=6
+declare -ir rl=${#rc[@]}
+declare -ir ts=$((rl*tn))
+
+read ny nx < <(stty size)
+
+echo -ne '\033[?25l\033[H\033[J'
+
+for (( i = 0; i < ts; i++ ))
+do
+	rx[i]=0
+	ry[i]=0
+	ra[i]=9
+done
+
+while true
+do
+	while ! read -t0.0$((1000/$f)) -n1
+	do
+		cn=0
+		for (( i = 0; i < ts; i++ ))
+		do
+			ra[i]=$((ra[i]+1))
+			[ ${ra[i]} -ge $rl ] &&
+			{
+				cn=$((cn+1))
+				[ $cn -lt $tn ] &&
+				{
+					ra[i]=0
+					let "rx[i] = $RANDOM % $nx +1"
+					let "ry[i] = $RANDOM % $ny +1"
+					let "rf[i] = $RANDOM % 7 +1"
+				}
+			}
+			[ ${ra[i]} -lt $rl ] &&
+				printf "\033[${ry[i]};${rx[i]}H\033[1;3${rf[i]}m${rc[${ra[i]}]}"
+		done
+	done
+	x=$((nx/2))
+	x=$((x-7))
+	y=$((ny/2))
+	printf "\033[0m\033[2J\033[${y};${x}HDISPLAY LOCKED"
+	sleep 1
+	printf "\033[0m\033[2J"
+done

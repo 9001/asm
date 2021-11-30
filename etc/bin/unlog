@@ -1,0 +1,3 @@
+#!/bin/ash
+printf '\033[%s' s r u >&2
+
