@@ -39,8 +39,7 @@ if you are using msys2 or mingw on windows, first ensure you have gnutar:
 
 and now,
 * make the apkovl: `tar -czvf the.apkovl.tar.gz --mode=755 etc`
-* copy the apkovl to the root of the flashdrive
-* copy `asm.sh` into a folder named `sm/` on the flashdrive
+* copy the apkovl and the `sm` folder to the root of the flashdrive
 
 
 ## optional steps

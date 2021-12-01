@@ -1,6 +1,8 @@
 #!/bin/ash
 # asm-bootstrap, ed <irc.rizon.net>, MIT-licensed, https://github.com/9001/asm
 
+command -v bash >/dev/null || apk add -q bash 2>/dev/null || true
+
 (cat <<'EOF'
 export AR=$(dirname /media/*/the.apkovl.tar.gz)
 export AP=$(df -h $AR | awk 'NR==2{sub(/.*\//,"",$1);print$1}')
@@ -56,7 +58,7 @@ unlog
 
 # error; give shell
 printf "\n$s: \033[31mERROR $err\033[0m\n"
-apk add -q vim tmux hexdump screen &
+apk add -q vim tmux hexdump &
 (beep -f 349 -l 200 -d 90 -r 2; rmmod pcspkr 2>/dev/null) &
 exec $SHELL -l
 

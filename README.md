@@ -1,13 +1,13 @@
 # alpine-service-mode
 
-write this to a usb flashdrive and [`asm.sh`](./asm.sh) will be executed on bootup
+write this to a usb flashdrive and [`./sm/asm.sh`](./sm/asm.sh) will be executed on bootup
 
 good for fixing headless boxes or just general hardware wrangling
 
 
 ## what does it do
 
-the example [`asm.sh`](./asm.sh) shows a menu with some demo features:
+the example [`asm.sh`](./sm/asm.sh) shows a menu with some demo features:
 
 * `1` shows a list of local HDDs and asks for a selection
   * maybe for entering a chroot or something
@@ -40,7 +40,7 @@ the [Alpine ISO](https://alpinelinux.org/downloads/) comes with a tool ([setup-b
 anyways, [`./build.sh`](./build.sh) does that and splices in some stuff from this repo:
 
 
-## [`asm.sh`](./asm.sh)
+## [`./sm/asm.sh`](./sm/asm.sh)
 
 is the payload which does the cool stuff (this is probably what you want to modify)
 
@@ -49,11 +49,11 @@ the following environment variables are available;
 * `$AP` = the usb blockdevice with partition, for example `sda1`
 * `$AD` = the usb blockdevice sans partition, for example `sda`
 
-will be saved to the flashdrive at `sm/asm.sh`
+will be saved to the flashdrive at `/sm/asm.sh`
 * can be modified at any time after building the image, either from inside the live-env or by accessing the flashdrive normally
 
 
-## [`etc`](./etc)
+## [`./etc`](./etc)
 
 is the [apkovl](https://wiki.alpinelinux.org/wiki/Alpine_local_backup) which gets unpacked into `/etc` on boot
 

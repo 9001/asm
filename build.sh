@@ -43,8 +43,12 @@ need bc
 }
 
 rm -rf b
-mkdir -p b/fs/sm
+mkdir -p b/fs/sm/img
 cp -pR etc b/
+
+# add unmodified apkovl + asm.sh for the final image
+tar -czvf b/fs/sm/img/the.apkovl.tar.gz etc
+cp -pR sm b/fs/sm/img/
 cd b
 
 # tty1 is ttyS0 due to -nographic
@@ -60,7 +64,7 @@ if ! $c; then
     $c
 fi
 if apk add -q sfdisk; then
-    echo ',,0c,*' | sfdisk --label dos /dev/vda
+    echo ',,0c,*' | sfdisk -q --label dos /dev/vda
 else
     # deadcode -- this branch is never taken --
     # left for reference if you REALLY cant install sfdisk
@@ -78,8 +82,11 @@ for f in */syslinux.cfg */grub.cfg; do sed -ri '
     s/(^set timeout=)[0-9]$/\11/;
     ' $f; 
 done )
+
+cp -pR $AR/sm/img/* /mnt/
 sync
 fstrim -v /mnt || true
+echo; df -h /mnt; echo
 umount /mnt
 poweroff
 EOF
