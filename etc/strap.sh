@@ -1,18 +1,19 @@
 #!/bin/ash
-# asm-bootstrap, ed <irc.rizon.net>, MIT-licensed, https://ocv.me/dev/alpine-svcmode/
+# asm-bootstrap, ed <irc.rizon.net>, MIT-licensed, https://github.com/9001/asm
 
-cat >/etc/profile.d/paths.sh <<'EOF'
+(cat <<'EOF'
 export AR=$(dirname /media/*/the.apkovl.tar.gz)
 export AP=$(df -h $AR | awk 'NR==2{sub(/.*\//,"",$1);print$1}')
 export AD=$(echo $AP | awk '/p[0-9]$/{sub(/p[0-9]$/,"");print;next} {sub(/[0-9]$/,"");print}')
-export SHELL=/bin/bash
 export HOME=/root
 EOF
+echo export SHELL=$(command -v bash || command -v ash)
+)>/etc/profile.d/paths.sh
 . /etc/profile.d/paths.sh
 cd
 
 # switch to shell after the first run
-[ -e /dev/shm/once ] && exec /bin/bash -l
+[ -e /dev/shm/once ] && exec $SHELL -l
 touch /dev/shm/once
 
 # load tty color scheme, announce we good
@@ -22,8 +23,9 @@ printf '\033[s\033[H'; cat /etc/motd; printf '\033[u'
 chvt 2; chvt 1
 
 # switch to bash + add loggers
-apk add -q util-linux bash tar
-sed -ri 's^/ash$^/bash^' /etc/passwd
+apk add -q util-linux bash tar &&
+  sed -ri 's^/ash$^/bash^' /etc/passwd
+
 cp -p /etc/bin/* /usr/local/bin/
 export PATH="$PATH:/usr/local/bin/"
 
@@ -43,7 +45,7 @@ beeps 40 2000 1000
 
 # run the payload
 s=$AR/sm/asm.sh
-/bin/bash $s && err= || err=$?
+$SHELL $s && err= || err=$?
 unlog
 
 # success? exit
@@ -56,5 +58,5 @@ unlog
 printf "\n$s: \033[31mERROR $err\033[0m\n"
 apk add -q vim tmux hexdump screen &
 (beep -f 349 -l 200 -d 90 -r 2; rmmod pcspkr 2>/dev/null) &
-exec /bin/bash -l
+exec $SHELL -l
 

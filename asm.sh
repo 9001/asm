@@ -1,5 +1,5 @@
 #!/bin/bash
-# asm-example, ed <irc.rizon.net>, MIT-licensed, https://ocv.me/dev/alpine-svcmode/
+# asm-example, ed <irc.rizon.net>, MIT-licensed, https://github.com/9001/asm
 set -e
 
 # list local HDDs and ask for a target
