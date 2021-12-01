@@ -1,6 +1,6 @@
 # creating the asm usb manually
 
-* grab a copy of `alpine-standard.iso` or `alpine-extended.iso` from https://alpinelinux.org/downloads/
+* grab a copy of `alpine-extended.iso` (recommended) or `alpine-standard.iso` from https://alpinelinux.org/downloads/
 
 * write it onto a usb flashdrive using your favorite tool
   * on windows: [rufus](https://github.com/pbatard/rufus/releases/) probably
