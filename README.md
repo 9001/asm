@@ -11,7 +11,8 @@ the example [`asm.sh`](./sm/asm.sh) shows a menu with some demo features:
 
 * `1` shows a list of local HDDs and asks for a selection
   * maybe for entering a chroot or something
-* `2` collects a bunch of hardware info and saves it to `sm/infos` on the flashdrive
+* `i` collects a bunch of hardware info and saves it to `sm/infos` on the flashdrive
+* `n` starts networking and `sshd` after asking for `s`tatic or `d`ynamic IP
 * `z` exits to a shell with `exit 0`
 * `x` does an `exit 1` which also gives a shell but with `vim` and `tmux` preinstalled
 * `k` shutdown

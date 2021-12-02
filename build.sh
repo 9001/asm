@@ -117,6 +117,9 @@ alpine-service-mode was built successfully (nice)
 you can now write the image to a usb flashdrive:
   cat asm.usb >/dev/sdi && sync
 
+or compress it for uploading:
+  pigz asm.usb
+
 or try it in qemu:
   qemu-system-$arch -accel kvm -drive format=raw,file=asm.usb -m 512
 
