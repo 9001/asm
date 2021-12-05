@@ -2,7 +2,7 @@
 bslcb() {
 	local RETVL=$? BSLMT=']'
 	[ -z "$BSLNFC" ] || {
-		read a b < <(history 1)
+		read -r a b < <(history 1)
 		BSLMT="$a] $b [$RETVL]"
 	}
 	BSLMT="$(date +'%Y-%m-%d, %H:%M:%S') [$$-$BSLMT"
