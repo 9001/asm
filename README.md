@@ -28,6 +28,7 @@ it plays the [pc98 bootup bleep](https://www.youtube.com/watch?v=9qof0qye1ao#t=6
 if you are on linux,
 * install qemu and run [`./build.sh`](./build.sh)
 * you will get `asm.usb` which you can write to a usb flashdrive using [rufus](https://github.com/pbatard/rufus/releases/) or `cat asm.usb >/dev/sdi`
+  * can additionally produce a hybrid ISO for burning to CD/DVD
 
 alternatively, you may [build-manually](./build-manually.md) instead of using [`./build.sh`](./build.sh)
 

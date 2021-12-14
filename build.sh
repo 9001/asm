@@ -16,13 +16,27 @@ sz="$2"
     err=1
 }
 
+hybrid=
+[ "$3" ] && {
+    hybrid=asm.iso
+    rm -f "$hybrid"
+}
+
 [ $err ] && {
+    echo "note:"
+    echo "  argument 3 (optional, requires root) will"
+    echo "  create isohybrid \"asm.iso\" in addition"
+    echo
     echo "example:"
-    echo "  $0 alpine-extended-3.15.0-x86_64.iso 1.8"
+    echo "  $0 dl/alpine-extended-3.15.0-x86_64.iso 1.8 yes"
+    echo
     exit 1
 }
 
-read flavor ver arch < <(echo "$iso" |
+iso="$(realpath "$iso" || readlink -f "$iso")"
+isoname="${iso##*/}"
+
+read flavor ver arch < <(echo "$isoname" |
   awk -F- '{sub(/.iso$/,"");v=$3;sub(/.[^.]+$/,"",v);print$2,v,$4}')
 
 need() {
@@ -35,11 +49,13 @@ qemu=qemu-system-$arch
 need $qemu
 need qemu-img
 need bc
+[ "$hybrid" ] && need xorrisofs
 [ $err ] && exit 1
 
 [ -e "$iso" ] || {
     echo "iso not found; downloading..."
-    wget https://mirrors.edge.kernel.org/alpine/v$ver/releases/$arch/"$iso"
+    mkdir -p "$(dirname "$iso")"
+    wget https://mirrors.edge.kernel.org/alpine/v$ver/releases/$arch/"$isoname" -O "$iso"
 }
 
 rm -rf b
@@ -101,13 +117,64 @@ fallocate -l ${sz} asm.usb
 mkfifo s.{in,out}
 (awk '1;/^ISOLINUX/{exit}' <s.out; echo "lts console=ttyS0" >s.in; cat s.out) &
 
-$qemu -accel kvm -nographic -serial pipe:s -cdrom "../$iso" -m 512 \
+$qemu -accel kvm -nographic -serial pipe:s -cdrom "$iso" -m 512 \
   -drive format=raw,if=virtio,discard=unmap,file=asm.usb \
   -drive format=raw,if=virtio,discard=unmap,file=ovl.img
 
 cd ..
 mv b/asm.usb .
 rm -rf b
+
+[ "$hybrid" ] && {
+    c="mount -o ro,offset=1048576 asm.usb b"
+    mkdir b
+    $c || sudo $c || {
+        printf "\nplease run the following as root:\n  %s\n" "$c"
+        while sleep 0.2; do
+            [ -e b/the.apkovl.tar.gz ] &&
+                sleep 1 && break
+        done
+    }
+    [ -e b/the.apkovl.tar.gz ] || {
+        echo failed to mount the usb image for iso conversion
+        exit 1
+    }
+    echo now building $hybrid ...
+    # https://github.com/alpinelinux/aports/blob/569ab4c43cba612670f1a153a077b42474c33267/scripts/mkimg.base.sh
+    xorrisofs \
+      -quiet \
+      -output $hybrid \
+      -full-iso9660-filenames \
+      -joliet \
+      -rational-rock \
+      -sysid LINUX \
+      -volid asm-$(date +%Y-%m%d-%H%M%S) \
+      -isohybrid-mbr b/boot/syslinux/isohdpfx.bin \
+      -eltorito-boot boot/syslinux/isolinux.bin \
+      -eltorito-catalog boot/syslinux/boot.cat \
+      -no-emul-boot \
+      -boot-load-size 4 \
+      -boot-info-table \
+      -eltorito-alt-boot \
+      -e boot/grub/efi.img \
+      -no-emul-boot \
+      -isohybrid-gpt-basdat \
+      -follow-links \
+      b && rv= || rv=$?
+
+    c="umount b"
+    $c || sudo $c || {
+        printf "\nplease run the following as root:\n  %s\n" "$c"
+        while sleep 0.2; do
+            [ ! -e b/the.apkovl.tar.gz ] &&
+                sleep 1 && break
+        done
+    }
+    rmdir b
+    [ $rv ] &&
+        exit $rv
+}
+
 cat <<EOF
 
 =======================================================================
