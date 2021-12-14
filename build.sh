@@ -3,6 +3,16 @@ set -e
 
 # builds asm.usb (a raw image which can be written to a flashdrive)
 
+need_root=
+mkfs.ext4 -h 2>&1 | grep -qE '\[-d\b' ||
+    need_root=1
+
+[ $need_root ] && [ $(id -u) -ne 0 ] && {
+    echo "you must run this as root,"
+    echo "because your mkfs.ext4 is too old to have -d"
+    exit 1
+}
+
 err=
 iso="$1"
 [ -z "$iso" ] && {
@@ -109,7 +119,14 @@ EOF
 chmod 755 fs/sm/asm.sh
 
 fallocate -l 16M ovl.img
-mkfs.ext4 -Fd fs ovl.img
+mkfs.ext4 -Fd fs ovl.img || {
+    mkfs.ext4 -F ovl.img
+    mkdir m
+    mount ovl.img m
+    cp -prT fs m
+    umount m
+    rmdir m
+}
 
 sz=$(echo "$sz*1024*1024*1024/1" | tr , . | LC_ALL=C bc)
 fallocate -l ${sz} asm.usb
