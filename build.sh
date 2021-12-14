@@ -134,7 +134,7 @@ fallocate -l ${sz} asm.usb
 mkfifo s.{in,out}
 (awk '1;/^ISOLINUX/{exit}' <s.out; echo "lts console=ttyS0" >s.in; cat s.out) &
 
-$qemu -accel kvm -nographic -serial pipe:s -cdrom "$iso" -m 512 \
+$qemu -enable-kvm -nographic -serial pipe:s -cdrom "$iso" -m 512 \
   -drive format=raw,if=virtio,discard=unmap,file=asm.usb \
   -drive format=raw,if=virtio,discard=unmap,file=ovl.img
 
