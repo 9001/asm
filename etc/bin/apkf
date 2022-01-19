@@ -1,0 +1,2 @@
+#!/bin/ash
+/sbin/apk --force-non-repository "$@"

@@ -26,15 +26,23 @@ shift
 
 [ -z "$1" ] && {
 	echo "need arg 2+: seed words"
+	echo "(arg 2 can also be -c to enable verification passes)"
 	echo "(arg 2 can also be -bs <blocksize> followed by seed words)"
 	exit 1
 }
 
 force=
+verify=
 while true
 do
 	[ "$1" = "-f" ] && {
 		force=1
+		shift
+		continue
+	}
+
+	[ "$1" = "-c" ] && {
+		verify=1
 		shift
 		continue
 	}
@@ -96,16 +104,25 @@ printf 'ok? press enter:'
 
 sz=$(blockdev --getsize64 /dev/$dev)
 
+gen() {
+	openssl enc -aes-256-cbc -iter 1 -pass pass:"$1" -nosalt </dev/zero 2> >(
+		grep -vE '^error writing output file$' >&2
+	)
+}
+
 for pwd in "$@"; do
 	echo "shred $dev with $pwd"
 	
-	openssl enc -aes-256-cbc -iter 1 -pass pass:$pwd -nosalt < /dev/zero |
-	pv -Ss $((sz-1)) > /dev/$dev
+	gen "$pwd" | pv -Ss $sz > /dev/$dev
 	#dd bs=$bs iflag=fullblock oflag=direct conv=noerror,notrunc of=/dev/$dev
-	
+
 	# conv=noerror is for failed reads, but looks like
 	# conv=sync,notrunc also aborts on failed writes?
 	# maybe that's due to the sync part, TODO
+
+	[ $verify ] || continue
+	echo "verify $dev with $pwd"
+	gen "$pwd" | pv -Ss $sz | cmp /dev/$dev
 done
 
 echo done

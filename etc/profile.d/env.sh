@@ -10,13 +10,13 @@ bslcb() {
 
 	[ -z "$BSLNFC" ] || {
 		[ $RETVL -eq 0 ] && echo ||
-			echo -e "\n\033[1;31mError Code:\033[0;1m $RETVL\033[0m"
+			echo -e "\n\033[1;91mError Code:\033[0;1m $RETVL\033[0m"
 
 		bash -c 'stat .' 2>&1 | grep -qE 'No such file or directory|Links: 0[ $]' && {
-			echo -e "\033[1;33mWARNING\033[0m: Current directory does not exist anymore."
+			echo -e "\033[1;93mWARNING\033[0m: Current directory does not exist anymore."
 			cd -- "$BSLNFC" 2>/dev/null &&
-				echo -e "\033[1;32mNOTICE:\033[0m Recovered pwd:  $(pwd)" ||
-				echo -e "\033[1;31mALERT:\033[0m Could not recover pwd"
+				echo -e "\033[1;92mNOTICE:\033[0m Recovered pwd:  $(pwd)" ||
+				echo -e "\033[1;91mALERT:\033[0m Could not recover pwd"
 		}
 	}
 	BSLNFC="$PWD"
@@ -52,6 +52,7 @@ if [ -d /etc/apk/ ] ; then
 	alias tmux='TERM=rxvt-256color tmux -2u'
 	[ "x$TERM" == "xrxvt" ] && export TERM=rxvt-256color
 	[ "x$TERM" == "xxterm" ] && export TERM=rxvt-256color
+	alias apk='/sbin/apk --force-non-repository'
 else
 	alias tmux='TERM=screen-256color tmux'
 fi
@@ -60,17 +61,17 @@ alias q='kill -9 $$'
 alias a='tmux attach || tmux'
 
 PS1="\
-\[\033[1;30m\]-\
-\[\033[1;35m\]\$?\
-\[\033[1;30m\]-\
-\[\033[1;31m\]\$(date +%H%M%S)\
-\[\033[1;30m\]-\
-\[\033[1;33m\]\u\
-\[\033[1;30m\]-\
-\[\033[1;32m\]\h\
-\[\033[1;30m\] <\
-\[\033[1;34m\]\w\
-\[\033[1;30m\]> \
+\[\033[90m\]-\
+\[\033[95m\]\$?\
+\[\033[90m\]-\
+\[\033[91m\]\$(date +%H%M%S)\
+\[\033[90m\]-\
+\[\033[93m\]\u\
+\[\033[90m\]-\
+\[\033[92m\]\h\
+\[\033[90m\] <\
+\[\033[94m\]\w\
+\[\033[90m\]> \
 \[\033[0m\]\n"
 
 true
