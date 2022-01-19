@@ -13,35 +13,56 @@ mkfs.ext4 -h 2>&1 | grep -qE '\[-d\b' ||
     exit 1
 }
 
-err=
-iso="$1"
-[ -z "$iso" ] && {
-    echo "need argument 1: alpine iso"
-    err=1
-}
+td=$(mktemp --tmpdir -d asm.XXXXX)
+trap "rv=$?; rm -rf $td; exit $rv" INT TERM EXIT
 
-sz="$2"
-[ -z "$sz" ] && {
-    echo "need argument 2: size of the usb image in GiB"
-    err=1
-}
+sz=1.8
+iso=
+iso_out=
+usb_out=asm.usb
+b=$td/b
 
-hybrid=
-[ "$3" ] && {
-    hybrid=asm.iso
-    rm -f "$hybrid"
-}
 
-[ $err ] && {
-    echo "note:"
-    echo "  argument 3 (optional, requires root) will"
-    echo "  create isohybrid \"asm.iso\" in addition"
-    echo
-    echo "example:"
-    echo "  $0 dl/alpine-extended-3.15.0-x86_64.iso 1.8 yes"
-    echo
+help() {
+    sed -r $'s/^( +)(-\w+ +)(\w+ +)/\\1\\2\e[36m\\3\e[0m/; s/(.*default: )(.*)/\\1\e[35m\\2\e[0m/' <<EOF
+
+arguments:
+  -i ISO    original/input alpine release iso
+  -s SZ     fat32 partition size in GiB, default: $sz
+  -b PATH   build-dir, default: $b
+  -ou PATH  output path for usb image, default: ${usb_out:-DISABLED}
+  -oi PATH  output path for isohybrid, default: ${iso_out:-DISABLED}
+
+examples:
+  $0 -i dl/alpine-extended-3.15.0-x86_64.iso
+  $0 -i dl/alpine-extended-3.15.0-x86_64.iso -oi asm.iso -s 3.6 -b b
+
+EOF
     exit 1
 }
+
+
+err=
+while [ "$1" ]; do
+    k="$1"; shift
+    v="$1"; shift || true
+    case "$k" in
+        -i)  iso="$v"; ;;
+        -s)  sz="$v";  ;;
+        -b)  b="$v";   ;;
+        -ou) usb_out="$v"; ;;
+        -oi) iso_out="$v"; ;;
+        *)   echo "unexpected argument: $k"; help; ;;
+    esac
+done
+
+[ -z "$iso" ] && {
+    echo "need argument -i (original alpine iso)"
+    help
+}
+
+[ $iso_out ] &&
+    rm -f "$iso_out"
 
 iso="$(realpath "$iso" || readlink -f "$iso")"
 isoname="${iso##*/}"
@@ -55,11 +76,14 @@ need() {
         err=1
     }
 }
-qemu=qemu-system-$arch
+qemu=$(
+    PATH="/usr/libexec:$PATH" command -v qemu-kvm ||
+    echo qemu-system-$arch
+)
 need $qemu
 need qemu-img
 need bc
-[ "$hybrid" ] && need xorrisofs
+[ "$iso_out" ] && need xorrisofs
 [ $err ] && exit 1
 
 [ -e "$iso" ] || {
@@ -68,14 +92,14 @@ need bc
     wget https://mirrors.edge.kernel.org/alpine/v$ver/releases/$arch/"$isoname" -O "$iso"
 }
 
-rm -rf b
-mkdir -p b/fs/sm/img
-cp -pR etc b/
+rm -rf $b
+mkdir -p $b/fs/sm/img
+cp -pR etc $b/
 
 # add unmodified apkovl + asm.sh for the final image
-tar -czvf b/fs/sm/img/the.apkovl.tar.gz etc
-cp -pR sm b/fs/sm/img/
-cd b
+tar -czvf $b/fs/sm/img/the.apkovl.tar.gz etc
+cp -pR sm $b/fs/sm/img/
+pushd $b >/dev/null
 
 # tty1 is ttyS0 due to -nographic
 sed -ri 's/^tty1/ttyS0/' etc/inittab
@@ -138,35 +162,35 @@ $qemu -enable-kvm -nographic -serial pipe:s -cdrom "$iso" -m 512 \
   -drive format=raw,if=virtio,discard=unmap,file=asm.usb \
   -drive format=raw,if=virtio,discard=unmap,file=ovl.img
 
-cd ..
-mv b/asm.usb .
-rm -rf b
+popd >/dev/null
+mv $b/asm.usb "$usb_out"
+rm -rf $b
 
-[ "$hybrid" ] && {
-    c="mount -o ro,offset=1048576 asm.usb b"
-    mkdir b
+[ "$iso_out" ] && {
+    c="mount -o ro,offset=1048576 asm.usb $b"
+    mkdir $b
     $c || sudo $c || {
         printf "\nplease run the following as root:\n  %s\n" "$c"
         while sleep 0.2; do
-            [ -e b/the.apkovl.tar.gz ] &&
+            [ -e $b/the.apkovl.tar.gz ] &&
                 sleep 1 && break
         done
     }
-    [ -e b/the.apkovl.tar.gz ] || {
+    [ -e $b/the.apkovl.tar.gz ] || {
         echo failed to mount the usb image for iso conversion
         exit 1
     }
-    echo now building $hybrid ...
+    echo now building "$iso_out" ...
     # https://github.com/alpinelinux/aports/blob/569ab4c43cba612670f1a153a077b42474c33267/scripts/mkimg.base.sh
     xorrisofs \
       -quiet \
-      -output $hybrid \
+      -output "$iso_out" \
       -full-iso9660-filenames \
       -joliet \
       -rational-rock \
       -sysid LINUX \
       -volid asm-$(date +%Y-%m%d-%H%M%S) \
-      -isohybrid-mbr b/boot/syslinux/isohdpfx.bin \
+      -isohybrid-mbr $b/boot/syslinux/isohdpfx.bin \
       -eltorito-boot boot/syslinux/isolinux.bin \
       -eltorito-catalog boot/syslinux/boot.cat \
       -no-emul-boot \
@@ -177,17 +201,17 @@ rm -rf b
       -no-emul-boot \
       -isohybrid-gpt-basdat \
       -follow-links \
-      b && rv= || rv=$?
+      $b && rv= || rv=$?
 
-    c="umount b"
+    c="umount $b"
     $c || sudo $c || {
         printf "\nplease run the following as root:\n  %s\n" "$c"
         while sleep 0.2; do
-            [ ! -e b/the.apkovl.tar.gz ] &&
+            [ ! -e $b/the.apkovl.tar.gz ] &&
                 sleep 1 && break
         done
     }
-    rmdir b
+    rmdir $b
     [ $rv ] &&
         exit $rv
 }
@@ -205,6 +229,6 @@ or compress it for uploading:
   pigz asm.usb
 
 or try it in qemu:
-  qemu-system-$arch -accel kvm -drive format=raw,file=asm.usb -m 512
+  $qemu -accel kvm -drive format=raw,file=asm.usb -m 512
 
 EOF

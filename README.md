@@ -30,7 +30,7 @@ if you are on linux,
 * you will get `asm.usb` which you can write to a usb flashdrive using [rufus](https://github.com/pbatard/rufus/releases/) or `cat asm.usb >/dev/sdi`
   * can additionally produce a hybrid ISO for burning to CD/DVD
 
-alternatively, you may [build-manually](./build-manually.md) instead of using [`./build.sh`](./build.sh)
+alternatively, you may [build it manually](./manual-build.md) instead of using [`./build.sh`](./build.sh)
 
 
 # how it works
@@ -67,10 +67,12 @@ is the [apkovl](https://wiki.alpinelinux.org/wiki/Alpine_local_backup) which get
 # compatibility
 
 should work on most BIOS and UEFI boxes with a few exceptions;
-1. BIOS boxes too ancient and buggy, requiring a proper hybrid-iso
-2. UEFI-only boxes which refuse to boot from MBR
 
-for case 2 you could modify the fdisk/sfdisk invocation to build a GPT-formatted flashdrive instead of MBR, killing BIOS support
+1. BIOS boxes too ancient and buggy, requiring a proper hybrid-iso
+  * **workaround:** use `-oi` to create a read-only hybrid iso
+
+2. UEFI-only boxes which refuse to boot from MBR
+  * **workaround:** modify the fdisk/sfdisk invocation to build a GPT-formatted flashdrive instead of MBR, killing BIOS support
 
 
 # notes
