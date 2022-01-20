@@ -133,9 +133,8 @@ for f in */syslinux.cfg */grub.cfg; do sed -ri '
     ' $f; 
 done )
 
-$SHELL $AR/sm/img/sm/post-build.sh || true
-
 cp -pR $AR/sm/img/* /mnt/
+$SHELL $AR/sm/img/sm/post-build.sh || true
 sync
 fstrim -v /mnt || true
 echo; df -h /mnt; echo
