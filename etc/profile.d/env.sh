@@ -53,6 +53,7 @@ if [ -d /etc/apk/ ] ; then
 	[ "x$TERM" == "xrxvt" ] && export TERM=rxvt-256color
 	[ "x$TERM" == "xxterm" ] && export TERM=rxvt-256color
 	alias apk='/sbin/apk --force-non-repository'
+	alias mc='/usr/bin/mc -S /usr/share/mc/skins/nicedark.ini'
 else
 	alias tmux='TERM=screen-256color tmux'
 fi

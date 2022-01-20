@@ -28,16 +28,25 @@ it plays the [pc98 bootup bleep](https://www.youtube.com/watch?v=9qof0qye1ao#t=6
 if you are on linux,
 * install qemu and run [`./build.sh`](./build.sh)
 * you will get `asm.usb` which you can write to a usb flashdrive using [rufus](https://github.com/pbatard/rufus/releases/) or `cat asm.usb >/dev/sdi`
-  * can additionally produce a hybrid ISO for burning to CD/DVD
+  * can additionally produce a hybrid ISO for burning to CD/DVD with `-oi`
 
 alternatively, you may [build it manually](./manual-build.md) instead of using [`./build.sh`](./build.sh)
+
+
+## custom build steps
+
+[`./sm/post-build.sh`](./sm/post-build.sh) is executed in the build-env right before the end
+
+by default it does nothing but it contains some examples
+* an rshell for prototyping / debugging your extensions
+* adding more APKs
 
 
 # how it works
 
 the [Alpine ISO](https://alpinelinux.org/downloads/) comes with a tool ([setup-bootable](https://wiki.alpinelinux.org/wiki/Alpine_setup_scripts#setup-bootable)) which writes a copy of the ISO onto a USB flashdrive, except you can then modify the USB contents just like a normal flashdrive
 
-> the flashdrive will be mounted read-only while inside the live-env, so yanking it at runtime is still perfectly safe -- to enable editing you have to `mount -o remount,rw /media/usb`
+> the flashdrive will be mounted read-only while inside the live-env, so yanking it at runtime is still perfectly safe -- to enable editing you have to `mount -o remount,rw $AR`
 
 anyways, [`./build.sh`](./build.sh) does that and splices in some stuff from this repo:
 
@@ -48,7 +57,7 @@ is the payload which does the cool stuff (this is probably what you want to modi
 
 the following environment variables are available;
 * `$AR` = filesystem path to the usb, for example `/media/usb`
-* `$AP` = the usb blockdevice with partition, for example `sda1`
+* `$AP` = the usb blockdevice and partition, for example `sda1`
 * `$AD` = the usb blockdevice sans partition, for example `sda`
 
 will be saved to the flashdrive at `/sm/asm.sh`
@@ -61,7 +70,7 @@ is the [apkovl](https://wiki.alpinelinux.org/wiki/Alpine_local_backup) which get
 
 * contains the logic to make Alpine run `asm.sh` after it has booted
 * will be placed at the root of the flashdrive as `the.apkovl.tar.gz` during installation
-* can be modified inside the live-env using the `strapmod` command (load for editing) and `strapsave` (persist changes on flashdrive)
+* can be modified inside the live-env using the `strapmod` command (load for editing) and `strapsave` (persist changes to flashdrive)
 
 
 # compatibility
@@ -83,4 +92,10 @@ should work on most BIOS and UEFI boxes with a few exceptions;
   ```
   losetup -f --show ~ed/asm.raw
   mount /dev/loop0p1 /mnt/ && tar -czvf /mnt/the.apkovl.tar.gz etc && cp asm-example.sh /mnt/sm/asm.sh && umount /mnt && sync && qemu-system-x86_64 -hda ~ed/asm.raw -m 768 -accel kvm
+  ```
+
+* local apk cache; uncomment the MIRRORS_URL sed and...
+  ```
+  echo http://192.168.122.1:3923/am/ > am/mirrors.txt && PYTHONPATH=~/dev/copyparty python3 -um copyparty | tee log
+  awk '!/GET  \/am\//{next} {sub(/.*GET  \/am\//,"")} 1' ../log | while IFS= read -r x; do [ -e "$x" ] || echo "https://mirrors.edge.kernel.org/alpine/$x"; done | while IFS= read -r x; do wget -xnH --cut-dirs=1 -i-; done 
   ```

@@ -101,7 +101,7 @@ disksel() {
 infograb() {
 	apk add pciutils usbutils
 	apk add coreutils || true
-	apkf add $AR/sm/{dmidecode,lshw,smartmontools}-*.apk || true
+	apkf add $AR/sm/eapk/{dmidecode,lshw,smartmontools}-*.apk || true
 	# note; blank cmd = commit to usb (since lspci -xxxx can crash the box)
 	local cmds=(
 		dmesg "dmesg --color=always" blkid "free -m"
