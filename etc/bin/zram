@@ -1,0 +1,14 @@
+#!/bin/ash
+set -e
+
+ram=$(awk '/^MemTotal:/{print$2*1024}' /proc/meminfo)
+p150=$((ram*3/2))
+
+echo 150 >/proc/sys/vm/swappiness
+echo 0 >/proc/sys/vm/page-cluster
+
+modprobe zram
+echo $p150 >/sys/block/zram0/disksize
+mkswap -L z0 /dev/zram0
+swapon -p 69 /dev/zram0
+mount -o remount,size=$p150 /
