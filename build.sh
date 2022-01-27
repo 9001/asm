@@ -4,12 +4,12 @@ set -e
 # builds asm.usb (a raw image which can be written to a flashdrive)
 
 need_root=
-mkfs.ext4 -h 2>&1 | grep -qE '\[-d\b' ||
+mkfs.ext3 -h 2>&1 | grep -qE '\[-d\b' ||
     need_root=1
 
 [ $need_root ] && [ $(id -u) -ne 0 ] && {
     echo "you must run this as root,"
-    echo "because your mkfs.ext4 is too old to have -d"
+    echo "because your mkfs.ext3 is too old to have -d"
     exit 1
 }
 
@@ -98,6 +98,7 @@ cp -pR etc $b/
 
 # add unmodified apkovl + asm.sh for the final image
 tar -czvf $b/fs/sm/img/the.apkovl.tar.gz etc
+printf "\ncopying sources to %s\n" "$b"
 cp -pR sm $b/fs/sm/img/
 pushd $b >/dev/null
 
@@ -133,7 +134,7 @@ for f in */syslinux.cfg */grub.cfg; do sed -ri '
     ' $f; 
 done )
 
-cp -pR $AR/sm/img/* /mnt/
+cp -pR $AR/sm/img/* /mnt/ 2>&1 | grep -vF 'preserve ownership of'
 $SHELL $AR/sm/img/sm/post-build.sh || true
 sync
 fstrim -v /mnt || true
@@ -143,9 +144,15 @@ poweroff
 EOF
 chmod 755 fs/sm/asm.sh
 
-fallocate -l 16M ovl.img
-mkfs.ext4 -Fd fs ovl.img || {
-    mkfs.ext4 -F ovl.img
+echo
+echo "ovl size calculation..."
+# 32 KiB per inode + apparentsize x1.1 + 8 MiB padding, ceil to 512b
+osz=$(find fs -printf '%s\n' | awk '{n++;s+=$1}END{print int((n*32*1024+s*1.1+8*1024*1024)/512)*512}')
+echo "ovl size estimate $osz"
+fallocate -l $osz ovl.img
+a="-T big -I 128 -O ^ext_attr"
+mkfs.ext3 -Fd fs $a ovl.img || {
+    mkfs.ext3 -F $a ovl.img
     mkdir m
     mount ovl.img m
     cp -prT fs m
@@ -153,7 +160,8 @@ mkfs.ext4 -Fd fs ovl.img || {
     rmdir m
 }
 
-sz=$(echo "$sz*1024*1024*1024/1" | tr , . | LC_ALL=C bc)
+# user-provided; ceil to 512b
+sz=$(echo "(($sz*1024*1024*1024+511)/512)*512" | tr , . | LC_ALL=C bc)
 fallocate -l ${sz} asm.usb
 
 mkfifo s.{in,out}
@@ -168,7 +176,7 @@ mv $b/asm.usb "$usb_out"
 rm -rf $b
 
 [ "$iso_out" ] && {
-    c="mount -o ro,offset=1048576 asm.usb $b"
+    c="mount -o ro,offset=1048576 $usb_out $b"
     mkdir $b
     $c || sudo $c || {
         printf "\nplease run the following as root:\n  %s\n" "$c"
@@ -224,12 +232,12 @@ cat <<EOF
 alpine-service-mode was built successfully (nice)
 
 you can now write the image to a usb flashdrive:
-  cat asm.usb >/dev/sdi && sync
+  cat $usb_out >/dev/sdi && sync
 
 or compress it for uploading:
-  pigz asm.usb
+  pigz $usb_out
 
 or try it in qemu:
-  $qemu -accel kvm -drive format=raw,file=asm.usb -m 512
+  $qemu -accel kvm -drive format=raw,file=$usb_out -m 512
 
 EOF
