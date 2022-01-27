@@ -49,7 +49,7 @@ EOF
 	read -u1 -n1 -rp 'sel> '
 	printf '\n\n'
 	case $REPLY in
-		s)  ip l set lo up
+		s) ip l set lo up
 			(. /lib/libalpine.sh; available_ifaces) | tr ' ' '\n' |
 			while read dev; do
 				[ $dev = lo ] && continue
@@ -59,12 +59,13 @@ EOF
 				ip a a $ip/$mask dev $dev
 				echo $dev = $ip /$mask
 			done;;
-		d) setup-interfaces -ar;;
+		d) yes '' | setup-interfaces -r;;
 		*) menu_net; return;;
 	esac
 	echo
 	apk add -q openssh-server
-	echo 'PermitRootLogin yes' >> /etc/ssh/sshd_config
+	sed -ri 's/(Subsystem[^/]+sftp).*/\1 internal-sftp/;
+		$aPermitRootLogin yes' /etc/ssh/sshd_config
 	printf '%s\n' "$pw" "$pw" | passwd >/dev/null
 	service sshd start
 	menu
@@ -120,27 +121,30 @@ infograb() {
 	cmds+=("" "lspci -mmnnvvvxxxx" "")
 
 	local d=$AR/sm/infos/$(utime)
+	read -u1 -rp 'optional-comment> '
+	echo
+	[ "$REPLY" ] && d="$d-$REPLY"
 	rm -rf grab
 	mkdir grab
 	pushd grab
 	for cmd in "${cmds[@]}"; do
 		[ -z "$cmd" ] && {
 			mount -o remount,rw $AR
-			[ -e $d ] || {
-				mkdir -p $d
-				echo $d >> $d/../log
+			[ -e "$d" ] || {
+				mkdir -p "$d"
+				echo "$d" >> "$d/../log"
 			}
-			mv * $d/
+			mv * "$d/"
 			sync
 			mount -o remount,ro $AR
 			continue
 		}
 		log "running $cmd"
 		local fn="$(printf '%s\n' "$cmd" | tr -s ' -./=&<>' -)"
-		(eval "$cmd") >$fn || echo "CMD FAILED: $cmd => $?" | tee -a $fn
+		(eval "$cmd") >"$fn" || echo "CMD FAILED: $cmd => $?" | tee -a "$fn"
 	done
 	popd
-	log info collected to $d
+	log info collected to "$d"
 	menu
 }
 
