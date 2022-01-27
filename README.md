@@ -86,6 +86,8 @@ should work on most BIOS and UEFI boxes with a few exceptions;
 
 # notes
 
+* [`./winpe/`](./winpe/) is unrelated bonus content
+
 * need to debug the alpine init? boot it like this to stream a verbose log out through the serial port: `lts console=ttyS0,115200,n8 debug_init=1`
 
 * rapid prototyping with qemu:
