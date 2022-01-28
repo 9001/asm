@@ -108,7 +108,7 @@ tar -czvf fs/the.apkovl.tar.gz etc
 
 cat >fs/sm/asm.sh <<'EOF'
 sed -ri 's/for i in \$initrds; do/for i in ${initrds\/\/,\/ }; do/' /sbin/setup-bootable
-c="apk add -q util-linux sfdisk syslinux"
+c="apk add -q util-linux sfdisk syslinux dosfstools"
 if ! $c; then
     setup-interfaces -ar
     setup-apkrepos -1
@@ -124,6 +124,7 @@ fi
 mdev -s
 mkfs.vfat -n ASM /dev/vda1
 setup-bootable -v /media/cdrom/ /dev/vda1
+echo 1 | fsck.vfat -w /dev/vda1 | grep -vE '^  , '
 
 mount -t vfat /dev/vda1 /mnt
 ( cd /mnt/boot;
