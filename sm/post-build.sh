@@ -4,8 +4,12 @@ eapks() {
     setup-interfaces -ar
     sed -ri 's/"1fhr"/"c1fhr"/' /sbin/setup-apkrepos  # backport bugfix
     #sed -ri 's`^(MIRRORS_URL=).*`\1http://192.168.122.1:3923/am/mirrors.txt`' /sbin/setup-apkrepos  # proxy
-    setup-apkrepos -1c
-    cat /etc/apk/repositories
+    #setup-apkrepos -1c
+    (sed -r 's/^https/http/' | tee -a /etc/apk/repositories) <<EOF
+$MIRROR/v$IVER/main
+$MIRROR/v$IVER/community
+EOF
+    apk update
     
     cd /mnt/apks/*
     ls -1 >.a

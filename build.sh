@@ -21,6 +21,7 @@ iso=
 iso_out=
 usb_out=asm.usb
 b=$td/b
+mirror=https://mirrors.edge.kernel.org/alpine
 
 
 help() {
@@ -32,6 +33,7 @@ arguments:
   -b PATH   build-dir, default: $b
   -ou PATH  output path for usb image, default: ${usb_out:-DISABLED}
   -oi PATH  output path for isohybrid, default: ${iso_out:-DISABLED}
+  -m URL    mirror (for iso/APKs), default: $mirror
 
 examples:
   $0 -i dl/alpine-extended-3.15.0-x86_64.iso
@@ -52,6 +54,7 @@ while [ "$1" ]; do
         -b)  b="$v";   ;;
         -ou) usb_out="$v"; ;;
         -oi) iso_out="$v"; ;;
+        -m)  mirror="${v%/}"; ;;
         *)   echo "unexpected argument: $k"; help; ;;
     esac
 done
@@ -89,7 +92,7 @@ need bc
 [ -e "$iso" ] || {
     echo "iso not found; downloading..."
     mkdir -p "$(dirname "$iso")"
-    wget https://mirrors.edge.kernel.org/alpine/v$ver/releases/$arch/"$isoname" -O "$iso"
+    wget $mirror/v$ver/releases/$arch/"$isoname" -O "$iso"
 }
 
 rm -rf $b
@@ -106,7 +109,13 @@ pushd $b >/dev/null
 sed -ri 's/^tty1/ttyS0/' etc/inittab
 tar -czvf fs/the.apkovl.tar.gz etc
 
-cat >fs/sm/asm.sh <<'EOF'
+cat >fs/sm/asm.sh <<EOF
+export IVER=$ver
+export IARCH=$arch
+export MIRROR=$mirror
+EOF
+
+cat >>fs/sm/asm.sh <<'EOF'
 sed -ri 's/for i in \$initrds; do/for i in ${initrds\/\/,\/ }; do/' /sbin/setup-bootable
 c="apk add -q util-linux sfdisk syslinux dosfstools"
 if ! $c; then
