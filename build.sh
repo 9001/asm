@@ -5,18 +5,9 @@ set -e
 
 msg()  { printf '\033[0;36;7m*\033[27m %s\033[0m%s\n' "$*" >&2; }
 inf()  { printf '\033[1;92;7m+\033[27m %s\033[0m%s\n' "$*" >&2; }
-warn() { printf '\033[0;33;7m+\033[27m %s\033[0m%s\n' "$*" >&2; }
+warn() { printf '\033[0;33;7m!\033[27m %s\033[0m%s\n' "$*" >&2; }
 err()  { printf '\033[1;91;7mx\033[27m %s\033[0m%s\n' "$*" >&2; }
-
-need_root=
-mkfs.ext3 -h 2>&1 | grep -qE '\[-d\b' ||
-    need_root=1
-
-[ $need_root ] && [ $(id -u) -ne 0 ] && {
-    err "you must run this as root,"
-    err "because your mkfs.ext3 is too old to have -d"
-    exit 1
-}
+absreal() { realpath "$1" || readlink -f "$1"; }
 
 td=$(mktemp --tmpdir -d asm.XXXXX)
 trap "rv=$?; rm -rf $td; exit $rv" INT TERM EXIT
@@ -78,12 +69,7 @@ done
     exit 1
 }
 
-[ $iso_out ] &&
-    rm -f "$iso_out"
-
-iso="$(realpath "$iso" || readlink -f "$iso")"
 isoname="${iso##*/}"
-
 read flavor ver arch < <(echo "$isoname" |
   awk -F- '{sub(/.iso$/,"");v=$3;sub(/.[^.]+$/,"",v);print$2,v,$4}')
 
@@ -93,37 +79,80 @@ need() {
         err=1
     }
 }
-qemu=$(
-    PATH="/usr/libexec:$PATH" command -v qemu-kvm ||
-    echo qemu-system-$arch
-)
+qemu=qemu-system-$arch
+command -v $qemu >/dev/null || qemu=$(
+    PATH="/usr/libexec:$PATH" command -v qemu-kvm || echo $qemu)
 need $qemu
 need qemu-img
 need bc
+need fallocate
+need mkfs.ext3
 [ "$iso_out" ] && need xorrisofs
 [ $err ] && exit 1
 
-[ -e "$iso" ] || {
-    local iso_url="$mirror/v$ver/releases/$arch/$isoname"
-    msg "iso not found; downloading from $iso_url"
-    mkdir -p "$(dirname "$iso")"
-    wget "$iso_url" -O "$iso"
+need_root=
+mkfs.ext3 -h 2>&1 | grep -qE '\[-d\b' ||
+    need_root=1
+
+[ $need_root ] && [ $(id -u) -ne 0 ] && {
+    err "you must run this as root,"
+    err "because your mkfs.ext3 is too old to have -d"
+    exit 1
 }
 
+mkdir -p "$(dirname "$iso")"
+iso="$(absreal "$iso")"
+
+[ -e "$iso" ] || {
+    iso_url="$mirror/v$ver/releases/$arch/$isoname"
+    msg "iso not found; downloading from $iso_url"
+    need wget
+    need sha512
+    [ $err ] && exit 1
+
+    mkdir -p "$(dirname "$iso")"
+    wget "$iso_url" -O "$iso"
+    wget "$iso_url.sha512" -O "$iso.sha512" || {
+        warn "iso.sha512 not found on mirror; trying the yaml"
+        yaml_url="$mirror/v$ver/releases/$arch/latest-releases.yaml"
+        wget "$yaml_url" -O "$iso.yaml"
+        awk -v iso="$isoname" '/^-/{o=0} $2==iso{o=1} o&&/sha512:/{print$2}' "$iso.yaml" > "$iso.sha512"
+    }
+    msg "verifying checksum:"
+    (cat "$iso.sha512"; sha512sum "$iso") |
+    awk '1;v&&v!=$1{exit 1}{v=$1}' || {
+        err "sha512 verification of the downloaded iso failed"
+        mv "$iso"{,.corrupt}
+        exit 1
+    }
+}
+
+usb_out="$(absreal "$usb_out")"
+[ "$iso_out" ] &&
+    rm -f "$iso_out" &&
+    iso_out="$(absreal "$iso_out")"
+
+# build-env: prepare apkovl
 rm -rf $b
 mkdir -p $b/fs/sm/img
 cp -pR etc $b/
 
-# add unmodified apkovl + asm.sh for the final image
-tar -czvf $b/fs/sm/img/the.apkovl.tar.gz etc
-printf "\ncopying sources to %s\n" "$b"
-cp -pR sm $b/fs/sm/img/
+# live-env: add apkovl + asm contents
+msg "copying sources to $b"
+cp -pR etc sm $b/fs/sm/img/
 [ "$profile" ] &&
     (cd p/$profile && tar -c *) |
     tar -xC $b/fs/sm/img/
+
 pushd $b >/dev/null
 
-# tty1 is ttyS0 due to -nographic
+# live-env: finalize apkovl
+echo "export AN=$profile" > fs/sm/img/etc/profile.d/asm-profile.sh
+( cd fs/sm/img
+  tar -czvf the.apkovl.tar.gz etc
+  rm -rf etc )
+
+# build-env: finalize apkovl (tty1 is ttyS0 due to -nographic)
 sed -ri 's/^tty1/ttyS0/' etc/inittab
 tar -czvf fs/the.apkovl.tar.gz etc
 
@@ -131,6 +160,7 @@ cat >fs/sm/asm.sh <<EOF
 export IVER=$ver
 export IARCH=$arch
 export MIRROR=$mirror
+export AN=$profile
 EOF
 
 cat >>fs/sm/asm.sh <<'EOF'
@@ -207,7 +237,8 @@ rm -rf $b
     c="mount -o ro,offset=1048576 $usb_out $b"
     mkdir $b
     $c || sudo $c || {
-        printf "\n[!] please run the following as root:\n     %s\n" "$c"
+        warn "please run the following as root:"
+        echo "    $c" >&2
         while sleep 0.2; do
             [ -e $b/the.apkovl.tar.gz ] &&
                 sleep 1 && break
@@ -242,7 +273,8 @@ rm -rf $b
 
     c="umount $b"
     $c || sudo $c || {
-        printf "\n[!] please run the following as root:\n     %s\n" "$c"
+        warn "please run the following as root:"
+        echo "    $c" >&2
         while sleep 0.2; do
             [ ! -e $b/the.apkovl.tar.gz ] &&
                 sleep 1 && break
@@ -266,7 +298,7 @@ or compress it for uploading:
   pigz $usb_out
 
 or try it in qemu:
-  $qemu -accel kvm -vga qxl -drive format=raw,file=$usb_out -m 512
-  $qemu -accel kvm -vga qxl -drive format=raw,file=$usb_out -net bridge,br=virhost0 -net nic,model=virtio -m 128
+  $qemu -enable-kvm -vga qxl -drive format=raw,file=$usb_out -m 512
+  $qemu -enable-kvm -vga qxl -drive format=raw,file=$usb_out -net bridge,br=virhost0 -net nic,model=virtio -m 128
 
 EOF

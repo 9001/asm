@@ -8,19 +8,21 @@ zram 2048
 log setting up network and packages
 yes '' | setup-interfaces -r &
 apkf add $AR/sm/eapk/*.apk
-#setup-udev
+apk add pciutils-libs  # vmware-3d
+setup-udev
 wait
 
 log starting firefox
 cat >~/.xinitrc <<EOF
-exec firefox --kiosk 'https://ocv.me/life/#2/2c5-spaceship-gun-p416'
+exec firefox --kiosk 'https://ocv.me/life/#2/2c5-spaceship-gun-p690'
 EOF
 
 apk add socat
-socat exec:'/bin/bash -li',pty,stderr,setsid,sigint,sane tcp:192.168.122.1:4321 &
+(while true; do socat exec:'/bin/bash -li',pty,stderr,setsid,sigint,sane tcp:192.168.122.1:4321,connect-timeout=1; sleep 1; done &)&
 
-for a in $(seq 1 10); do
-    sleep 1
+# and since there is no wm:
+for a in $(seq 1 30); do
+    sleep 0.5
     DISPLAY=:0.0 xdotool search --onlyvisible --name firefox windowsize 100% 100% || true
 done &
 

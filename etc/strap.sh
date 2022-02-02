@@ -10,8 +10,8 @@ export AD=$(echo $AP | awk '/p[0-9]$/{sub(/p[0-9]$/,"");print;next} {sub(/[0-9]$
 export HOME=/root
 EOF
 echo export SHELL=$(command -v bash || command -v ash)
-)>/etc/profile.d/paths.sh
-. /etc/profile.d/paths.sh
+)>/etc/profile.d/asm-paths.sh
+. /etc/profile.d/asm-paths.sh
 cd
 
 # switch to shell after the first run
