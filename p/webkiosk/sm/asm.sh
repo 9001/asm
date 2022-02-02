@@ -1,0 +1,28 @@
+#!/bin/bash
+# asm profile example @ https://github.com/9001/asm/blob/hovudstraum/p/webkiosk/sm/asm.sh
+set -e
+
+log downloading more ram
+zram 2048
+
+log setting up network and packages
+yes '' | setup-interfaces -r &
+apkf add $AR/sm/eapk/*.apk
+#setup-udev
+wait
+
+log starting firefox
+cat >~/.xinitrc <<EOF
+exec firefox --kiosk 'https://ocv.me/life/#2/2c5-spaceship-gun-p416'
+EOF
+
+apk add socat
+socat exec:'/bin/bash -li',pty,stderr,setsid,sigint,sane tcp:192.168.122.1:4321 &
+
+for a in $(seq 1 10); do
+    sleep 1
+    DISPLAY=:0.0 xdotool search --onlyvisible --name firefox windowsize 100% 100% || true
+done &
+
+# intentionally unsafe, drops to shell for debugging when firefox exits
+xinit -- :0

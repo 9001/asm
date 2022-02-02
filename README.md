@@ -42,6 +42,11 @@ by default it does nothing but it contains some examples
 * adding more APKs
 
 
+## [profiles](./p/)
+
+if you are building several images with different contents (bootscripts, initramfs, ...) you can use the `-p` option to specify a [profile/overlay](./p/) which will replace corresponding files inside `sm` and `etc` at build-time
+
+
 # how it works
 
 the [Alpine ISO](https://alpinelinux.org/downloads/) comes with a tool ([setup-bootable](https://wiki.alpinelinux.org/wiki/Alpine_setup_scripts#setup-bootable)) which writes a copy of the ISO onto a USB flashdrive, except you can then modify the USB contents just like a normal flashdrive
@@ -99,5 +104,5 @@ should work on most BIOS and UEFI boxes with a few exceptions;
 * local apk cache; uncomment the MIRRORS_URL sed and...
   ```
   echo http://192.168.122.1:3923/am/ > am/mirrors.txt && PYTHONPATH=~/dev/copyparty python3 -um copyparty | tee log
-  awk '!/GET  \/am\//{next} {sub(/.*GET  \/am\//,"")} 1' ../log | while IFS= read -r x; do [ -e "$x" ] || echo "https://mirrors.edge.kernel.org/alpine/$x"; done | while IFS= read -r x; do wget -xnH --cut-dirs=1 -i-; done 
+  awk '!/GET  \/am\//{next} {sub(/.*GET  \/am\//,"")} 1' ../log | while IFS= read -r x; do [ -e "$x" ] || echo "https://mirrors.edge.kernel.org/alpine/$x"; done | wget -xnH --cut-dirs=1 -i-
   ```

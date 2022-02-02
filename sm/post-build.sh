@@ -20,12 +20,13 @@ EOF
         ntfs-3g ntfs-3g-progs exfatprogs \
         bc file findutils grep jq less mc ncdu pv psmisc sqlite \
         py3-jinja2 py3-requests ranger
-    
+
     mkdir /mnt/sm/eapk
     (ls -1; cat .a) | sort | uniq -c | awk '$1<2{print$2}' |
         while read -r x; do mv "$x" /mnt/sm/eapk/; done
     rm .a
 }
+
 
 ##
 # another example; pops a reverse shell in the build env
@@ -36,11 +37,13 @@ EOF
 #   socat file:$(tty),raw,echo=0 tcp-l:4321
 
 rshell() {
+    i=192.168.122.1
     setup-interfaces -ar
-    # bash -i >&/dev/tcp/192.168.122.1/4321 0>&1
+    # bash -i >&/dev/tcp/$i/4321 0>&1
     apk add socat
-    socat exec:'/bin/bash -li',pty,stderr,setsid,sigint,sane tcp:192.168.122.1:4321
+    socat exec:'/bin/bash -li',pty,stderr,setsid,sigint,sane tcp:$i:4321,connect-timeout=1
 }
+
 
 ##
 # :^)
@@ -54,5 +57,7 @@ party() {
         https://github.com/9001/copyparty/raw/hovudstraum/bin/copyparty-fuse.py
 }
 
+
 #eapks
 #rshell
+#party

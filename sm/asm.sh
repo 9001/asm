@@ -1,5 +1,5 @@
 #!/bin/bash
-# asm-example, ed <irc.rizon.net>, MIT-licensed, https://github.com/9001/asm
+# asm-example @ https://github.com/9001/asm/blob/hovudstraum/sm/asm.sh
 set -e
 
 # static ip (for [n]etwork -> [s]tatic)

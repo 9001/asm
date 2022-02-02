@@ -3,19 +3,25 @@ set -e
 
 # builds asm.usb (a raw image which can be written to a flashdrive)
 
+msg()  { printf '\033[0;36;7m*\033[27m %s\033[0m%s\n' "$*" >&2; }
+inf()  { printf '\033[1;92;7m+\033[27m %s\033[0m%s\n' "$*" >&2; }
+warn() { printf '\033[0;33;7m+\033[27m %s\033[0m%s\n' "$*" >&2; }
+err()  { printf '\033[1;91;7mx\033[27m %s\033[0m%s\n' "$*" >&2; }
+
 need_root=
 mkfs.ext3 -h 2>&1 | grep -qE '\[-d\b' ||
     need_root=1
 
 [ $need_root ] && [ $(id -u) -ne 0 ] && {
-    echo "you must run this as root,"
-    echo "because your mkfs.ext3 is too old to have -d"
+    err "you must run this as root,"
+    err "because your mkfs.ext3 is too old to have -d"
     exit 1
 }
 
 td=$(mktemp --tmpdir -d asm.XXXXX)
 trap "rv=$?; rm -rf $td; exit $rv" INT TERM EXIT
 
+profile=
 sz=1.8
 iso=
 iso_out=
@@ -29,14 +35,16 @@ help() {
 
 arguments:
   -i ISO    original/input alpine release iso
+  -p NAME   profile to apply, default: <NONE>
   -s SZ     fat32 partition size in GiB, default: $sz
-  -b PATH   build-dir, default: $b
+  -m URL    mirror (for iso/APKs), default: $mirror
   -ou PATH  output path for usb image, default: ${usb_out:-DISABLED}
   -oi PATH  output path for isohybrid, default: ${iso_out:-DISABLED}
-  -m URL    mirror (for iso/APKs), default: $mirror
+  -b PATH   build-dir, default: $b
 
 examples:
   $0 -i dl/alpine-extended-3.15.0-x86_64.iso
+  $0 -i dl/alpine-extended-3.15.0-x86_64.iso -p r0cbox
   $0 -i dl/alpine-extended-3.15.0-x86_64.iso -oi asm.iso -s 3.6 -b b
 
 EOF
@@ -52,16 +60,22 @@ while [ "$1" ]; do
         -i)  iso="$v"; ;;
         -s)  sz="$v";  ;;
         -b)  b="$v";   ;;
+        -p)  profile="$v"; ;;
         -ou) usb_out="$v"; ;;
         -oi) iso_out="$v"; ;;
         -m)  mirror="${v%/}"; ;;
-        *)   echo "unexpected argument: $k"; help; ;;
+        *)   err "unexpected argument: $k"; help; ;;
     esac
 done
 
 [ -z "$iso" ] && {
-    echo "need argument -i (original alpine iso)"
+    err "need argument -i (original alpine iso)"
     help
+}
+
+[ ! "$profile" ] || [ -e "p/$profile" ] || {
+    err "selected profile does not exist: $PWD/p/$profile"
+    exit 1
 }
 
 [ $iso_out ] &&
@@ -75,7 +89,7 @@ read flavor ver arch < <(echo "$isoname" |
 
 need() {
     command -v $1 >/dev/null || {
-        echo need $1
+        err need $1
         err=1
     }
 }
@@ -90,9 +104,10 @@ need bc
 [ $err ] && exit 1
 
 [ -e "$iso" ] || {
-    echo "iso not found; downloading..."
+    local iso_url="$mirror/v$ver/releases/$arch/$isoname"
+    msg "iso not found; downloading from $iso_url"
     mkdir -p "$(dirname "$iso")"
-    wget $mirror/v$ver/releases/$arch/"$isoname" -O "$iso"
+    wget "$iso_url" -O "$iso"
 }
 
 rm -rf $b
@@ -103,6 +118,9 @@ cp -pR etc $b/
 tar -czvf $b/fs/sm/img/the.apkovl.tar.gz etc
 printf "\ncopying sources to %s\n" "$b"
 cp -pR sm $b/fs/sm/img/
+[ "$profile" ] &&
+    (cd p/$profile && tar -c *) |
+    tar -xC $b/fs/sm/img/
 pushd $b >/dev/null
 
 # tty1 is ttyS0 due to -nographic
@@ -155,10 +173,10 @@ EOF
 chmod 755 fs/sm/asm.sh
 
 echo
-echo "ovl size calculation..."
+msg "ovl size calculation..."
 # 32 KiB per inode + apparentsize x1.1 + 8 MiB padding, ceil to 512b
 osz=$(find fs -printf '%s\n' | awk '{n++;s+=$1}END{print int((n*32*1024+s*1.1+8*1024*1024)/512)*512}')
-echo "ovl size estimate $osz"
+msg "ovl size estimate $osz"
 fallocate -l $osz ovl.img
 a="-T big -I 128 -O ^ext_attr"
 mkfs.ext3 -Fd fs $a ovl.img || {
@@ -189,17 +207,17 @@ rm -rf $b
     c="mount -o ro,offset=1048576 $usb_out $b"
     mkdir $b
     $c || sudo $c || {
-        printf "\nplease run the following as root:\n  %s\n" "$c"
+        printf "\n[!] please run the following as root:\n     %s\n" "$c"
         while sleep 0.2; do
             [ -e $b/the.apkovl.tar.gz ] &&
                 sleep 1 && break
         done
     }
     [ -e $b/the.apkovl.tar.gz ] || {
-        echo failed to mount the usb image for iso conversion
+        err failed to mount the usb image for iso conversion
         exit 1
     }
-    echo now building "$iso_out" ...
+    msg now building "$iso_out" ...
     # https://github.com/alpinelinux/aports/blob/569ab4c43cba612670f1a153a077b42474c33267/scripts/mkimg.base.sh
     xorrisofs \
       -quiet \
@@ -224,7 +242,7 @@ rm -rf $b
 
     c="umount $b"
     $c || sudo $c || {
-        printf "\nplease run the following as root:\n  %s\n" "$c"
+        printf "\n[!] please run the following as root:\n     %s\n" "$c"
         while sleep 0.2; do
             [ ! -e $b/the.apkovl.tar.gz ] &&
                 sleep 1 && break
@@ -248,6 +266,7 @@ or compress it for uploading:
   pigz $usb_out
 
 or try it in qemu:
-  $qemu -accel kvm -drive format=raw,file=$usb_out -m 512
+  $qemu -accel kvm -vga qxl -drive format=raw,file=$usb_out -m 512
+  $qemu -accel kvm -vga qxl -drive format=raw,file=$usb_out -net bridge,br=virhost0 -net nic,model=virtio -m 128
 
 EOF
