@@ -60,7 +60,12 @@ while [ "$1" ]; do
 done
 
 [ -z "$iso" ] && {
-    err "need argument -i (original alpine iso)"
+    err "need argument -i (path to original alpine iso, will be downloaded if it does not exist)"
+    help
+}
+
+printf '%s\n' "$iso" | grep -q : && {
+    err "the argument to -i should be a local path, not a URL -- it will be downloaded if it does not exist"
     help
 }
 
@@ -107,7 +112,7 @@ iso="$(absreal "$iso")"
     iso_url="$mirror/v$ver/releases/$arch/$isoname"
     msg "iso not found; downloading from $iso_url"
     need wget
-    need sha512
+    need sha512sum
     [ $err ] && exit 1
 
     mkdir -p "$(dirname "$iso")"

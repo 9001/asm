@@ -1,8 +1,10 @@
 # alpine-service-mode
 
-write this to a usb flashdrive and [`./sm/asm.sh`](./sm/asm.sh) will be executed on bootup
-
-good for fixing headless boxes or just general hardware wrangling
+* write this to a usb flashdrive and [`./sm/asm.sh`](./sm/asm.sh) will be executed on bootup
+* good for fixing headless boxes or just general hardware wrangling
+* based on [Alpine Linux](https://alpinelinux.org/), runs anywhere
+  * trivial: `i386/x86` // `x64` // `aarch64` // `ppc64le` // `s390x`
+  * possible: `armhf` // `armv7`
 
 
 ## what does it do
@@ -93,19 +95,21 @@ when booting a computer with the flashdrive inserted, all the usual alpine stuff
 
 * linux runs [`/init`](https://github.com/alpinelinux/mkinitfs/blob/master/initramfs-init.in) from the initramfs
 
-* initramfs-init does a bunch of stuff, then scans all removable devices for an [apkovl](https://wiki.alpinelinux.org/wiki/Alpine_local_backup) to unpack, finds `fs0:/the.apkovl.tar.gz` (which is [`./etc/](./etc/) from this repo), and unpacks it into `/etc`
+* initramfs-init does a bunch of stuff, then scans all removable devices for an [apkovl](https://wiki.alpinelinux.org/wiki/Alpine_local_backup) to unpack, finds `fs0:/the.apkovl.tar.gz` (which is [`./etc/`](./etc/) from this repo), and unpacks it into `/etc`
 
 * initramfs-init continues the usual setup before doing a handover to [`/sbin/init`](https://github.com/mirror/busybox/blob/master/init/init.c)
 
 * busybox-init reads [the asm edition of `/etc/inittab`](./etc/inittab) and runs [`/sbin/openrc`](https://wiki.gentoo.org/wiki/OpenRC) to launch the `sysinit` and `boot` services as defined in `/etc/runlevels/$1`, and then spawns TTYs 1 through 6
-  * except tty1 is [`/etc/strap.sh`](./etc/strap.sh) according to our inittab, which is the asm entrypoint
+  * except, according to our inittab, tty1 is [`/etc/strap.sh`](./etc/strap.sh) which is the asm entrypoint
   * a completely normal alpine bootup aside from that :^)
 
 * [`/etc/strap.sh`](./etc/strap.sh) does some basic environment setup:
-  * sets the `$AR/$AP/$AD` variables persistently
+  * sets the `$AR/$AP/$AD` variables for easy access to the USB FS
   * switches the shell from `ash` to `bash` if available
   * keyboard layout, console font and colors, beeps the pc-speaker
   * and finally runs [`$AR/sm/asm.sh`](./sm/asm.sh) aka `fs0:/sm/asm.sh` exactly once, before turning tty1 back into a normal interactive console
+
+so considering the minimal amount of hacks, this should all JustWork in future alpine versions too 🤞🤞
 
 
 # compatibility
