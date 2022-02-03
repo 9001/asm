@@ -1,6 +1,7 @@
 #!/bin/ash
 
 setup-interfaces -ar
+fetch_apks openssh-server python3 tmux
 
 mkdir -p /mnt/sm/bin
 cd /mnt/sm/bin

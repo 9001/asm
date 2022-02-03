@@ -9,7 +9,8 @@ log setting up network
 printf '%s\n' "" 10.1.2.51 24 "" done n | setup-interfaces -r
 
 log installing deps
-apk add -q openssh-server python3 tmux
+apk add -q openssh-server
+apk add -q python3 tmux || apkf add -q $AR/sm/eapk/*
 
 log starting sshd
 sed -ri 's/(Subsystem[^/]+sftp).*/\1 internal-sftp/;
