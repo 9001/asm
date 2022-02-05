@@ -24,23 +24,33 @@ it plays the [pc98 bootup bleep](https://www.youtube.com/watch?v=9qof0qye1ao#t=6
 
 * you can mute SFX by creating a file named `sm/quiet` on the flashdrive
 
+see [profiles](./p/) for additional examples including a chatserver, a disk wiper and a webkiosk
+
 
 # build it
 
 if you are on linux,
 * install qemu and run [`./build.sh`](./build.sh)
-* you will get `asm.usb` which you can write to a usb flashdrive using [rufus](https://github.com/pbatard/rufus/releases/) or `cat asm.usb >/dev/sdi`
+* you will get `asm.usb` which you can write to a usb flashdrive
   * can additionally produce a hybrid ISO for burning to CD/DVD with `-oi`
 
 alternatively, you may [build it manually](./manual-build.md) instead of using [`./build.sh`](./build.sh)
+
+
+## write it to a flashdrive
+
+* on linux, `cat asm.usb >/dev/sdi`
+* on windows, use [rufus](https://github.com/pbatard/rufus/releases/)
+  * rufus v3.15 permanently unmounts the flashdrive when done, so run [./rufus-unhide.bat](./rufus-unhide.bat) afterwards
 
 
 ## custom build steps
 
 [`./sm/post-build.sh`](./sm/post-build.sh) is executed in the build-env right before the end
 
-by default it does nothing but it contains some examples
+by default it does nothing but it provides a library of helpers / examples,
 * an rshell for prototyping / debugging your extensions
+* shrinking the output image
 * adding more APKs
 
 
@@ -128,6 +138,9 @@ should work on most BIOS and UEFI boxes with a few exceptions;
 * [`./winpe/`](./winpe/) is unrelated bonus content
 
 * need to debug the alpine init? boot it like this to stream a verbose log out through the serial port: `lts console=ttyS0,115200,n8 debug_init=1`
+  * or append the extra args after `modloop_verify=no` in `build.sh`
+  * qemu: `-serial pipe:s` as extra arg, and `mkfifo s.{in,out}; tee serial.log <s.out&` before launch
+    * optionally just `-serial stdio` for interactive without logging
 
 * rapid prototyping with qemu:
   ```
@@ -139,4 +152,14 @@ should work on most BIOS and UEFI boxes with a few exceptions;
   ```
   echo http://192.168.122.1:3923/am/ > am/mirrors.txt && PYTHONPATH=~/dev/copyparty python3 -um copyparty | tee log
   awk '!/GET  \/am\//{next} {sub(/.*GET  \/am\//,"")} 1' ../log | while IFS= read -r x; do [ -e "$x" ] || echo "https://mirrors.edge.kernel.org/alpine/$x"; done | wget -xnH --cut-dirs=1 -i-
+  ```
+
+* initramfs hacking:
+  ```
+  mkdir x x2
+  mount -o offset=1048576 asm.usb x
+  (cd x2 && gzip -d < ../x/boot/initramfs-virt | cpio -idmv)
+  vim x2/init
+  (umask 0077; cd x2 && find . | sort | cpio --quiet --renumber-inodes -o -H newc | zstd -19 -T0) > x/boot/initramfs-virt
+  umount x
   ```

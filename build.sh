@@ -10,7 +10,7 @@ err()  { printf '\033[1;91;7mx\033[27m %s\033[0m%s\n' "$*" >&2; }
 absreal() { realpath "$1" || readlink -f "$1"; }
 
 td=$(mktemp --tmpdir -d asm.XXXXX)
-trap "rv=$?; rm -rf $td; exit $rv" INT TERM EXIT
+trap "rv=$?; rm -rf $td; tput smam || printf '\033[?7h'; exit $rv" INT TERM EXIT
 
 profile=
 sz=1.8
@@ -33,10 +33,14 @@ arguments:
   -oi PATH  output path for isohybrid, default: ${iso_out:-DISABLED}
   -b PATH   build-dir, default: $b
 
+notes:
+  -s cannot be smaller than the source iso
+
 examples:
   $0 -i dl/alpine-extended-3.15.0-x86_64.iso
-  $0 -i dl/alpine-extended-3.15.0-x86_64.iso -p r0cbox
   $0 -i dl/alpine-extended-3.15.0-x86_64.iso -oi asm.iso -s 3.6 -b b
+  $0 -i dl/alpine-standard-3.15.0-x86_64.iso -s 0.2 -p r0cbox
+  $0 -i dl/alpine-extended-3.15.0-x86_64.iso -p webkiosk
 
 EOF
     exit 1
@@ -85,6 +89,7 @@ need() {
     }
 }
 qemu=qemu-system-$arch
+[ $arch = x86 ] && qemu=${qemu}_64
 command -v $qemu >/dev/null || qemu=$(
     PATH="/usr/libexec:$PATH" command -v qemu-kvm || echo $qemu)
 need $qemu
@@ -116,11 +121,16 @@ iso="$(absreal "$iso")"
     [ $err ] && exit 1
 
     mkdir -p "$(dirname "$iso")"
-    wget "$iso_url" -O "$iso"
+    wget "$iso_url" -O "$iso" || {
+        rm -f "$iso"; exit 1
+    }
     wget "$iso_url.sha512" -O "$iso.sha512" || {
+        rm -f "$iso.sha512"
         warn "iso.sha512 not found on mirror; trying the yaml"
         yaml_url="$mirror/v$ver/releases/$arch/latest-releases.yaml"
-        wget "$yaml_url" -O "$iso.yaml"
+        wget "$yaml_url" -O "$iso.yaml" || {
+            rm -f "$iso.yaml"; exit 1
+        }
         awk -v iso="$isoname" '/^-/{o=0} $2==iso{o=1} o&&/sha512:/{print$2}' "$iso.yaml" > "$iso.sha512"
     }
     msg "verifying checksum:"
@@ -151,8 +161,15 @@ cp -pR etc sm $b/fs/sm/img/
 
 pushd $b >/dev/null
 
+# both-envs: add mirror and profile info
+tee fs/sm/img/etc/profile.d/asm-profile.sh >fs/sm/asm.sh <<EOF
+export IVER=$ver
+export IARCH=$arch
+export MIRROR=$mirror
+export AN=$profile
+EOF
+
 # live-env: finalize apkovl
-echo "export AN=$profile" > fs/sm/img/etc/profile.d/asm-profile.sh
 ( cd fs/sm/img
   tar -czvf the.apkovl.tar.gz etc
   rm -rf etc )
@@ -161,19 +178,11 @@ echo "export AN=$profile" > fs/sm/img/etc/profile.d/asm-profile.sh
 sed -ri 's/^tty1/ttyS0/' etc/inittab
 tar -czvf fs/the.apkovl.tar.gz etc
 
-cat >fs/sm/asm.sh <<EOF
-export IVER=$ver
-export IARCH=$arch
-export MIRROR=$mirror
-export AN=$profile
-EOF
-
 cat >>fs/sm/asm.sh <<'EOF'
 sed -ri 's/for i in \$initrds; do/for i in ${initrds\/\/,\/ }; do/' /sbin/setup-bootable
 c="apk add -q util-linux sfdisk syslinux dosfstools"
 if ! $c; then
-    setup-interfaces -ar
-    setup-apkrepos -1
+    wrepo
     $c
 fi
 if apk add -q sfdisk; then
@@ -191,7 +200,7 @@ echo 1 | fsck.vfat -w /dev/vda1 | grep -vE '^  , '
 mount -t vfat /dev/vda1 /mnt
 ( cd /mnt/boot;
 for f in */syslinux.cfg */grub.cfg; do sed -ri '
-    s/( quiet) *$/\1 modloop_verify=no /;
+    s/( quiet)( .*|$)/\1\2 modloop_verify=no /;
     s/(^TIMEOUT )[0-9]{2}$/\110/;
     s/(^set timeout=)[0-9]$/\11/;
     ' $f; 
@@ -228,9 +237,12 @@ sz=$(echo "(($sz*1024*1024*1024+511)/512)*512" | tr , . | LC_ALL=C bc)
 fallocate -l ${sz} asm.usb
 
 mkfifo s.{in,out}
-(awk '1;/^ISOLINUX/{exit}' <s.out; echo "lts console=ttyS0" >s.in; cat s.out) &
+[ $flavor = virt ] && kern=virt || kern=lts
+(awk '1;/^ISOLINUX/{exit}' <s.out; echo "$kern console=ttyS0" >s.in; cat s.out) &
 
-$qemu -enable-kvm -nographic -serial pipe:s -cdrom "$iso" -m 512 \
+cores=$(lscpu -p | awk -F, '/^[0-9]+,/{t[$2":"$3":"$4]=1} END{n=0;for(v in t)n++;print n}')
+
+$qemu -enable-kvm -nographic -serial pipe:s -cdrom "$iso" -cpu host -smp $cores -m 1024 \
   -drive format=raw,if=virtio,discard=unmap,file=asm.usb \
   -drive format=raw,if=virtio,discard=unmap,file=ovl.img
 

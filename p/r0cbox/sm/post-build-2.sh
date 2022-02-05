@@ -1,6 +1,17 @@
 #!/bin/ash
 
 setup-interfaces -ar
+
+# optional image shrinker, from 154 to 81 MiB 
+shrink() {
+    zram
+    wrepo
+    imshrink_nosig
+    imshrink_filter_mods
+    imshrink_filter_apks alpine-base openssh-server
+}
+
+shrink
 fetch_apks openssh-server python3 tmux
 
 mkdir -p /mnt/sm/bin

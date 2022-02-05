@@ -1,35 +1,3 @@
-# https://ocv.me/dot/.bashrc
-bslcb() {
-	local RETVL=$? BSLMT=']'
-	[ -z "$BSLNFC" ] || {
-		read -r a b < <(history 1)
-		BSLMT="$a] $b [$RETVL]"
-	}
-	BSLMT="$(date +'%Y-%m-%d, %H:%M:%S') [$$-$BSLMT"
-	printf '%s\n' "$BSLMT" >> ~/.bash.log
-
-	[ -z "$BSLNFC" ] || {
-		[ $RETVL -eq 0 ] && echo ||
-			echo -e "\n\033[1;91mError Code:\033[0;1m $RETVL\033[0m"
-
-		bash -c 'stat .' 2>&1 | grep -qE 'No such file or directory|Links: 0[ $]' && {
-			echo -e "\033[1;93mWARNING\033[0m: Current directory does not exist anymore."
-			cd -- "$BSLNFC" 2>/dev/null &&
-				echo -e "\033[1;92mNOTICE:\033[0m Recovered pwd:  $(pwd)" ||
-				echo -e "\033[1;91mALERT:\033[0m Could not recover pwd"
-		}
-	}
-	BSLNFC="$PWD"
-}
-PROMPT_COMMAND=bslcb
-
-HISTSIZE=10000
-HISTFILESIZE=10000
-HISTCONTROL=ignoreboth
-
-shopt -s histappend
-shopt -s checkwinsize
-
 alias ls='ls --color=auto'
 alias grep='grep --color=auto'
 alias fgrep='fgrep --color=auto'

@@ -32,3 +32,12 @@ r0cbox hardware requirements:
   * will exit to an interactive shell if firefox crashes / exits
   * and by default there are other TTYs without password protection anyways
 * 1 GiB or more RAM is recommended depending on website contents
+
+
+# [`./min/`](./min/)
+
+* produces a 32 MiB iso, 27 MiB gzipped usb image:
+  ```
+  ./build.sh -i dl/alpine-virt-3.15.0-x86.iso -oi asm.iso -p min -s 0.06
+  ```
+  * (non-virt i386 is 69 / 63 MiB due to hw drivers)

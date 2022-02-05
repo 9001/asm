@@ -105,7 +105,7 @@ infograb() {
 	apkf add $AR/sm/eapk/{dmidecode,lshw,smartmontools}-*.apk || true
 	# note; blank cmd = commit to usb (since lspci -xxxx can crash the box)
 	local cmds=(
-		dmesg "dmesg --color=always" blkid "free -m"
+		dmesg "dmesg --color=always" blkid "free -m" "uname -a"
 		lsblk lscpu lshw lsipc lsirq lsmod fbset
 		lsusb "lsusb -v" "lsusb -tvvv" "stdbuf -o0 -e0 lsusb -v 2>&1"
 		lspci "lspci -nnP" "lspci -nnPP" "lspci -nnvvv"

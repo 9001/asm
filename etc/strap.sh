@@ -1,7 +1,7 @@
 #!/bin/ash
 # asm-bootstrap, ed <irc.rizon.net>, MIT-licensed, https://github.com/9001/asm
 
-command -v bash >/dev/null || apk add -q bash 2>/dev/null || true
+command -v bash >/dev/null || apk add -q bash 2>/dev/null >&2 || true
 
 (cat <<'EOF'
 export AR=$(dirname /media/*/the.apkovl.tar.gz)
@@ -21,18 +21,18 @@ touch /dev/shm/once
 # load tty color scheme, announce we good
 . /etc/profile.d/bifrost.sh
 printf '\033[36m * %s ready\033[0m\n' "$(cat $AR/.alpine-release)"
-printf '\033[s\033[H'; cat /etc/motd; printf '\033[u'
+printf '\033[s\033[H'; cat /etc/motd; printf '\033[u\033[?7h'
 chvt 2; chvt 1
 
 # switch to bash + add loggers
-apk add -q util-linux bash tar &&
+apk add -q util-linux bash tar 2>/dev/null >&2 &&
   sed -ri 's^/ash$^/bash^' /etc/passwd
 
 cp -p /etc/bin/* /usr/local/bin/
 export PATH="$PATH:/usr/local/bin/"
 
 # keymap and font
-setup-keymap us us-altgr-intl
+yes abort | setup-keymap us us-altgr-intl 2>/dev/null >&2
 stty size | awk '$1<36{exit 1}' ||
   (cd /etc/cfnt; setfont $(ls -1))
 

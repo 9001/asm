@@ -1,0 +1,18 @@
+#!/bin/ash
+set -e
+
+# setup apkrepos and networking
+
+grep -q /v$IVER/community /etc/apk/repositories || 
+    printf "$MIRROR/v$IVER/%s\n" main community |
+    sed -r 's/^https/http/' |
+    tee /etc/apk/w |
+    tee -a /etc/apk/repositories
+
+ip r | grep -q default ||
+    setup-interfaces -ar
+
+apk update || {
+    setup-interfaces -ar
+    apk update
+}
