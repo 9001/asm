@@ -34,14 +34,14 @@ if you are on linux,
 * you will get `asm.usb` which you can write to a usb flashdrive
   * can additionally produce a hybrid ISO for burning to CD/DVD with `-oi`
 
-alternatively, you may [build it manually](./manual-build.md) instead of using [`./build.sh`](./build.sh)
+alternatively, you may [build it manually](./doc/manual-build.md) instead of using [`./build.sh`](./build.sh)
 
 
 ## write it to a flashdrive
 
 * on linux, `cat asm.usb >/dev/sdi`
 * on windows, use [rufus](https://github.com/pbatard/rufus/releases/)
-  * rufus v3.15 permanently unmounts the flashdrive when done, so run [./rufus-unhide.bat](./rufus-unhide.bat) afterwards
+  * rufus v3.15 permanently unmounts the flashdrive when done, so run [rufus-unhide.bat](./doc/rufus-unhide.bat) afterwards
 
 
 ## custom build steps
