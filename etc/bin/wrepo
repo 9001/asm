@@ -14,5 +14,8 @@ ip r | grep -q default ||
 
 apk update || {
     setup-interfaces -ar
-    apk update
+    apk update || {
+        log "ERROR: cannot download alpine packages from $MIRROR/v$IVER/"
+        exit 1
+    }
 }

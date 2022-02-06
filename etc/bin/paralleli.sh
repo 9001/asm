@@ -32,6 +32,9 @@ _par_test()
 
 
 par() {
+	local q=
+	[ "$1" = -q ] && q=q && shift
+	
 	local jobs=$1
 	printf '%s\n' "$1" |
 	grep -qE '^[0-9]+$' ||
@@ -94,7 +97,7 @@ cmd: \033[1;37m%s\033[0m
 		nbusy=$((nbusy+1))
 		jobctr=$((jobctr+1))
 		mkdir $td/j$jobctr
-		printf '\033[36m[+] start %04d: %s\033[0m\n' $jobctr "$fn" >&2
+		[ $q ] || printf '\033[36m[+] start %04d: %s\033[0m\n' $jobctr "$fn" >&2
 		{
 			# the task to perform
 			eval "$cmd" < /dev/null ||
@@ -105,12 +108,12 @@ cmd: \033[1;37m%s\033[0m
 				mkdir -p $td/err
 			}
 			
-			printf '\033[36m[-]   end %04d: %s\033[0m\n' $jobctr "$fn" >&2
+			[ $q ] || printf '\033[36m[-]   end %04d: %s\033[0m\n' $jobctr "$fn" >&2
 			rmdir $td/j$jobctr
 		} &
 	done
 
-	printf '\033[36m[+] stdin empty\033[0m\n' >&2
+	[ $q ] || printf '\033[36m[+] stdin empty\033[0m\n' >&2
 
 	# cannot use wait since the while loop is a subshell itself,
 	# which also means we cannot see variable modifications within
@@ -129,5 +132,5 @@ cmd: \033[1;37m%s\033[0m
 	done
 
 	rm -rf $td
-	printf '\033[36m[+] done\033[0m\n' >&2
+	[ $q ] || printf '\033[36m[+] done\033[0m\n' >&2
 }

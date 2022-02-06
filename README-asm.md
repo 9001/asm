@@ -43,6 +43,10 @@ alternatively, you may [build it manually](./doc/manual-build.md) instead of usi
 * on windows, use [rufus](https://github.com/pbatard/rufus/releases/)
   * rufus v3.15 permanently unmounts the flashdrive when done, so run [rufus-unhide.bat](./doc/rufus-unhide.bat) afterwards
 
+**tip:** if the flashdrive is larger than the image, it is safe and recommended to add another partition to the flashdrive using fdisk / sgdisk / the win10 `Disk Management` utility
+* and you can write a new asm image onto the flashdrive without losing data on the additional partition, as long as the new build is the same size or smaller -- just need to add the extra partition back into fdisk
+  * **NOT** possible on windows; writing a new image with rufus is OK, but both win10 `Disk Management` and `diskpart` will shred the filesystem header, even if you select `Do not format this volume` when adding the partition
+
 
 ## custom build steps
 
@@ -137,29 +141,4 @@ should work on most BIOS and UEFI boxes with a few exceptions;
 
 * [`./winpe/`](./winpe/) is unrelated bonus content
 
-* need to debug the alpine init? boot it like this to stream a verbose log out through the serial port: `lts console=ttyS0,115200,n8 debug_init=1`
-  * or append the extra args after `modloop_verify=no` in `build.sh`
-  * qemu: `-serial pipe:s` as extra arg, and `mkfifo s.{in,out}; tee serial.log <s.out&` before launch
-    * optionally just `-serial stdio` for interactive without logging
-
-* rapid prototyping with qemu:
-  ```
-  losetup -f --show ~ed/asm.raw
-  mount /dev/loop0p1 /mnt/ && tar -czvf /mnt/the.apkovl.tar.gz etc && cp asm-example.sh /mnt/sm/asm.sh && umount /mnt && sync && qemu-system-x86_64 -hda ~ed/asm.raw -m 768 -accel kvm
-  ```
-
-* local apk cache; uncomment the MIRRORS_URL sed and...
-  ```
-  echo http://192.168.122.1:3923/am/ > am/mirrors.txt && PYTHONPATH=~/dev/copyparty python3 -um copyparty | tee log
-  awk '!/GET  \/am\//{next} {sub(/.*GET  \/am\//,"")} 1' ../log | while IFS= read -r x; do [ -e "$x" ] || echo "https://mirrors.edge.kernel.org/alpine/$x"; done | wget -xnH --cut-dirs=1 -i-
-  ```
-
-* initramfs hacking:
-  ```
-  mkdir x x2
-  mount -o offset=1048576 asm.usb x
-  (cd x2 && gzip -d < ../x/boot/initramfs-virt | cpio -idmv)
-  vim x2/init
-  (umask 0077; cd x2 && find . | sort | cpio --quiet --renumber-inodes -o -H newc | zstd -19 -T0) > x/boot/initramfs-virt
-  umount x
-  ```
+* see [`./doc/notes.md`](./doc/notes.md) for more

@@ -12,9 +12,13 @@
 #   socat file:$(tty),raw,echo=0 tcp-l:4321
 
 rshell() {
-    # bash -i >&/dev/tcp/$1/4321 0>&1
-    apk add socat
-    socat exec:'/bin/bash -li',pty,stderr,setsid,sigint,sane tcp:$1:4321,connect-timeout=1
+    if apk add socat; then 
+        socat exec:$SHELL' -li',pty,stderr,setsid,sigint,sane tcp:$1:4321,connect-timeout=1
+    elif [ "$SHELL" = /bin/bash ]; then
+        bash -i >&/dev/tcp/$1/4321 0>&1
+    else
+        local f=$(mktemp);rm $f;mkfifo $f;cat $f|ash -i 2>&1|nc $1 4321 >$f
+    fi
 }
 
 
@@ -25,8 +29,7 @@ fetch_apks() {
     wrepo
     cd /mnt/apks/*
     ls -1 >.a
-    echo "$@"
-    #rshell 192.168.122.1
+    #echo "$@"; rshell 192.168.122.1
     apk fetch --repositories-file=/etc/apk/w -R "$@"
     mkdir -p /mnt/sm/eapk
     (ls -1; cat .a) | sort | uniq -c | awk '$1<2{print$2}' |
@@ -59,6 +62,18 @@ party() {
 }
 
 
+##
+# boot faster, may destroy graphics
+
+nomodeset() {
+    ( cd /mnt/boot;
+    for f in */syslinux.cfg */grub.cfg; do sed -ri '
+        s/( quiet)( .*|$)/\1\2 nomodeset i915.modeset=0 nouveau.modeset=0 /;
+        ' $f; 
+    done )
+}
+
+
 ########################################################################
 # image shrinkers;
 # each of these are optional
@@ -71,22 +86,31 @@ imshrink_fake_gz() {
     # assumes the current version of alpine still does .ko.gz,
     # harmless if that's not the case
     cd ~/x2
-    printf 'uncompressing kmods\033[?7h\n'
-    find -iname '*.gz' | while IFS= read -r x; do
-        echo -n .
-        gzip -d "$x"
-        pigz -0 "${x%.*}"
+    printf 'uncompressing kmods using %d cores\033[?7h\n' $CORES
+    find -iname '*.gz' > ~/l
+    local nc=0
+    while true; do
+        awk \$NR%$CORES==$nc ~/l |
+        while IFS= read -r x; do
+            printf .
+            gzip -d "$x"
+            pigz -0 "${x%.*}"
+        done &
+        nc=$((nc+1))
+        [ $nc -ge $CORES ] && break
     done
+    wait
     echo
 }
 
 imshrink_filter_mods() {
     # shaves ~54 MiB
     # shrink modloop by removing rarely-useful stuff + invokes imshrink_fake_gz
-    apk add squashfs-tools pigz
+    apk add squashfs-tools pigz pv
     cd; rm -rf x x2; mkdir x x2
     mount -o loop /mnt/boot/modloop-* x
     cd x
+    echo unpacking modloop
     find -type f | awk '
         /\/(brcm|mrvl|ath1.k|ti-connectivity|rtlwifi|rtl_bt|wireless|bluetooth)\/|iwlwifi/{next}  # wifi/bt
         /\/(amdgpu|radeon|nvidia|nouveau)\//{next}  # pcie gpus
@@ -103,6 +127,7 @@ imshrink_filter_mods() {
         x86|x86_64) mksfs="-Xbcj x86" ;;
         *) mksfs=
     esac
+    (sleep 1; pv -i0.3 -d $(pidof mksquashfs):3) &
     mksquashfs x2/ x3 -comp xz -exit-on-error $mksfs
     umount x
     mv x3 /mnt/boot/modloop-*
@@ -124,9 +149,9 @@ imshrink_filter_apks() {
 }
 
 imshrink_nosig() {
-    # shaves ~1 MiB lol
+    # shaves 1~3 MiB
     # remove modloop signature from initramfs to avoid pulling in openssl
-    # (bonus: zstd produces a smaller initramfs)
+    # (bonus: zstd/xz produces a smaller initramfs)
     apk add zstd xz
     cd; mkdir x; cd x
     f=$(echo /mnt/boot/initramfs-*)
@@ -136,9 +161,10 @@ imshrink_nosig() {
     echo repacking initramfs
     # https://github.com/alpinelinux/mkinitfs/blob/a5f05c98f690d95374b69ae5405052b250305fdf/mkinitfs.in#L177
     umask 0077
-    comp="xz -C crc32 -T 0"  #     <-- 320k smaller, but
-    comp="zstd -19 -T0 --long"  #  <-- faster decompression
-    find . | sort | cpio --quiet --renumber-inodes -o -H newc | $comp > $f
+    comp="zstd -19 -T0"     # boots ~.5sec / 10% faster, --long/--ultra can OOM
+    comp="xz -C crc32 -T0"  # 320k..3M smaller
+    find . | sort | cpio --renumber-inodes -o -H newc | $comp > $f
+    cd; rm -rf x
 }
 
 ##

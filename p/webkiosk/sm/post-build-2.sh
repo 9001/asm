@@ -1,4 +1,5 @@
 #!/bin/bash
+set -e
 
 setup-interfaces -ar
 fetch_apks \

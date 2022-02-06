@@ -10,6 +10,7 @@ export AD=$(echo $AP | awk '/p[0-9]$/{sub(/p[0-9]$/,"");print;next} {sub(/[0-9]$
 export HOME=/root
 EOF
 echo export SHELL=$(command -v bash || command -v ash)
+echo export CORES=$( (cat /proc/cpuinfo;echo) | awk -F: '{gsub(/[ \t]/,"")} /^physicalid:/{p=$2;n++} /^coreid:/{i=$2;n++} /^$/&&n{t[p"."i]=1;n=0} END {n=0;for(x in t)n++;print n}')
 )>/etc/profile.d/asm-paths.sh
 . /etc/profile.d/asm-paths.sh
 cd

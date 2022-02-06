@@ -39,8 +39,8 @@ notes:
 examples:
   $0 -i dl/alpine-extended-3.15.0-x86_64.iso
   $0 -i dl/alpine-extended-3.15.0-x86_64.iso -oi asm.iso -s 3.6 -b b
-  $0 -i dl/alpine-standard-3.15.0-x86_64.iso -s 0.2 -p r0cbox
   $0 -i dl/alpine-extended-3.15.0-x86_64.iso -p webkiosk
+  $0 -i dl/alpine-standard-3.15.0-x86.iso -s 0.2 -p r0cbox
 
 EOF
     exit 1
@@ -179,6 +179,15 @@ sed -ri 's/^tty1/ttyS0/' etc/inittab
 tar -czvf fs/the.apkovl.tar.gz etc
 
 cat >>fs/sm/asm.sh <<'EOF'
+set -ex
+eh() {
+    [ $? -eq 0 ] && exit 0
+    printf "\033[A\033[1;37;41m\n\n  asm build failed; blanking partition header  \n\033[0m\n"
+    sync; head -c1024 /dev/zero >/dev/vda
+    poweroff
+}
+trap eh INT TERM EXIT
+
 sed -ri 's/for i in \$initrds; do/for i in ${initrds\/\/,\/ }; do/' /sbin/setup-bootable
 c="apk add -q util-linux sfdisk syslinux dosfstools"
 if ! $c; then
@@ -206,7 +215,7 @@ for f in */syslinux.cfg */grub.cfg; do sed -ri '
     ' $f; 
 done )
 
-cp -pR $AR/sm/img/* /mnt/ 2>&1 | grep -vF 'preserve ownership of'
+cp -pR $AR/sm/img/* /mnt/ 2>&1 | grep -vF 'preserve ownership of' || true
 $SHELL $AR/sm/img/sm/post-build.sh || true
 sync
 fstrim -v /mnt || true
@@ -245,6 +254,12 @@ cores=$(lscpu -p | awk -F, '/^[0-9]+,/{t[$2":"$3":"$4]=1} END{n=0;for(v in t)n++
 $qemu -enable-kvm -nographic -serial pipe:s -cdrom "$iso" -cpu host -smp $cores -m 1024 \
   -drive format=raw,if=virtio,discard=unmap,file=asm.usb \
   -drive format=raw,if=virtio,discard=unmap,file=ovl.img
+
+# builder nukes the partition header on error; check if it did
+head -c64 asm.usb | od -w64 -vtx1 | awk 'NR==1&&/[^0 ]/{exit 1}' && {
+    err some of the build steps failed
+    exit 1
+}
 
 popd >/dev/null
 mv $b/asm.usb "$usb_out"

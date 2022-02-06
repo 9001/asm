@@ -40,4 +40,4 @@ r0cbox hardware requirements:
   ```
   ./build.sh -i dl/alpine-virt-3.15.0-x86.iso -oi asm.iso -p min -s 0.06
   ```
-  * (non-virt i386 is 69 / 63 MiB due to hw drivers)
+  * (non-virt i386 is 68 / 63 MiB due to hw drivers)

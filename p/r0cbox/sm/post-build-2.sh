@@ -1,4 +1,5 @@
 #!/bin/ash
+set -e
 
 setup-interfaces -ar
 
