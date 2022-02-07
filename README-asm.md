@@ -40,8 +40,10 @@ alternatively, you may [build it manually](./doc/manual-build.md) instead of usi
 ## write it to a flashdrive
 
 * on linux, `cat asm.usb >/dev/sdi`
-* on windows, use [rufus](https://github.com/pbatard/rufus/releases/)
+* on windows, either use [rufus](https://github.com/pbatard/rufus/releases/) or [USBimager (Recommended)](https://bztsrc.gitlab.io/usbimager/)
+  * you want the `GDI wo` edition of USBimager -- the default choice when visiting that URL on windows
   * rufus v3.15 permanently unmounts the flashdrive when done, so run [rufus-unhide.bat](./doc/rufus-unhide.bat) afterwards
+  * do not use balenaEtcher, it is spyware
 
 **tip:** if the flashdrive is larger than the image, it is safe and recommended to add a "data" partition to the flashdrive after writing the image:
 * on windows, use the win10 `Disk Management` utility, or better yet:
