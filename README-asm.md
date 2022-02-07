@@ -43,9 +43,11 @@ alternatively, you may [build it manually](./doc/manual-build.md) instead of usi
 * on windows, use [rufus](https://github.com/pbatard/rufus/releases/)
   * rufus v3.15 permanently unmounts the flashdrive when done, so run [rufus-unhide.bat](./doc/rufus-unhide.bat) afterwards
 
-**tip:** if the flashdrive is larger than the image, it is safe and recommended to add another partition to the flashdrive using fdisk / sgdisk / the win10 `Disk Management` utility
-* and you can write a new asm image onto the flashdrive without losing data on the additional partition, as long as the new build is the same size or smaller -- just need to add the extra partition back into fdisk
-  * **NOT** possible on windows; writing a new image with rufus is OK, but both win10 `Disk Management` and `diskpart` will shred the filesystem header, even if you select `Do not format this volume` when adding the partition
+**tip:** if the flashdrive is larger than the image, it is safe and recommended to add a "data" partition to the flashdrive after writing the image:
+* on windows, use the win10 `Disk Management` utility, or better yet:
+* on linux, `echo ,,07 | sfdisk -a /dev/sdi` (followed by `mkfs.ntfs -fL ASM2 /dev/sdi2` if there is no existing filesystem to keep)
+  * linux-only bonus: you can write a new asm image onto the flashdrive without losing anything on the data partition, as long as the new build is the same size or smaller -- just need to issue the sfdisk command again
+    * linux-only because windows is very persistent in blanking any filesystem headers it can find
 
 
 ## custom build steps
