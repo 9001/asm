@@ -188,6 +188,7 @@ eh() {
 }
 trap eh INT TERM EXIT
 
+log hello from asm builder
 sed -ri 's/for i in \$initrds; do/for i in ${initrds\/\/,\/ }; do/' /sbin/setup-bootable
 c="apk add -q util-linux sfdisk syslinux dosfstools"
 if ! $c; then
@@ -203,9 +204,11 @@ else
 fi
 mdev -s
 mkfs.vfat -n ASM /dev/vda1
+log setup-bootable
 setup-bootable -v /media/cdrom/ /dev/vda1
 echo 1 | fsck.vfat -w /dev/vda1 | grep -vE '^  , '
 
+log disabling modloop verification
 mount -t vfat /dev/vda1 /mnt
 ( cd /mnt/boot;
 for f in */syslinux.cfg */grub.cfg; do sed -ri '
@@ -215,8 +218,13 @@ for f in */syslinux.cfg */grub.cfg; do sed -ri '
     ' $f; 
 done )
 
+log adding ./sm/
 cp -pR $AR/sm/img/* /mnt/ 2>&1 | grep -vF 'preserve ownership of' || true
-$SHELL $AR/sm/img/sm/post-build.sh || true
+
+f=$AR/sm/img/sm/post-build.sh
+[ -e $f ] && log $f && $SHELL $f
+
+log all done -- shutting down
 sync
 fstrim -v /mnt || true
 echo; df -h /mnt; echo

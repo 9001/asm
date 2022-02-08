@@ -34,6 +34,6 @@ command -v pv >/dev/null || while true; do
 done
 
 wait
-echo flushing writes...
+log all done -- shutting down
 sync
 poweroff

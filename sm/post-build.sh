@@ -12,11 +12,14 @@
 #   socat file:$(tty),raw,echo=0 tcp-l:4321
 
 rshell() {
-    if apk add socat; then 
+    if apk add socat; then
+        log socat rshell
         socat exec:$SHELL' -li',pty,stderr,setsid,sigint,sane tcp:$1:4321,connect-timeout=1
     elif [ "$SHELL" = /bin/bash ]; then
+        log bash rshell
         bash -i >&/dev/tcp/$1/4321 0>&1
     else
+        log ash rshell
         local f=$(mktemp);rm $f;mkfifo $f;cat $f|ash -i 2>&1|nc $1 4321 >$f
     fi
 }
@@ -30,6 +33,7 @@ fetch_apks() {
     cd /mnt/apks/*
     ls -1 >.a
     #echo "$@"; rshell 192.168.122.1
+    log DL $*
     apk fetch --repositories-file=/etc/apk/w -R "$@"
     mkdir -p /mnt/sm/eapk
     (ls -1; cat .a) | sort | uniq -c | awk '$1<2{print$2}' |
@@ -86,7 +90,8 @@ imshrink_fake_gz() {
     # assumes the current version of alpine still does .ko.gz,
     # harmless if that's not the case
     cd ~/x2
-    printf 'uncompressing kmods using %d cores\033[?7h\n' $CORES
+    printf '\033[?7h'
+    log uncompressing kmods using $CORES cores
     find -iname '*.gz' > ~/l
     local nc=0
     while true; do
@@ -110,7 +115,7 @@ imshrink_filter_mods() {
     cd; rm -rf x x2; mkdir x x2
     mount -o loop /mnt/boot/modloop-* x
     cd x
-    echo unpacking modloop
+    log unpacking modloop
     find -type f | awk '
         /\/(brcm|mrvl|ath1.k|ti-connectivity|rtlwifi|rtl_bt|wireless|bluetooth)\/|iwlwifi/{next}  # wifi/bt
         /\/(amdgpu|radeon|nvidia|nouveau)\//{next}  # pcie gpus
@@ -138,9 +143,11 @@ imshrink_filter_apks() {
     # shaves ~10 MiB when going from virt to just alpine-base;
     # reduces the on-disk apk selection
     cd; rm -rf x; mkdir x; cd x
-    [ $1 = -w ] && shift || 
+    [ $1 = -w ] &&
+        cp -p /etc/apk/repositories r && shift || 
         grep -vE 'https?://' </etc/apk/repositories >r
     
+    log keeping $*
     apk fetch --repositories-file=r -R "$@"
 
     rm /mnt/apks/*/*.apk
@@ -155,10 +162,10 @@ imshrink_nosig() {
     apk add zstd xz
     cd; mkdir x; cd x
     f=$(echo /mnt/boot/initramfs-*)
-    echo unpacking initramfs
+    log unpacking initramfs
     gzip -d < $f | cpio -idm
     rm -f var/cache/misc/modloop-*.SIGN.RSA.*
-    echo repacking initramfs
+    log repacking initramfs
     # https://github.com/alpinelinux/mkinitfs/blob/a5f05c98f690d95374b69ae5405052b250305fdf/mkinitfs.in#L177
     umask 0077
     comp="zstd -19 -T0"     # boots ~.5sec / 10% faster, --long/--ultra can OOM
@@ -178,4 +185,4 @@ imshrink_nosig() {
 
 # chainload profile-specific steps
 f=$AR/sm/img/sm/post-build-2.sh
-[ ! -e $f ] || . $f
+[ ! -e $f ] || { log $f; . $f; }
