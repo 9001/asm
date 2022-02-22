@@ -68,9 +68,10 @@ while [ ! -e "$blkpath" ]
 do
 	pdev="${pdev%?}"
 	blkpath="/sys/block/$pdev/$dev"
+	[ -z "$pdev" ] && break
 done
 [ -z "$pdev" ] && {
-	echo bug
+	echo device not found
 	exit 1
 }
 
@@ -100,7 +101,7 @@ blkid "/dev/$pdev"* || true
 echo
 printf 'ok? press enter:'
 [ $force ] ||
-	read -u1 -r
+	read -r
 
 sz=$(blockdev --getsize64 /dev/$dev)
 
