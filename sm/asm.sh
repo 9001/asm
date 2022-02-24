@@ -64,9 +64,17 @@ EOF
 	esac
 	echo
 	apk add -q openssh-server
-	sed -ri 's/(Subsystem[^/]+sftp).*/\1 internal-sftp/;
-		$aPermitRootLogin yes' /etc/ssh/sshd_config
-	printf '%s\n' "$pw" "$pw" | passwd >/dev/null
+	sed -ri 's/(Subsystem[^/]+sftp).*/\1 internal-sftp/' /etc/ssh/sshd_config
+	keyfile=$AR/sm/authorized_keys
+	if [ -e $keyfile ]; then
+		log allowing $(grep ssh- $keyfile | wc -l) ssh-keys from $keyfile
+		mkdir -p ~/.ssh
+		cp -pv $keyfile ~/.ssh
+	else
+		log allowing auth using hardcoded password
+		sed -ri '$aPermitRootLogin yes' /etc/ssh/sshd_config
+		printf '%s\n' "$pw" "$pw" | passwd >/dev/null
+	fi
 	service sshd start
 	menu
 }
