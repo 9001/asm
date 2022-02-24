@@ -59,7 +59,8 @@ EOF
 				ip a a $ip/$mask dev $dev
 				echo $dev = $ip /$mask
 			done;;
-		d) yes '' | setup-interfaces -r;;
+		d) (sleep 1; rm -f /tmp/setup-interfaces*/w*.noconf) &
+			yes '' | setup-interfaces -r;;
 		*) menu_net; return;;
 	esac
 	echo
