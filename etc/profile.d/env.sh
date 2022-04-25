@@ -1,6 +1,6 @@
 # https://ocv.me/dot/.bashrc
 bslcb() {
-	local RETVL=$? BSLMT=']'
+	local RETVL=$? BSLMT=']' a b
 	[ -z "$BSLNFC" ] || {
 		read -r a b < <(history 1)
 		BSLMT="$a] $b [$RETVL]"
