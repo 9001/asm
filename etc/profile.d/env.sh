@@ -60,6 +60,7 @@ fi
 
 alias q='kill -9 $$'
 alias a='tmux attach || tmux'
+alias yssh='ssh -oUserKnownHostsFile=/dev/null -oStrictHostKeyChecking=no'
 
 PS1="\
 \[\033[90m\]-\

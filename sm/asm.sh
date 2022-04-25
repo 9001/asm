@@ -111,7 +111,7 @@ disksel() {
 infograb() {
 	apk add pciutils usbutils
 	apk add coreutils || true
-	apkf add $AR/sm/eapk/{dmidecode,lshw,smartmontools}-*.apk || true
+	apkf add $AR/sm/eapk/{dmidecode,lshw,smartmontools,nvme-cli}-*.apk || true
 	# note; blank cmd = commit to usb (since lspci -xxxx can crash the box)
 	local cmds=(
 		dmesg "dmesg --color=always" blkid "free -m" "uname -a"
@@ -119,8 +119,22 @@ infograb() {
 		lsusb "lsusb -v" "lsusb -tvvv" "stdbuf -o0 -e0 lsusb -v 2>&1"
 		lspci "lspci -nnP" "lspci -nnPP" "lspci -nnvvv"
 		"lspci -bnnvvv" "lspci -mmnn" "lspci -mmnnvvv"
-		dmidecode "dmidecode -u"
+		dmidecode "dmidecode -u" "nvme list"
 	)
+
+	for d in /dev/nvme[0-9]; do
+		[ -e $d ] && cmds+=(
+			"nvme id-ctrl $d -vH"
+			"nvme smart-log $d -H"
+			"nvme error-log $d"
+		)
+	done
+
+	for n in /dev/nvme[0-9]n[0-9]; do
+		[ -e $n ] && cmds+=(
+			"nvme id-ns $n -vH"
+		)
+	done
 
 	while IFS= read -r x; do
 		cmds+=("smartctl -x /dev/$x")

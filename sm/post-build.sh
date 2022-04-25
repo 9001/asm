@@ -45,7 +45,8 @@ recommended_apks() {
     fetch_apks \
         bzip2 gzip pigz zstd \
         aria2 bmon fuse fuse3 iperf3 nmap-ncat proxychains-ng sshfs sshpass \
-        dmidecode lshw smartmontools sgdisk testdisk \
+        dmidecode lshw smartmontools sgdisk testdisk nvme-cli \
+        nbd nbd-client partclone \
         ntfs-3g ntfs-3g-progs exfatprogs \
         bc file findutils grep jq less mc ncdu pv psmisc sqlite \
         py3-jinja2 py3-requests ranger \

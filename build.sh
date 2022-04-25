@@ -22,7 +22,7 @@ mirror=https://mirrors.edge.kernel.org/alpine
 
 
 help() {
-    sed -r $'s/^( +)(-\w+ +)(\w+ +)/\\1\\2\e[36m\\3\e[0m/; s/(.*default: )(.*)/\\1\e[35m\\2\e[0m/' <<EOF
+    sed -r $'s/^( +)(-\w+ +)([A-Z]\w* +)/\\1\\2\e[36m\\3\e[0m/; s/(.*default: )(.*)/\\1\e[35m\\2\e[0m/' <<EOF
 
 arguments:
   -i ISO    original/input alpine release iso
