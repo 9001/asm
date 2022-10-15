@@ -9,7 +9,25 @@ warn() { printf '\033[0;33;7m!\033[27m %s\033[0m%s\n' "$*" >&2; }
 err()  { printf '\033[1;91;7mx\033[27m %s\033[0m%s\n' "$*" >&2; }
 absreal() { realpath "$1" || readlink -f "$1"; }
 
-td=$(mktemp --tmpdir -d asm.XXXXX)
+
+# osx support; choose macports or homebrew:
+#   port install qemu coreutils findutils gnutar gsed gawk xorriso e2fsprogs
+#   brew install qemu coreutils findutils gnu-tar gnu-sed gawk xorriso e2fsprogs
+gtar=$(command -v gtar || command -v gnutar) || true
+[ ! -z "$gtar" ] && command -v gfind >/dev/null && {
+	tar()  { $gtar "$@"; }
+	sed()  { gsed  "$@"; }
+	find() { gfind "$@"; }
+	sort() { gsort "$@"; }
+	command -v grealpath >/dev/null &&
+		realpath() { grealpath "$@"; }
+    
+    export PATH="/usr/local/opt/e2fsprogs/sbin/:$PATH"
+    macos=1
+}
+
+
+td=$(mktemp --tmpdir -d asm.XXXXX || mktemp -d -t asm.XXXXX)
 trap "rv=$?; rm -rf $td; tput smam || printf '\033[?7h'; exit $rv" INT TERM EXIT
 
 profile=
@@ -37,10 +55,10 @@ notes:
   -s cannot be smaller than the source iso
 
 examples:
-  $0 -i dl/alpine-extended-3.15.0-x86_64.iso
-  $0 -i dl/alpine-extended-3.15.0-x86_64.iso -oi asm.iso -s 3.6 -b b
-  $0 -i dl/alpine-extended-3.15.0-x86_64.iso -p webkiosk
-  $0 -i dl/alpine-standard-3.15.0-x86.iso -s 0.2 -p r0cbox
+  $0 -i dl/alpine-extended-3.16.2-x86_64.iso
+  $0 -i dl/alpine-extended-3.16.2-x86_64.iso -oi asm.iso -s 3.6 -b b
+  $0 -i dl/alpine-extended-3.16.2-x86_64.iso -p webkiosk
+  $0 -i dl/alpine-standard-3.16.2-x86.iso -s 0.2 -p r0cbox
 
 EOF
     exit 1
@@ -88,6 +106,7 @@ need() {
         err=1
     }
 }
+[ $macos ] && accel="-M accel=hvf" || accel="-enable-kvm"
 qemu=qemu-system-$arch
 [ $arch = x86 ] && qemu=${qemu}_64
 command -v $qemu >/dev/null || qemu=$(
@@ -95,7 +114,7 @@ command -v $qemu >/dev/null || qemu=$(
 need $qemu
 need qemu-img
 need bc
-need fallocate
+need truncate
 need mkfs.ext3
 [ "$iso_out" ] && need xorrisofs
 [ $err ] && exit 1
@@ -238,7 +257,7 @@ msg "ovl size calculation..."
 # 32 KiB per inode + apparentsize x1.1 + 8 MiB padding, ceil to 512b
 osz=$(find fs -printf '%s\n' | awk '{n++;s+=$1}END{print int((n*32*1024+s*1.1+8*1024*1024)/512)*512}')
 msg "ovl size estimate $osz"
-fallocate -l $osz ovl.img
+truncate -s $osz ovl.img
 a="-T big -I 128 -O ^ext_attr"
 mkfs.ext3 -Fd fs $a ovl.img || {
     mkfs.ext3 -F $a ovl.img
@@ -251,7 +270,7 @@ mkfs.ext3 -Fd fs $a ovl.img || {
 
 # user-provided; ceil to 512b
 sz=$(echo "(($sz*1024*1024*1024+511)/512)*512" | tr , . | LC_ALL=C bc)
-fallocate -l ${sz} asm.usb
+truncate -s ${sz} asm.usb
 
 mkfifo s.{in,out}
 [ $flavor = virt ] && kern=virt || kern=lts
@@ -259,14 +278,15 @@ mkfifo s.{in,out}
 
 cores=$(lscpu -p | awk -F, '/^[0-9]+,/{t[$2":"$3":"$4]=1} END{n=0;for(v in t)n++;print n}')
 
-$qemu -enable-kvm -nographic -serial pipe:s -cdrom "$iso" -cpu host -smp $cores -m 1024 \
+$qemu $accel -nographic -serial pipe:s -cdrom "$iso" -cpu host -smp $cores -m 1024 \
   -drive format=raw,if=virtio,discard=unmap,file=asm.usb \
   -drive format=raw,if=virtio,discard=unmap,file=ovl.img
 
 # builder nukes the partition header on error; check if it did
 head -c64 asm.usb | od -w64 -vtx1 | awk 'NR==1&&/[^0 ]/{exit 1}' && {
     err some of the build steps failed
-    exit 1
+    [ $macos ] || exit 1
+    # TODO fails on macos due to od being different
 }
 
 popd >/dev/null
