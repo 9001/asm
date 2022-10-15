@@ -100,13 +100,20 @@ isoname="${iso##*/}"
 read flavor ver arch < <(echo "$isoname" |
   awk -F- '{sub(/.iso$/,"");v=$3;sub(/.[^.]+$/,"",v);print$2,v,$4}')
 
+[ $macos ] && {
+    accel="-M accel=hvf"
+    video=""
+} || {
+    accel="-enable-kvm"
+    video="-vga qxl"
+}
+
 need() {
     command -v $1 >/dev/null || {
         err need $1
         err=1
     }
 }
-[ $macos ] && accel="-M accel=hvf" || accel="-enable-kvm"
 qemu=qemu-system-$arch
 [ $arch = x86 ] && qemu=${qemu}_64
 command -v $qemu >/dev/null || qemu=$(
@@ -283,10 +290,9 @@ $qemu $accel -nographic -serial pipe:s -cdrom "$iso" -cpu host -smp $cores -m 10
   -drive format=raw,if=virtio,discard=unmap,file=ovl.img
 
 # builder nukes the partition header on error; check if it did
-head -c64 asm.usb | od -w64 -vtx1 | awk 'NR==1&&/[^0 ]/{exit 1}' && {
+od -v <asm.usb | awk 'NR>4{exit e}{$1=""}/[^0 ]/{e=1}END{exit e}' && {
     err some of the build steps failed
-    [ $macos ] || exit 1
-    # TODO fails on macos due to od being different
+    exit 1
 }
 
 popd >/dev/null
@@ -358,7 +364,7 @@ or compress it for uploading:
   pigz $usb_out
 
 or try it in qemu:
-  $qemu -enable-kvm -vga qxl -drive format=raw,file=$usb_out -m 512
-  $qemu -enable-kvm -vga qxl -drive format=raw,file=$usb_out -net bridge,br=virhost0 -net nic,model=virtio -m 128
+  $qemu $accel $video -drive format=raw,file=$usb_out -m 512
+  $qemu $accel $video -drive format=raw,file=$usb_out -net bridge,br=virhost0 -net nic,model=virtio -m 128
 
 EOF

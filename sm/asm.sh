@@ -152,7 +152,7 @@ infograb() {
 	pushd grab
 	for cmd in "${cmds[@]}"; do
 		[ -z "$cmd" ] && {
-			mount -o remount,rw $AR
+			mount -o remount,rw $AR || continue
 			[ -e "$d" ] || {
 				mkdir -p "$d"
 				echo "$d" >> "$d/../log"
