@@ -37,6 +37,18 @@ yes abort | setup-keymap us us-altgr-intl 2>/dev/null >&2
 stty size | awk '$1<36{exit 1}' ||
   (cd /etc/cfnt; setfont $(ls -1))
 
+# repos
+(m=$(cat /etc/apk/arch)
+  (cd $AR/apks/$m 2>/dev/null && ls -1 | grep -E 'APKINDEX.+.tar.gz') |
+  while read r; do
+    d=/var/ar/$r/$m
+    mkdir -p $d
+    find $AR/apks/$m/ | xargs -I{} ln -s {} $d/
+    mv $d/$r $d/APKINDEX.tar.gz
+    echo /var/ar/$r >> /etc/apk/repositories
+  done
+)
+
 # be noisy unless muted
 beeps() {
   local d=$1; shift

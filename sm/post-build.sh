@@ -29,16 +29,12 @@ rshell() {
 # download extra APKs
 
 fetch_apks() {
-    wrepo
     cd /mnt/apks/*
-    ls -1 >.a
+    setup-apkcache /mnt/apks/*
+    wrepo
     #echo "$@"; rshell 192.168.122.1
     log DL $*
     apk fetch --repositories-file=/etc/apk/w -R "$@"
-    mkdir -p /mnt/sm/eapk
-    (ls -1; cat .a) | sort | uniq -c | awk '$1<2{print$2}' |
-        while read -r x; do mv "$x" /mnt/sm/eapk/; done
-    rm .a
 }
 
 recommended_apks() {

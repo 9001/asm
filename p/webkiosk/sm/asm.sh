@@ -7,7 +7,10 @@ zram 2048
 
 log setting up network and packages
 yes '' | setup-interfaces -r &
-apkf add -q $AR/sm/eapk/*.apk
+apk add -q \
+    xorg-server xf86-video-{fbdev,vesa,vmware} \
+    mesa-dri-{classic,gallium,intel} mesa-{egl,gl} \
+    ttf-dejavu xdotool eudev firefox-esr
 apk add -q pciutils-libs  # vmware-3d
 setup-udev
 wait

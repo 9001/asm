@@ -9,11 +9,13 @@ shrink() {
     wrepo
     imshrink_nosig
     imshrink_filter_mods
-    imshrink_filter_apks alpine-base openssh-server
+    imshrink_filter_apks alpine-base openssh-server openssl
 }
 
 shrink
-fetch_apks openssh-server python3 tmux
+fetch_apks \
+    alpine-base openssh-server openssl \
+    python3 tmux
 
 mkdir -p /mnt/sm/bin
 cd /mnt/sm/bin
