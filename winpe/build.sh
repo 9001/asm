@@ -1,13 +1,23 @@
 #!/bin/bash
 set -e
 
+# if iso is provided, do cleanbuild
+[ $1 ] && {
+	umount /mnt/wiso 2>/dev/null || true
+	rm -rf t
+}
+
+help() {
+	echo need arg 1: windows iso, for example:
+	echo '  ~/iso/en_windows_10_enterprise_ltsc_2019_x64_dvd_5795bb03.iso'
+	echo '  ~/iso/win7-X17-59186-english-64bit-professional.iso'
+	exit 1
+}
+
+[ "$1" ] && [ ! -e "$1" ] && echo "file not found: $1" && help
+
 [ -e /mnt/wiso/efi/microsoft/boot/cdboot.efi ] || {
-	[ -z "$1" ] && {
-		echo need arg 1: windows iso, for example:
-		echo '  ~/iso/en_windows_10_enterprise_ltsc_2019_x64_dvd_5795bb03.iso'
-		echo '  ~/iso/win7-X17-59186-english-64bit-professional.iso'
-		exit 1
-	}
+	[ -z "$1" ] && help
 	mkdir -p /mnt/wiso
 	sudo mount "$1" /mnt/wiso/
 }

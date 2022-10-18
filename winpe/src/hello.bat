@@ -1,1 +1,2 @@
+wpeinit
 echo okay cool
