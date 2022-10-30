@@ -367,4 +367,7 @@ or try it in qemu:
   $qemu $accel $video -drive format=raw,file=$usb_out -m 512
   $qemu $accel $video -drive format=raw,file=$usb_out -net bridge,br=virhost0 -net nic,model=virtio -m 128
 
+activate host-only-network if necessary:
+  ./doc/setup-virhost.sh
+
 EOF
