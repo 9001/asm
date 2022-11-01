@@ -52,6 +52,13 @@ alternatively, you may [build it manually](./doc/manual-build.md) instead of usi
     * linux-only because windows is very persistent in blanking any filesystem headers it can find
 
 
+# make it your own
+
+the recommended / intended way to replace the demos / examples with your own stuff is to create [profiles/overlays](#profiles) with your logic and payloads -- see [the examples](./p/) for some inspiration
+
+you should never have to modify [`./build.sh`](./build.sh) since that should JustWork, so let me know if there's something i've missed
+
+
 ## custom build steps
 
 [`./sm/post-build.sh`](./sm/post-build.sh) is executed in the build-env right before the end
