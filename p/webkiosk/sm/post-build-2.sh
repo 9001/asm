@@ -7,6 +7,6 @@ fetch_apks \
     xorg-server xf86-input-libinput eudev mesa \
     eudev-openrc udev-init-scripts-openrc \
     xf86-video-{fbdev,vesa,vmware} mesa-dri-{gallium,classic,intel} mesa-egl \
-    ttf-dejavu xeyes xrandr xdotool socat
+    ttf-dejavu xeyes xrandr xdotool socat hhpc
 
 # acpi dbus mesa-{egl,gl,gles}

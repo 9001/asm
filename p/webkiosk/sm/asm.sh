@@ -7,6 +7,7 @@ zram 2048
 
 log setting up network and packages
 yes '' | setup-interfaces -r &
+sleep 0.1  # cosmetic
 apk add -q \
     xorg-server xf86-video-{fbdev,vesa,vmware} \
     mesa-dri-{classic,gallium,intel} mesa-{egl,gl} \
@@ -17,6 +18,7 @@ wait
 
 log starting firefox
 cat >~/.xinitrc <<EOF
+hhpc &
 exec firefox --kiosk 'https://ocv.me/life/#2/2c5-spaceship-gun-p690'
 EOF
 
