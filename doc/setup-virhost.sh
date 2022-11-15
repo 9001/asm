@@ -17,9 +17,16 @@ cat >host-only.xml <<'EOF'
       <range start="192.168.123.100" end="192.168.123.254" />
     </dhcp>
   </ip>
+  <ip family="ipv6" address="fd00:fda::1" prefix="96">
+    <dhcp>
+      <range start="fd00:fda::80" end="fd00:fda::ffff" />
+    </dhcp>
+  </ip>
 </network>
 EOF
 
+virsh net-destroy virhost0 || true
+virsh net-undefine virhost0 || true
 virsh net-define host-only.xml
 virsh net-start virhost0
 virsh net-autostart virhost0
