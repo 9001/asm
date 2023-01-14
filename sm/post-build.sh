@@ -35,6 +35,16 @@ fetch_apks() {
     #echo "$@"; rshell 192.168.122.1
     log DL $*
     apk fetch --repositories-file=/etc/apk/w -R "$@"
+    
+    log upgrading on-disk pkgs
+    read_idx() { tar -xOf $1 APKINDEX | awk -F: 'function pr() {if (p) {printf "%s %s\n",p,v};p=""} /^P:/{p=$2} /^V:/{v=$2} /^$/{pr()} END{pr()}'; }
+    for f in APKINDEX.*.tar.gz; do read_idx $f; done | LC_ALL=C sort > /dev/shm/nps
+    read_idx APKINDEX.tar.gz | LC_ALL=C sort > /dev/shm/ops
+    comm -23 /dev/shm/ops /dev/shm/nps > /dev/shm/dps
+    awk '{printf "%s-%s.apk\n",$1,$2}' </dev/shm/dps | xargs rm -f --
+    cut -d' ' -f1 /dev/shm/dps | xargs -r apk fetch --repositories-file=/etc/apk/w -R
+    for f in APKINDEX.*.tar.gz; do gzip -d <$f | grep -qE "^P:apk-tools$" && cp -pv $f APKINDEX.tar.gz; done
+    true
 }
 
 recommended_apks() {

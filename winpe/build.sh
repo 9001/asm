@@ -47,4 +47,4 @@ echo ,,U | sfdisk -X gpt t.usb
 mkfs.vfat -n PE -S 512 --offset=2048 t.usb
 mmd -i t.usb@@1M $( (cd t; find -type d) | cut -c3- | grep . | awk '{printf " ::%s", $0}')
 (cd t; find -type f) | cut -c3- | while IFS= read -r x; do mcopy -i t.usb@@1M t/"$x" ::"$x"; done
-qemu-system-x86_64 -accel kvm -drive format=raw,file=t.usb -bios /usr/share/OVMF/OVMF_CODE.fd -m 1024
+qemu-system-x86_64 -accel kvm -drive format=raw,file=t.usb -bios /usr/share/OVMF/OVMF_CODE.fd -m 1024 -cpu host -net bridge,br=virhost0 -net nic,model=e1000e

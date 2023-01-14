@@ -40,6 +40,7 @@ mirror=https://mirrors.edge.kernel.org/alpine
 
 
 help() {
+    v=3.17.1
     sed -r $'s/^( +)(-\w+ +)([A-Z]\w* +)/\\1\\2\e[36m\\3\e[0m/; s/(.*default: )(.*)/\\1\e[35m\\2\e[0m/' <<EOF
 
 arguments:
@@ -55,10 +56,10 @@ notes:
   -s cannot be smaller than the source iso
 
 examples:
-  $0 -i dl/alpine-extended-3.16.2-x86_64.iso
-  $0 -i dl/alpine-extended-3.16.2-x86_64.iso -oi asm.iso -s 3.6 -b b
-  $0 -i dl/alpine-extended-3.16.2-x86_64.iso -p webkiosk
-  $0 -i dl/alpine-standard-3.16.2-x86.iso -s 0.2 -p r0cbox
+  $0 -i dl/alpine-extended-$v-x86_64.iso
+  $0 -i dl/alpine-extended-$v-x86_64.iso -oi asm.iso -s 3.6 -b b
+  $0 -i dl/alpine-standard-$v-x86_64.iso -p webkiosk
+  $0 -i dl/alpine-standard-$v-x86.iso -s 0.2 -p r0cbox
 
 EOF
     exit 1
@@ -139,7 +140,7 @@ mkfs.ext3 -h 2>&1 | grep -qE '\[-d\b' ||
 mkdir -p "$(dirname "$iso")"
 iso="$(absreal "$iso")"
 
-[ -e "$iso" ] || {
+[ -s "$iso" ] || {
     iso_url="$mirror/v$ver/releases/$arch/$isoname"
     msg "iso not found; downloading from $iso_url"
     need wget
@@ -285,7 +286,7 @@ mkfifo s.{in,out}
 
 cores=$(lscpu -p | awk -F, '/^[0-9]+,/{t[$2":"$3":"$4]=1} END{n=0;for(v in t)n++;print n}')
 
-$qemu $accel -nographic -serial pipe:s -cdrom "$iso" -cpu host -smp $cores -m 1024 \
+$qemu $accel -cpu host -nographic -serial pipe:s -cdrom "$iso" -cpu host -smp $cores -m 1024 \
   -drive format=raw,if=virtio,discard=unmap,file=asm.usb \
   -drive format=raw,if=virtio,discard=unmap,file=ovl.img
 
@@ -364,8 +365,11 @@ or compress it for uploading:
   pigz $usb_out
 
 or try it in qemu:
-  $qemu $accel $video -drive format=raw,file=$usb_out -m 512
-  $qemu $accel $video -drive format=raw,file=$usb_out -net bridge,br=virhost0 -net nic,model=virtio -m 128
+  $qemu $accel $video -cpu host -drive format=raw,file=$usb_out -m 512
+  $qemu $accel $video -cpu host -drive format=raw,file=$usb_out -net bridge,br=virhost0 -net nic,model=virtio -m 192
+
+some useful qemu args:
+  -nic user   -nographic
 
 activate host-only-network if necessary:
   ./doc/setup-virhost.sh

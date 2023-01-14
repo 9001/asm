@@ -8,18 +8,19 @@ zram 2048
 log setting up network and packages
 yes '' | setup-interfaces -r &
 sleep 0.1  # cosmetic
+echo
 apk add -q \
     xorg-server xf86-video-{fbdev,vesa,vmware} \
-    mesa-dri-{classic,gallium,intel} mesa-{egl,gl} \
-    ttf-dejavu xdotool eudev firefox-esr
+    mesa-dri-gallium mesa-{egl,gl} \
+    ttf-dejavu xdotool eudev hhpc firefox-esr
 apk add -q pciutils-libs  # vmware-3d
-setup-udev
+setup-devd udev
 wait
 
 log starting firefox
 cat >~/.xinitrc <<EOF
 hhpc &
-exec firefox --kiosk 'https://ocv.me/life/#2/2c5-spaceship-gun-p690'
+exec firefox-esr --kiosk 'https://ocv.me/life/#2/2c5-spaceship-gun-p690'
 EOF
 
 apk add socat
