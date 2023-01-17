@@ -151,7 +151,9 @@ imshrink_filter_mods() {
         /\/(amdgpu|radeon|nvidia|nouveau)\//{next}  # pcie gpus
         /\/(netronome)\//{next}  # agilio smartnics
         /\/(sound)\//{next}  # soundcards
-        /\/drivers\/multimedia\//{next}  # capturecards, webcams
+        /\/(drivers\/multimedia|kernel\/drivers\/media)\//{next}  # capturecards, webcams
+        /\/(ueagle-atm)\//{next}  # adsl modems
+        /\/(ocfs2)\//{next}  # filesystems
     1' | tar -cT- | tar -xC ../x2
     imshrink_fake_gz
     cd
