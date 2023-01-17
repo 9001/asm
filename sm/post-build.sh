@@ -28,35 +28,58 @@ rshell() {
 ##
 # download extra APKs
 
+read_idx() {
+    tar -xOf $1 APKINDEX | awk -F: '
+        function pr() {if (p) {printf "%s %s\n",p,v};p=""}
+        /^P:/{p=$2} /^V:/{v=$2} /^$/{pr()} END{pr()}
+    ';
+}
+
 fetch_apks() {
+    local e=0  # defer errors until end of function (to build proxy cache)
     cd /mnt/apks/*
     setup-apkcache /mnt/apks/*
     wrepo
     #echo "$@"; rshell 192.168.122.1
     log DL $*
-    apk fetch --repositories-file=/etc/apk/w -R "$@"
-    
-    log upgrading on-disk pkgs
-    read_idx() { tar -xOf $1 APKINDEX | awk -F: 'function pr() {if (p) {printf "%s %s\n",p,v};p=""} /^P:/{p=$2} /^V:/{v=$2} /^$/{pr()} END{pr()}'; }
+    apk fetch --repositories-file=/etc/apk/w -R "$@" || e=1
+
+    log checking conditional deps
     for f in APKINDEX.*.tar.gz; do read_idx $f; done | LC_ALL=C sort > /dev/shm/nps
+    (set +x; for f in *.apk; do gzip -d <"$f" | awk '/^pkgname = /{print$3;exit}'; done >/dev/shm/apks)
+    sed -r 's/$/-openrc/' </dev/shm/apks | LC_ALL=C sort >/dev/shm/o1
+    cut -d' ' -f1 </dev/shm/nps | LC_ALL=C sort >/dev/shm/o2
+    comm -12 /dev/shm/o1 /dev/shm/o2 | xargs -r apk fetch --repositories-file=/etc/apk/w -R || e=1
+
+    log upgrading on-disk pkgs
     read_idx APKINDEX.tar.gz | LC_ALL=C sort > /dev/shm/ops
     comm -23 /dev/shm/ops /dev/shm/nps > /dev/shm/dps
     awk '{printf "%s-%s.apk\n",$1,$2}' </dev/shm/dps | xargs rm -f --
-    cut -d' ' -f1 /dev/shm/dps | xargs -r apk fetch --repositories-file=/etc/apk/w -R
+    cut -d' ' -f1 /dev/shm/dps | xargs -r apk fetch --repositories-file=/etc/apk/w -R || e=1
     for f in APKINDEX.*.tar.gz; do gzip -d <$f | grep -qE "^P:apk-tools$" && cp -pv $f APKINDEX.tar.gz; done
-    true
+
+    return $e
 }
 
 recommended_apks() {
     fetch_apks \
-        bzip2 gzip pigz zstd \
-        aria2 bmon fuse fuse3 iperf3 nmap-ncat proxychains-ng sshfs sshpass \
-        dmidecode lshw smartmontools sgdisk testdisk nvme-cli \
-        nbd nbd-client partclone \
-        ntfs-3g ntfs-3g-progs exfatprogs \
-        bc file findutils grep jq less mc ncdu pv psmisc sqlite \
-        py3-jinja2 py3-requests ranger \
+        bash coreutils util-linux \
+        bzip2 gzip pigz xz zstd \
+        bmon curl iperf3 iproute2 iputils nmap-ncat proxychains-ng rsync socat sshfs sshpass tcpdump \
+        dmidecode efibootmgr lm-sensors lshw nvme-cli pciutils sgdisk smartmontools testdisk usbutils \
+        cryptsetup fuse fuse3 nbd nbd-client partclone \
+        btrfs-progs dosfstools exfatprogs mtools ntfs-3g ntfs-3g-progs squashfs-tools xfsprogs \
+        bc file findutils grep hexdump htop jq less mc ncdu psmisc pv sqlite strace tar tmux vim \
         "$@"
+
+    # suggestions:
+    #  +15.8M py3-requests ranger
+    #   +7.9M grub-bios grub-efi
+    #   +1.9M lvm2
+    #   +1.5M aria2 
+    #   +1.5M net-snmp-tools
+    #
+    # py3-requests ranger aria2
 }
 
 

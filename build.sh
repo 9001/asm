@@ -56,7 +56,7 @@ notes:
   -s cannot be smaller than the source iso
 
 examples:
-  $0 -i dl/alpine-extended-$v-x86_64.iso
+  $0 -i dl/alpine-standard-$v-x86_64.iso
   $0 -i dl/alpine-extended-$v-x86_64.iso -oi asm.iso -s 3.6 -b b
   $0 -i dl/alpine-standard-$v-x86_64.iso -p webkiosk
   $0 -i dl/alpine-standard-$v-x86.iso -s 0.2 -p r0cbox
