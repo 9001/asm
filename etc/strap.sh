@@ -19,6 +19,9 @@ cd
 [ -e /dev/shm/once ] && exec $SHELL -l
 touch /dev/shm/once
 
+# start lo
+service networking start || true
+
 # load tty color scheme, announce we good
 . /etc/profile.d/bifrost.sh
 printf '\033[36m * %s ready\033[0m\n' "$(cat $AR/.alpine-release)"
