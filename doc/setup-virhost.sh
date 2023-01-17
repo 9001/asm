@@ -31,4 +31,5 @@ virsh net-define host-only.xml
 virsh net-start virhost0
 virsh net-autostart virhost0
 
-echo allow virhost0 >> /etc/qemu/bridge.conf
+for f in /etc/qemu/bridge.conf /etc/qemu-kvm/bridge.conf
+do echo allow virhost0 >> $f || true; done
