@@ -28,7 +28,7 @@ gtar=$(command -v gtar || command -v gnutar) || true
 
 
 td=$(mktemp --tmpdir -d asm.XXXXX || mktemp -d -t asm.XXXXX)
-trap "rv=$?; rm -rf $td; tput smam || printf '\033[?7h'; exit $rv" INT TERM EXIT
+trap "rm -rf $td; tput smam || printf '\033[?7h'" INT TERM EXIT
 
 profile=
 sz=1.8
@@ -56,7 +56,7 @@ notes:
   -s cannot be smaller than the source iso
 
 examples:
-  $0 -i dl/alpine-standard-$v-x86_64.iso
+  $0 -i dl/alpine-extended-$v-x86_64.iso
   $0 -i dl/alpine-extended-$v-x86_64.iso -oi asm.iso -s 3.6 -b b
   $0 -i dl/alpine-standard-$v-x86_64.iso -p webkiosk
   $0 -i dl/alpine-standard-$v-x86.iso -s 0.2 -p r0cbox
@@ -95,6 +95,21 @@ printf '%s\n' "$iso" | grep -q : && {
 [ ! "$profile" ] || [ -e "p/$profile" ] || {
     err "selected profile does not exist: $PWD/p/$profile"
     exit 1
+}
+
+not_mounted() {
+    for f in /sys/class/block/*/loop/backing_file; do
+        grep -F "$1" $f >/dev/null 2>&1 && return 1
+    done
+    return 0
+}
+not_mounted "$usb_out" || {
+    echo "output file $usb_out is mounted; trying to unmount..."
+    umount "$usb_out" || true
+    not_mounted "$usb_out" || {
+        echo "failed; cannot continue"
+        exit 1
+    }
 }
 
 isoname="${iso##*/}"
@@ -300,57 +315,7 @@ popd >/dev/null
 mv $b/asm.usb "$usb_out"
 rm -rf $b
 
-[ "$iso_out" ] && {
-    c="mount -o ro,offset=1048576 $usb_out $b"
-    mkdir $b
-    $c || sudo $c || {
-        warn "please run the following as root:"
-        echo "    $c" >&2
-        while sleep 0.2; do
-            [ -e $b/the.apkovl.tar.gz ] &&
-                sleep 1 && break
-        done
-    }
-    [ -e $b/the.apkovl.tar.gz ] || {
-        err failed to mount the usb image for iso conversion
-        exit 1
-    }
-    msg now building "$iso_out" ...
-    # https://github.com/alpinelinux/aports/blob/569ab4c43cba612670f1a153a077b42474c33267/scripts/mkimg.base.sh
-    xorrisofs \
-      -quiet \
-      -output "$iso_out" \
-      -full-iso9660-filenames \
-      -joliet \
-      -rational-rock \
-      -sysid LINUX \
-      -volid asm-$(date +%Y-%m%d-%H%M%S) \
-      -isohybrid-mbr $b/boot/syslinux/isohdpfx.bin \
-      -eltorito-boot boot/syslinux/isolinux.bin \
-      -eltorito-catalog boot/syslinux/boot.cat \
-      -no-emul-boot \
-      -boot-load-size 4 \
-      -boot-info-table \
-      -eltorito-alt-boot \
-      -e boot/grub/efi.img \
-      -no-emul-boot \
-      -isohybrid-gpt-basdat \
-      -follow-links \
-      $b && rv= || rv=$?
-
-    c="umount $b"
-    $c || sudo $c || {
-        warn "please run the following as root:"
-        echo "    $c" >&2
-        while sleep 0.2; do
-            [ ! -e $b/the.apkovl.tar.gz ] &&
-                sleep 1 && break
-        done
-    }
-    rmdir $b
-    [ $rv ] &&
-        exit $rv
-}
+[ "$iso_out" ] && ./u2i.sh "$usb_out" "$iso_out" "$b"
 
 cat <<EOF
 

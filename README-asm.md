@@ -42,6 +42,7 @@ alternatively, you may [build it manually](./doc/manual-build.md) instead of usi
 * on linux, `cat asm.usb >/dev/sdi`
 * on windows, either use [rufus](https://github.com/pbatard/rufus/releases/) or [USBimager (Recommended)](https://bztsrc.gitlab.io/usbimager/)
   * you want the `GDI wo` edition of USBimager -- the default choice when visiting that URL on windows
+  * usbimager v1.0.9 is 10x faster than rufus if you are repeatedly writing similar usb images to the same flashdrive
   * rufus v3.15 permanently unmounts the flashdrive when done, so run [rufus-unhide.bat](./doc/rufus-unhide.bat) afterwards
   * do not use balenaEtcher, it is spyware
 
@@ -50,6 +51,23 @@ alternatively, you may [build it manually](./doc/manual-build.md) instead of usi
 * on linux, `echo ,,07 | sfdisk -a /dev/sdi` (followed by `mkfs.ntfs -fL ASM2 /dev/sdi2` if there is no existing filesystem to keep)
   * linux-only bonus: you can write a new asm image onto the flashdrive without losing anything on the data partition, as long as the new build is the same size or smaller -- just need to issue the sfdisk command again
     * linux-only because windows is very persistent in blanking any filesystem headers it can find
+
+
+## rapid prototyping
+
+if you are working on `asm.sh` and you're testing your image by repeatedly making an iso and booting that in virtualbox/vmware/bare-metal, it would be much faster to instead mount asm.usb and make changes directly inside the image, and then use `u2i.sh` to build the iso from the mounted folder instead of doing a full build:
+
+```bash
+mkdir -p m; mount -o offset=1048576,uid=1000 asm.usb m
+# make changes inside m, leave it mounted and
+# do the following to make an iso whenever:
+./u2i.sh m asm.iso
+cat <asm.iso >/dev/sdx
+```
+
+> `cat <asm.iso >/dev/sdx` can be replaced with `revert /dev/sdx <asm.iso` for much faster writes; see[revert](https://github.com/9001/usr-local-bin/blob/master/revert)
+
+you still need to do a full build when you change the set of included packages or make changes to the initramfs
 
 
 # make it your own
