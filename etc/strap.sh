@@ -74,7 +74,7 @@ unlog
 
 # error; give shell
 printf "\n$s: \033[31mERROR $err\033[0m\n"
-apk add -q vim tmux hexdump &
+apk add -q tmux &
 (beep -f 349 -l 200 -d 90 -r 2; rmmod pcspkr 2>/dev/null) &
 exec $SHELL -l
 

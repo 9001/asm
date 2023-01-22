@@ -52,11 +52,14 @@ if [ -d /etc/apk/ ] ; then
 	alias tmux='TERM=rxvt-256color tmux -2u'
 	[ "x$TERM" == "xrxvt" ] && export TERM=rxvt-256color
 	[ "x$TERM" == "xxterm" ] && export TERM=rxvt-256color
-	alias apk='/sbin/apk --force-non-repository'
-	alias mc='/usr/bin/mc -S /usr/share/mc/skins/nicedark.ini'
+	alias apk='/sbin/apk --force-non-repository --wait 10'
+	alias mc='[ -e /usr/bin/mc ] || apk add mc; /usr/bin/mc -S /usr/share/mc/skins/nicedark.ini'
 else
 	alias tmux='TERM=screen-256color tmux'
 fi
+for c in bc bmon curl cryptsetup file hexdump htop jq lshw ncdu pigz pv python3 ranger rsync socat sshfs strace tcpdump vim xz zstd; do
+	alias $c="unalias $c; which $c >/dev/null || apk add $c; $c"
+done
 
 alias q='kill -9 $$'
 alias a='tmux attach || tmux'
