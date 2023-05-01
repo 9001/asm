@@ -54,10 +54,11 @@ if [ -d /etc/apk/ ] ; then
 	[ "x$TERM" == "xxterm" ] && export TERM=rxvt-256color
 	alias apk='/sbin/apk --force-non-repository --wait 10'
 	alias mc='[ -e /usr/bin/mc ] || apk add mc; /usr/bin/mc -S /usr/share/mc/skins/nicedark.ini'
+	alias i='apk add'
 else
 	alias tmux='TERM=screen-256color tmux'
 fi
-for c in bc bmon curl cryptsetup file hexdump htop jq lshw ncdu pigz pv python3 ranger rsync socat sshfs strace tcpdump vim xz zstd; do
+for c in bmon htop lshw ncdu ranger sshfs vim; do
 	alias $c="unalias $c; which $c >/dev/null || apk add $c; $c"
 done
 
