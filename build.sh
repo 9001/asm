@@ -262,6 +262,7 @@ done )
 
 log adding ./sm/
 cp -pR $AR/sm/img/* /mnt/ 2>&1 | grep -vF 'preserve ownership of' || true
+mkdir /mnt/sm/bin
 
 f=$AR/sm/img/sm/post-build.sh
 [ -e $f ] && log $f && $SHELL $f
@@ -331,6 +332,7 @@ or compress it for uploading:
 
 or try it in qemu:
   $qemu $accel $video -cpu host -drive format=raw,file=$usb_out -m 512
+  $qemu $accel $video -cpu host -drive format=raw,file=$usb_out -bios /usr/share/OVMF/OVMF_CODE.fd -m 512
   $qemu $accel $video -cpu host -drive format=raw,file=$usb_out -net bridge,br=virhost0 -net nic,model=virtio -m 192
 
 some useful qemu args:

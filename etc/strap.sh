@@ -33,7 +33,7 @@ apk add -q util-linux bash tar 2>/dev/null >&2 &&
   sed -ri 's^/ash$^/bash^' /etc/passwd
 
 cp -p /etc/bin/* /usr/local/bin/
-export PATH="$PATH:/usr/local/bin/"
+export PATH="$PATH:/usr/local/bin/:$AR/sm/bin"
 
 # keymap and font
 yes abort | setup-keymap us us-altgr-intl 2>/dev/null >&2

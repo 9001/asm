@@ -23,6 +23,7 @@ the example [`asm.sh`](./sm/asm.sh) shows a menu with some demo features:
 it plays the [pc98 bootup bleep](https://www.youtube.com/watch?v=9qof0qye1ao#t=6m28s) to let you know it's at the menu in case you don't have a monitor
 
 * you can mute SFX by creating a file named `sm/quiet` on the flashdrive
+  * or beep even more with `grub-efi` and `grub_beep` in [post-build-2.sh](https://github.com/9001/asm/blob/hovudstraum/p/big/sm/post-build-2.sh)
 
 see [profiles](./p/) for additional examples including a chatserver, a disk wiper and a webkiosk
 

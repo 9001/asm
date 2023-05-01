@@ -69,12 +69,13 @@ recommended_apks() {
         dmidecode efibootmgr lm-sensors lshw nvme-cli pciutils sgdisk smartmontools testdisk usbutils \
         cryptsetup fuse fuse3 nbd nbd-client partclone \
         btrfs-progs dosfstools exfatprogs mtools ntfs-3g ntfs-3g-progs squashfs-tools xfsprogs \
-        bc file findutils grep hexdump htop jq less mc ncdu psmisc pv sqlite strace tar tmux vim \
+        bc diffutils file findutils grep hexdump htop jq less mc ncdu patch psmisc pv sqlite strace tar tmux vim \
         "$@"
 
     # suggestions:
     #  +15.8M py3-requests ranger
-    #   +7.9M grub-bios grub-efi
+    #  +14.3M grub-bios grub-efi
+    #   +4.9M sbctl sbsigntool
     #   +1.9M lvm2
     #   +1.5M aria2 
     #   +1.5M net-snmp-tools
@@ -105,6 +106,16 @@ nomodeset() {
         s/( quiet)( .*|$)/\1\2 nomodeset i915.modeset=0 nouveau.modeset=0 /;
         ' $f; 
     done )
+}
+
+
+##
+# beep at grub menu
+
+grub_beep() {
+    apk add grub-efi
+    tar -cC /usr/lib/grub x86_64-efi/play.mod | tar -xvC /mnt/boot/grub
+    printf >> /mnt/boot/grub/grub.cfg '%s\n' '' 'insmod play' 'play 1920 220 1'
 }
 
 
