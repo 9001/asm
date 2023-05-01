@@ -45,9 +45,14 @@ menu_net() {
 choose ip address:
   d) dynamic / dhcp
   s) static, starting from $i1.$i2
+  N) static, starting from $i1.N
 EOF
 	read -u1 -n1 -rp 'sel> '
 	printf '\n\n'
+	echo $REPLY | grep -E '^[0-9]+$' && {
+		i2=$REPLY
+		REPLY=s
+	}
 	case $REPLY in
 		s) ip l set lo up
 			(. /lib/libalpine.sh; available_ifaces) | tr ' ' '\n' |
