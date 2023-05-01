@@ -152,10 +152,15 @@ imshrink_fake_gz() {
 imshrink_filter_mods() {
     # shaves ~54 MiB
     # shrink modloop by removing rarely-useful stuff + invokes imshrink_fake_gz
+    #
+    # accepts optional regex for additional mods to remove; for example
+    # imshrink_filter_mods '\/(vmwgfx|arcnet|isdn)\/'
+    #
     apk add squashfs-tools pigz pv
     cd; rm -rf x x2; mkdir x x2
     mount -o loop /mnt/boot/modloop-* x
     cd x
+    arg="$1"; [ -z "$arg" ] || arg="/$arg/{next}"
     log unpacking modloop
     find -type f | awk '
         /\/(brcm|mrvl|ath1.k|ti-connectivity|rtlwifi|rtl_bt|wireless|bluetooth)\/|iwlwifi/{next}  # wifi/bt
@@ -165,6 +170,7 @@ imshrink_filter_mods() {
         /\/(drivers\/multimedia|kernel\/drivers\/media)\//{next}  # capturecards, webcams
         /\/(ueagle-atm)\//{next}  # adsl modems
         /\/(ocfs2)\//{next}  # filesystems
+        '"$arg"'  # from argv
     1' | tar -cT- | tar -xC ../x2
     imshrink_fake_gz
     cd
