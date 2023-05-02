@@ -114,65 +114,36 @@ disksel() {
 
 # collect and store some hardware info
 infograb() {
-	apk add pciutils usbutils
-	apk add coreutils || true
-	apk add dmidecode lshw smartmontools nvme-cli || true
-	# note; blank cmd = commit to usb (since lspci -xxxx can crash the box)
-	local cmds=(
-		dmesg "dmesg --color=always" blkid "free -m" "uname -a"
-		lsblk lscpu lshw lsipc lsirq lsmod fbset
-		lsusb "lsusb -v" "lsusb -tvvv" "stdbuf -o0 -e0 lsusb -v 2>&1"
-		lspci "lspci -nnP" "lspci -nnPP" "lspci -nnvvv"
-		"lspci -bnnvvv" "lspci -mmnn" "lspci -mmnnvvv"
-		dmidecode "dmidecode -u" "nvme list"
+	# p1 definitely exists, p2 hopefully, p3 would be nice
+	p1="pciutils usbutils"
+	p2="coreutils"
+	p3="dmidecode lshw smartmontools nvme-cli libcpuid-tool"
+
+	apk add $p1 $p2 $p3 || {
+		apk add $p1
+		apk add $p2 || true
+		apk add $p3 || true
+	}
+
+	hwscan $AR/sm/infos
+
+	apk add python3 && (
+		cd /dev/shm
+		rm -f hw-inv.*
+		hwinv $AR/sm/infos \
+			--json=hw-inv.json \
+			--html=hw-inv.html \
+			--csv=hw-inv.csv \
+			--txt=hw-inv.txt
+
+		mount -o remount,rw $AR
+		mv hw-inv.* $AR/sm/infos/
+
+		[ -e $AR/sm/bin/hw-inv.py ] ||
+			cp -pv $(which hwinv) $AR/sm/bin/hw-inv.py 2>/dev/null || true
 	)
 
-	for d in /dev/nvme[0-9]; do
-		[ -e $d ] && cmds+=(
-			"nvme id-ctrl $d -vH"
-			"nvme smart-log $d -H"
-			"nvme error-log $d"
-		)
-	done
-
-	for n in /dev/nvme[0-9]n[0-9]; do
-		[ -e $n ] && cmds+=(
-			"nvme id-ns $n -vH"
-		)
-	done
-
-	while IFS= read -r x; do
-		cmds+=("smartctl -x /dev/$x")
-	done < <(lsblk -bo SIZE,KNAME,SUBSYSTEMS,TYPE |
-		awk 'NR>1 && !/:usb/ && $1 && / disk$/ {print$2}')
-
-	cmds+=("" "lspci -mmnnvvvxxxx" "")
-
-	local d=$AR/sm/infos/$(utime)
-	read -u1 -rp 'optional-comment> '
-	echo
-	[ "$REPLY" ] && d="$d-$REPLY"
-	rm -rf grab
-	mkdir grab
-	pushd grab
-	for cmd in "${cmds[@]}"; do
-		[ -z "$cmd" ] && {
-			mount -o remount,rw $AR || continue
-			[ -e "$d" ] || {
-				mkdir -p "$d"
-				echo "$d" >> "$d/../log"
-			}
-			mv * "$d/"
-			sync
-			mount -o remount,ro $AR
-			continue
-		}
-		log "running $cmd"
-		local fn="$(printf '%s\n' "$cmd" | tr -s ' -./=&<>' -)"
-		(eval "$cmd") >"$fn" || echo "CMD FAILED: $cmd => $?" | tee -a "$fn"
-	done
-	popd
-	log info collected to "$d"
+	mount -o remount,ro $AR
 	menu
 }
 

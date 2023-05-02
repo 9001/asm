@@ -1,0 +1,101 @@
+#!/bin/bash
+set -e
+
+type log &>/dev/null || log() { echo "$*"; }
+
+outdir="$1"
+[ -z "$outdir" ] && {
+	echo need arg 1: output dir
+	exit 1
+}
+outdir="$(realpath "$outdir")"
+out_fs="$outdir"
+for _ in a a a; do [ -e "$out_fs" ] || out_fs="${out_fs%/*}"; done
+fs_mp=$(df "$out_fs" | awk '{v=$NF} END{print v}')
+fs_attrs=$(cat /proc/mounts | awk -v mp="$fs_mp" '$2==mp{print","$4","}')
+printf '%s\n' "$fs_attrs" | grep -q ,ro, && fs_ro=1 || fs_ro=
+
+runcmds() {
+	for cmd in "$@"; do
+		[ -z "$cmd" ] && {
+			set -x
+			[ $fs_ro ] && { mount -o remount,rw $fs_mp || continue; }
+			[ -e "$d" ] || {
+				mkdir -p "$d"
+				echo "$d" >> "$d/../log"
+			}
+			mv * "$d/"
+			sync
+			[ $fs_ro ] && { mount -o remount,ro $fs_mp; }
+			set +x
+			continue
+		}
+		log "running $cmd"
+		fn="$(printf '%s\n' "$cmd" | tr -s ' -./=&<>' -)"
+		printf '%s\n' "$fn" | grep -E ^cpuid_tool && fn=x
+		(eval "$cmd") >"$fn" && continue || rc=$?
+		printf '%s\n' "$cmd" | grep -q json && continue
+		echo "CMD FAILED: $cmd => $?" | tee -a "$fn"
+	done
+}
+
+# note; blank cmd = commit to usb (since lspci -xxxx can crash the box)
+cmds=(
+	dmesg "dmesg --color=always" blkid "free -m" "uname -a"
+	lsblk lscpu lsipc lsirq lsmod fbset
+	"lshw -numeric" "lshw -numeric -json"
+	lsusb "lsusb -v" "lsusb -tvvv" "stdbuf -o0 -e0 lsusb -v 2>&1"
+	lspci "lspci -nnP" "lspci -nnPP" "lspci -nnvvv"
+	"lspci -bnnvvv" "lspci -mmnn" "lspci -mmnnvvv"
+	"cpuid_tool --save=cpuid.raw --outfile=cpuid.txt --all --clock --clock-rdtsc --sgx --hypervisor"
+	dmidecode "dmidecode -u" "nvme list"
+)
+
+for d in /dev/nvme[0-9]; do
+	[ -e $d ] && cmds+=(
+		"nvme id-ctrl $d -vH"
+		"nvme smart-log $d -H"
+		"nvme error-log $d"
+	)
+done
+
+for n in /dev/nvme[0-9]n[0-9]; do
+	[ -e $n ] && cmds+=(
+		"nvme id-ns $n -vH"
+	)
+done
+
+while IFS= read -r x; do
+	cmds+=(
+		"smartctl -x /dev/$x"
+		"smartctl -x /dev/$x --json=vu"
+	)
+done < <(lsblk -bo SIZE,KNAME,SUBSYSTEMS,TYPE |
+	awk 'NR>1 && !/:usb/ && $1 && / disk$/ {print$2}')
+
+cmds+=("" "lspci -mmnnvvvxxxx" "")
+
+d="$outdir/$(utime 2>/dev/null || date +%s.%N)"
+[ $# -gt 1 ] && REPLY="$2" || read -u1 -rp 'optional-comment> '
+echo
+[ "$REPLY" ] && d="$d-$REPLY"
+td=$(mktemp --tmpdir -d hwscan.XXXXX || mktemp -d -t hwscan.XXXXX)
+cd $td
+runcmds "${cmds[@]}"
+
+megadev=$( (grep -l megaraid, $d/smartctl-* | tee /dev/stderr | xargs -r rm) 2>&1 | awk '/-x-dev-/{print;exit}' | sed -r 's/.*-dev-//; s/-.*//' )
+[ -z "$megadev" ] || {
+	cmds=()
+	for n in {0..31}; do
+		cmds+=(
+			"smartctl -x /dev/$megadev -d megaraid,$n"
+			"smartctl -x /dev/$megadev -d megaraid,$n --json=vu"
+		)
+	done
+	runcmds "${cmds[@]}"
+	grep -lRE 'open device:.*INQUIRY failed' . | xargs -r rm
+	runcmds ""
+}
+
+rm -rf "$td"
+log info collected to "$d"

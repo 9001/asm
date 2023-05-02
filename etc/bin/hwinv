@@ -1,0 +1,302 @@
+#!/usr/bin/env python3
+
+import os
+import csv
+import json
+import html
+import argparse
+
+
+def noop(*a, **ka):
+    pass
+
+
+def grab(j, r, rules):
+    for dk, sk in [x.split("=", 1) for x in rules.split()]:
+        try:
+            v = j[sk]
+            if v:
+                r[dk] = v
+        except:
+            pass
+
+
+def dpad(txt):
+    try:
+        a, b = txt.strip("[]").split(":")
+        return f"({a:>04}:{b:>04})"
+    except:
+        return txt
+
+
+def dive(j0, r):
+    for j in j0.get("children", []):
+        d = j.get("description")
+
+        rules = ""
+
+        if d == "Motherboard":
+            rules = """
+mobo=product
+mobo-sn=serial
+"""
+
+        elif d == "BIOS":
+            rules = """
+bios-ver=version
+bios-date=date
+"""
+
+        elif d == "CPU":
+            rules = """
+cpu=product
+"""
+
+        elif d == "System Memory":
+            try:
+                r["ram"] = j["size"] // (1024 * 1024)
+
+                taken = 0
+                free = 0
+                for j2 in j["children"]:
+                    d2 = j2["description"]
+                    if d2 == "[empty]":
+                        free += 1
+                    else:
+                        taken += 1
+
+                r["rams"] = f"{taken}/{taken+free}"
+            except:
+                pass
+
+        elif d == "Ethernet interface":
+            try:
+                nic = dpad(j["product"].split(" ")[-1])
+                mac = j["serial"]
+
+                nics = r["nic"] = r.get("nic") or []
+                nics.append(f"{mac} {nic}")
+            except:
+                pass
+
+        elif d == "VGA compatible controller":
+            try:
+                gpus = r["gpu"] = r.get("gpu") or []
+                gpus.append(dpad(j["product"].split(" ")[-1]))
+            except:
+                pass
+
+        elif d in ("Keyboard", "Mouse", "Human interface device"):
+            hids = r["hid"] = r.get("hid") or []
+            hids.append(j.get("product") or d)
+
+        # lshw is not a good choice for HDD info
+        # (doesn't see SATA drives)
+
+        if rules:
+            grab(j, r, rules)
+
+        dive(j, r)
+
+
+def parse_lshw(ap, r):
+    verbose("reading", ap)
+    with open(ap, "r", encoding="utf-8") as f:
+        j = json.load(f)
+
+    try:
+        if j[0]["class"] == "system":
+            j = j[0]
+    except:
+        pass
+
+    rules = """
+vend=vendor
+box=product
+box-sn=serial
+"""
+
+    grab(j, r, rules)
+    dive(j, r)
+    return r
+
+
+def parse_smart(ap, r):
+    verbose("reading", ap)
+    with open(ap, "r", encoding="utf-8") as f:
+        j = json.load(f)
+
+    hdd = j.get("model_name")
+    sn = j.get("serial_number")
+    fw = j.get("firmware_version")
+
+    if hdd and fw:
+        hdd += f" (FW:{fw})"
+
+    hdds = r["hdd"] = r.get("hdd") or []
+    hddsns = r["hdd-sn"] = r.get("hdd-sn") or []
+
+    hdds.append(hdd or "?")
+    hddsns.append(sn or "?")
+
+
+def parse(ap):
+    r = {}
+    files = list(sorted(os.listdir(ap)))
+
+    desc = ap.split("/")[-1]
+    if "-" in desc:
+        r["desc"] = desc.split("-", 1)[1]
+
+    parse_lshw(os.path.join(ap, "lshw-numeric-json"), r)
+
+    for fn in files:
+        if fn.startswith("smartctl-x-") and fn.endswith("-json-vu"):
+            parse_smart(os.path.join(ap, fn), r)
+
+    return r
+
+
+verbose = noop
+
+
+def main():
+    global verbose
+
+    # columns to include in output and in what order;
+    # example is all possible fields, up to 8 nics, 4 gpus, 16 hdds, 8 HID
+    cols = "desc vend box box-sn mobo mobo-sn bios-ver bios-date ram rams cpu nic:8 gpu:4 hdd:16 hdd-sn:16 hid:8"
+
+    # fmt: off
+    ap = argparse.ArgumentParser(description="hardware summarizer", epilog="default columns: " + cols)
+    ap.add_argument("infos", type=str, nargs="+", help="folders of infos to parse")
+    ap.add_argument("-v", action="store_true", help="verbose")
+    ap.add_argument("--json", type=str, metavar="PATH", help="write json to PATH")
+    ap.add_argument("--html", type=str, metavar="PATH", help="write html to PATH")
+    ap.add_argument("--txt", type=str, metavar="PATH", help="write text to PATH")
+    ap.add_argument("--csv", type=str, metavar="PATH", help="write csv to PATH")
+    ap.add_argument("--col", type=str, metavar="A B C", help="output columns; space-separated", default=cols)
+    # fmt: on
+    al = ap.parse_args()
+    cols = al.col
+    if al.v:
+        verbose = print
+
+    dirs = []
+    for bdir in al.infos:
+        log_file = os.path.join(bdir, "log")
+        lshw_file = os.path.join(bdir, "lshw-numeric-json")
+        if os.path.exists(lshw_file):
+            verbose("reading one specific directory of hardware info:", bdir)
+            dirs.append(bdir)
+        elif os.path.exists(log_file):
+            verbose("reading ordered list of hardware info dirs from", bdir)
+            with open(log_file, "rb") as f:
+                for ln in f:
+                    ln = ln.decode("utf-8").strip()
+                    dirs.append(os.path.join(bdir, ln.split("/")[-1]))
+        else:
+            verbose("selecting all info folders in", bdir)
+            for inode in sorted(os.listdir(bdir)):
+                ap = os.path.join(bdir, inode)
+                if os.path.isdir(ap):
+                    dirs.append(ap)
+
+    infs = []
+    for d in dirs:
+        if not os.path.exists(d):
+            print(f"WARNING: folder not found: {d}")
+            continue
+
+        verbose("adding folder", d)
+        infs.append(parse(d.rstrip("/")))
+        # print(json.dumps(
+
+    if al.json:
+        verbose("writing json", al.json)
+        with open(al.json, "w", encoding="utf-8") as f:
+            json.dump(infs, f)
+
+    # flatten lists into columns
+    colset = []
+    for cn in cols.split():
+        if ":" not in cn:
+            colset.append(cn)
+            continue
+
+        cn, ncap = cn.split(":")
+        ncap = int(ncap)
+        ncol = 0
+        for inf in infs:
+            ncol = max(ncol, len(inf.get(cn) or []))
+
+        ncol = min(ncol, ncap)
+        for n in range(ncol):
+            colset.append(f"{cn}-{n + 1}")
+
+        for inf in infs:
+            for n in range(ncol):
+                ocn = f"{cn}-{n + 1}"
+                inf[ocn] = inf[cn][n] if cn in inf and n < len(inf[cn]) else ""
+
+    rows = [colset]
+    for inf in infs:
+        row = []
+        rows.append(row)
+        for cn in colset:
+            cv = inf.get(cn)
+            row.append(cv or "-")
+
+    if al.csv:
+        verbose("writing csv")
+        with open(al.csv, "w", encoding="utf-8-sig") as f:
+            csv.writer(f).writerows(rows)
+
+    if al.txt:
+        lines = [""] * len(rows)
+        for col in range(len(rows[0])):
+            w = 0
+            for row in rows:
+                w = max(w, len(str(row[col])))
+
+            for n, row in enumerate(rows):
+                lines[n] += f"{row[col]:<{w}} "
+
+        verbose("writing txt")
+        with open(al.txt, "w", encoding="utf-8") as f:
+            for ln in lines:
+                f.write(ln + "\n")
+
+    if al.html:
+        h = """
+<!DOCTYPE html><html lang="en"><head>
+<meta charset="utf-8">
+<title>hw-inv</title>
+<style>
+html, body { margin: 0; padding: 0; background: #fff; color: #000 }
+table { margin: 1em 0 1em 1.4em }
+td { white-space: nowrap; font-family: monospace, monospace; padding: .2em .4em; border: 1px solid #ccc; border-width: 0 1px 1px 0 }
+td:last-child { border-right: 1.4em solid #fff }
+td:first-child { position: sticky; left: 0; background: #fff }
+</style></head><body><table>
+"""
+        h = [h]
+        for row in rows:
+            t = "<tr>"
+            for col in row:
+                t += f"<td>{html.escape(str(col), False)}</td>"
+
+            h.append(t + "</tr>")
+
+        h.append("</table></body></html>")
+
+        verbose("writing html")
+        with open(al.html, "w", encoding="utf-8") as f:
+            for ln in h:
+                f.write(ln + "\n")
+
+        verbose("done")
+
+
+if __name__ == "__main__":
+    main()

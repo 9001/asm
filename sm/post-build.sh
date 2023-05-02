@@ -66,7 +66,7 @@ recommended_apks() {
         bash coreutils util-linux \
         bzip2 gzip pigz xz zstd \
         bmon curl iperf3 iproute2 iputils nmap-ncat proxychains-ng rsync socat sshfs sshpass tcpdump \
-        dmidecode efibootmgr lm-sensors lshw nvme-cli pciutils sgdisk smartmontools testdisk usbutils \
+        dmidecode efibootmgr libcpuid-tool lm-sensors lshw nvme-cli pciutils sgdisk smartmontools testdisk usbutils \
         cryptsetup fuse fuse3 nbd nbd-client partclone \
         btrfs-progs dosfstools exfatprogs mtools ntfs-3g ntfs-3g-progs squashfs-tools xfsprogs \
         bc diffutils file findutils grep hexdump htop jq less mc ncdu patch psmisc pv sqlite strace tar tmux vim \
@@ -115,7 +115,7 @@ nomodeset() {
 grub_beep() {
     apk add grub-efi
     tar -cC /usr/lib/grub x86_64-efi/play.mod | tar -xvC /mnt/boot/grub
-    printf >> /mnt/boot/grub/grub.cfg '%s\n' '' 'insmod play' 'play 1920 220 1'
+    printf >> /mnt/boot/grub/grub.cfg '%s\n' '' 'insmod play' 'play 1920 330 1'
 }
 
 
