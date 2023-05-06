@@ -83,7 +83,7 @@ td=$(mktemp --tmpdir -d hwscan.XXXXX || mktemp -d -t hwscan.XXXXX)
 cd $td
 runcmds "${cmds[@]}"
 
-megadev=$( (grep -l megaraid, $d/smartctl-* | tee /dev/stderr | xargs -r rm) 2>&1 | awk '/-x-dev-/{print;exit}' | sed -r 's/.*-dev-//; s/-.*//' )
+megadev=$(grep -l megaraid, $d/smartctl-* 2>/dev/null | head -n 1 | sed -r 's/.*-dev-//; s/-.*//')
 [ -z "$megadev" ] || {
 	cmds=()
 	for n in {0..31}; do

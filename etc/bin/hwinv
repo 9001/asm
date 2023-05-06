@@ -126,6 +126,14 @@ def parse_smart(ap, r):
     with open(ap, "r", encoding="utf-8") as f:
         j = json.load(f)
 
+    try:
+        errs = j["smartctl"]["messages"]
+        err = "\n".join(x["string"] for x in errs)
+        if "megaraid,N" in err:
+            return
+    except:
+        pass
+
     hdd = j.get("model_name")
     sn = j.get("serial_number")
     fw = j.get("firmware_version")
