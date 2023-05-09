@@ -136,16 +136,42 @@ def parse_smart(ap, r):
 
     hdd = j.get("model_name")
     sn = j.get("serial_number")
+    sz = int(j.get("user_capacity", {}).get("bytes_s", "0"))
     fw = j.get("firmware_version")
+    hrs = j.get("power_on_time", {}).get("hours")
+    cyc = j.get("power_cycle_count")
+    temp = j.get("temperature", {}).get("current")
+    wear = j.get("nvme_smart_health_information_log", {}).get("percentage_used")
 
     if hdd and fw:
         hdd += f" (FW:{fw})"
 
+    # https://github.com/9001/usr-local-bin/blob/master/allsmart
+    bads = "Reallocated_Sector_Ct|Reallocated_Event_Count|Current_Pending_Sector|Offline_Uncorrectable"
+    bad = set(bads.split("|"))
+    err = 0
+    for ent in j.get("ata_smart_attributes", {}).get("table", []):
+        if ent["name"] in bad:
+            # print(ent["name"])
+            err += ent["raw"]["value"]
+
     hdds = r["hdd"] = r.get("hdd") or []
     hddsns = r["hdd-sn"] = r.get("hdd-sn") or []
+    hddszs = r["hdd-sz"] = r.get("hdd-sz") or []
+    hddhrs = r["hdd-hrs"] = r.get("hdd-hrs") or []
+    hddcyc = r["hdd-cyc"] = r.get("hdd-cyc") or []
+    hddtemp = r["hdd-temp"] = r.get("hdd-temp") or []
+    hddwear = r["hdd-wear"] = r.get("hdd-wear") or []
+    hdderr = r["hdd-err"] = r.get("hdd-err") or []
 
     hdds.append(hdd or "?")
     hddsns.append(sn or "?")
+    hddszs.append(sz // (1024 * 1024 * 1024))
+    hddhrs.append(hrs or "")
+    hddcyc.append(cyc or "")
+    hddtemp.append(temp or "")
+    hddwear.append(wear or "")
+    hdderr.append(err)
 
 
 def parse(ap):
@@ -173,7 +199,8 @@ def main():
 
     # columns to include in output and in what order;
     # example is all possible fields, up to 8 nics, 4 gpus, 16 hdds, 8 HID
-    cols = "desc vend box box-sn mobo mobo-sn bios-ver bios-date ram rams cpu nic:8 gpu:4 hdd:16 hdd-sn:16 hid:8"
+    # "s:foo" adds a spacer with value "foo"
+    cols = "desc vend box box-sn mobo mobo-sn bios-ver bios-date ram rams cpu nic:8 gpu:4 s:▌ hdd:16 s:▌ hdd-sz:16 s:▌ hdd-hrs:16 s:▌ hdd-cyc:16 s:▌ hdd-temp:16 s:▌ hdd-wear:16 s:▌ hdd-err:16 s:▌ hdd-sn:16 s:▌ hid:8"
 
     # fmt: off
     ap = argparse.ArgumentParser(description="hardware summarizer", epilog="default columns: " + cols)
@@ -228,7 +255,7 @@ def main():
     # flatten lists into columns
     colset = []
     for cn in cols.split():
-        if ":" not in cn:
+        if ":" not in cn or cn.startswith("s:"):
             colset.append(cn)
             continue
 
@@ -247,13 +274,17 @@ def main():
                 ocn = f"{cn}-{n + 1}"
                 inf[ocn] = inf[cn][n] if cn in inf and n < len(inf[cn]) else ""
 
-    rows = [colset]
+    rows = [[x if x[:2] != "s:" else "-" for x in colset]]
     for inf in infs:
         row = []
         rows.append(row)
         for cn in colset:
-            cv = inf.get(cn)
-            row.append(cv or "-")
+            if cn.startswith("s:"):
+                cv = cn[2:]
+            else:
+                cv = inf.get(cn)
+
+            row.append(cv or "")
 
     if al.csv:
         verbose("writing csv")
