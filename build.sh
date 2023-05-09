@@ -40,7 +40,7 @@ mirror=https://mirrors.edge.kernel.org/alpine
 
 
 help() {
-    v=3.17.3
+    v=3.18.0
     sed -r $'s/^( +)(-\w+ +)([A-Z]\w* +)/\\1\\2\e[36m\\3\e[0m/; s/(.*default: )(.*)/\\1\e[35m\\2\e[0m/' <<EOF
 
 arguments:
