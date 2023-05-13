@@ -139,8 +139,10 @@ infograb() {
 		mount -o remount,rw $AR
 		mv hw-inv.* $AR/sm/infos/
 
-		[ -e $AR/sm/bin/hw-inv.py ] ||
-			cp -pv $(which hwinv) $AR/sm/bin/hw-inv.py 2>/dev/null || true
+		mkdir -p $AR/sm/bin
+		for p in hwinv hwscan; do
+			cp -npv $(which $p) $AR/sm/bin/$p 2>/dev/null || true
+		done
 	)
 
 	mount -o remount,ro $AR

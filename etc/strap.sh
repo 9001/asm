@@ -7,6 +7,7 @@ command -v bash >/dev/null || apk add -q bash 2>/dev/null >&2 || true
 export AR=$(dirname /media/*/the.apkovl.tar.gz)
 export AP=$(df -h $AR | awk 'NR==2{sub(/.*\//,"",$1);print$1}')
 export AD=$(echo $AP | awk '/p[0-9]$/{sub(/p[0-9]$/,"");print;next} {sub(/[0-9]$/,"");print}')
+export PATH="$AR/sm/bin:/usr/local/bin/:$PATH"
 export HOME=/root
 EOF
 echo export SHELL=$(command -v bash || command -v ash)
@@ -33,7 +34,6 @@ apk add -q util-linux bash tar 2>/dev/null >&2 &&
   sed -ri 's^/ash$^/bash^' /etc/passwd
 
 cp -p /etc/bin/* /usr/local/bin/
-export PATH="$PATH:/usr/local/bin/:$AR/sm/bin"
 
 # keymap and font
 yes abort | setup-keymap us us-altgr-intl 2>/dev/null >&2
