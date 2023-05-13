@@ -5,9 +5,12 @@ type log &>/dev/null || log() { echo "$*"; }
 
 outdir="$1"
 [ -z "$outdir" ] && {
-	echo need arg 1: output dir
+	echo "need arg 1: output dir"
+	echo "optional arg 2: comment"
+	echo "optional arg 3: comment timeout"
 	exit 1
 }
+shift
 outdir="$(realpath "$outdir")"
 out_fs="$outdir"
 for _ in a a a; do [ -e "$out_fs" ] || out_fs="${out_fs%/*}"; done
@@ -76,7 +79,15 @@ done < <(lsblk -bo SIZE,KNAME,SUBSYSTEMS,TYPE |
 cmds+=("" "lspci -mmnnvvvxxxx" "")
 
 d="$outdir/$(utime 2>/dev/null || date +%s.%N)"
-[ $# -gt 1 ] && REPLY="$2" || read -u1 -rp 'optional-comment> '
+cmt="$1"
+[ $# -gt 0 ] && ask= || ask=1
+[ $# -gt 1 ] && {
+	echo "comment: $cmt"
+	read -u1 -n1 -t$2 -rp 'change comment? y/N: ' r || true
+	echo
+	[[ $r =~ [Yy] ]] && ask=1
+}
+[ ! $ask ] && REPLY="$1" || read -u1 -rp 'optional-comment> '
 echo
 [ "$REPLY" ] && d="$d-$REPLY"
 td=$(mktemp --tmpdir -d hwscan.XXXXX || mktemp -d -t hwscan.XXXXX)

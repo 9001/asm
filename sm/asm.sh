@@ -125,7 +125,8 @@ infograb() {
 		apk add $p3 || true
 	}
 
-	hwscan $AR/sm/infos
+	# to timeout the comment prompt after 3 sec, uncomment the '' 3
+	hwscan $AR/sm/infos  # '' 3
 
 	apk add python3 && (
 		cd /dev/shm
