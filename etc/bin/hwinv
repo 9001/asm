@@ -314,18 +314,23 @@ def main():
 <style>
 html, body { margin: 0; padding: 0; background: #fff; color: #000 }
 table { margin: 1em 0 1em 1.4em }
-td { white-space: nowrap; font-family: monospace, monospace; padding: .2em .4em; border: 1px solid #ccc; border-width: 0 1px 1px 0 }
+th, td { white-space: nowrap; font-family: monospace, monospace; padding: .2em .4em; border: 1px solid #ccc; border-width: 0 1px 1px 0 }
+th { text-align: left; position: sticky; top: 0; background: #fff; border-bottom: .25em solid #aaa; z-index: 1 }
+th:first-child { left: 0; z-index: 2 }
+td:first-child { position: sticky; left: 0; background: #fff; border-right: .25em solid #aaa }
 td:last-child { border-right: 1.4em solid #fff }
-td:first-child { position: sticky; left: 0; background: #fff }
+tr:hover td { background: #fea }
 </style></head><body><table>
 """
         h = [h]
+        tag = "th"
         for row in rows:
             t = "<tr>"
             for col in row:
-                t += f"<td>{html.escape(str(col), False)}</td>"
+                t += f"<{tag}>{html.escape(str(col), False)}</{tag}>"
 
             h.append(t + "</tr>")
+            tag = "td"
 
         h.append("</table></body></html>")
 
