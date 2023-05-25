@@ -1,0 +1,96 @@
+#!/bin/ash
+set -e
+
+[ -e $AR/sm/quiet ] && {
+    rmmod pcspkr 2>/dev/null || true
+    exit 0
+}
+
+[ $# -gt 1 ] || {
+    echo need arg 1: note duration in ms
+    echo need arg 2: frequency of note 1
+    echo optional arg 3+: note frequencies
+    exit 1
+}
+
+d=$1
+shift
+
+# native beep
+nbeep() {
+    while [ $# -gt 0 ]; do
+        beep -f $1 -l $d
+        shift
+    done
+}
+
+# alsa-beep
+abeep() {
+    killall -q tinyplay || true
+    for m in 'Master Playback' 'PCM Playback'; do
+        tinymix set "$m Volume" 100% 2>/dev/null || true
+        tinymix set "$m Switch" 1 2>/dev/null || true
+    done
+
+    # b=samplebits c=chans r=samplerate
+    b=; c=; r=;
+    eval "$(tinypcminfo 2>/dev/null | awk '
+        /^PCM /{o=0}
+        /^PCM out:/{o=1}
+        !o{next}
+        {k=""}
+        /Format Name:/{k="b"}
+        /Channels:/{k="c"}
+        /Rate:/{k="r"}
+        /=/{sub(/[^=]+=/,"");sub(/[^0-9].*/,"")}
+        {sub(/,.*/,"");gsub(/[^0-9]/,"")}
+        k{printf "%s=%s\n",k,$0}
+    ')"
+    [ "$r" ] || return
+
+    local fl=/dev/shm/beeped
+
+    {
+        [ -e $fl ] || {
+            touch $fl
+            fgen 386 0  # metal
+        }
+        while [ $# -gt 0 ]; do
+            fgen $d $1
+            shift
+        done
+        fgen 333 0  # qemu
+    } |
+    tinyplay -b$b -c$c -r$r -i raw - >/dev/null
+}
+
+fgen() {
+    awk -vb=$b -vc=$c -vr=$r -vd=$1 -vf=$2 'BEGIN{
+        if(!f) {
+            w=sprint "\x01";
+            e=(r*c*(b/8)*d/1000); i=1;
+            while(i<e) {i*=2;w=w w}
+            print substr(w,1,e);
+            exit;
+        }
+        w1=sprint "\x7f";
+        w2=sprint "\x81";
+        e=(r*c*(b/8))/f; i=1;
+        while(i<e) {i*=2;w1=w1 w1;w2=w2 w2}
+        w=substr(w1,1,e) substr(w2,1,e);
+        t=(((r*d)/1000)*c*(b/8))/(e*2);
+        for(n=0;n<t;n++) print(w);
+    }'
+}
+
+command -v tinyplay >/dev/null && {
+    abeep "$@"
+    exit
+}
+
+echo $AR/apks/*/tinyalsa-* | grep -q apk$ && {
+    apk add -q tinyalsa; abeep "$@"
+    exit
+}
+
+nbeep "$@"

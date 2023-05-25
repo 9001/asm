@@ -53,13 +53,7 @@ stty size | awk '$1<36{exit 1}' ||
 )
 
 # be noisy unless muted
-beeps() {
-  local d=$1; shift
-  [ ! -e $AR/sm/quiet ] &&
-    for f in $@; do beep -f $f -l $d; done ||
-    rmmod pcspkr 2>/dev/null
-}
-beeps 40 2000 1000
+beeps 40 2000 1000 &
 
 # run the payload
 s=$AR/sm/asm.sh
@@ -68,13 +62,14 @@ unlog
 
 # success? exit
 [ $err ] || {
-  beeps 70 523 784 1046
+  nohup beeps 70 523 784 1046 2>/dev/null &
+  for a in a a a a; do sleep 0.05; [ -e nohup.out ] && break; done
   exit 0
 }
 
 # error; give shell
 printf "\n$s: \033[31mERROR $err\033[0m\n"
 apk add -q tmux &
-(beep -f 349 -l 200 -d 90 -r 2; rmmod pcspkr 2>/dev/null) &
+(beeps 96 349 349 0 349 349; rmmod pcspkr 2>/dev/null) &
 exec $SHELL -l
 

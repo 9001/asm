@@ -47,6 +47,10 @@ strapmod() {
 strapsave() {
 	(cd /root && mount -o remount,rw $AR && tar -czf $AR/the.apkovl.tar.gz etc && sync && (fstrim $AR 2>/dev/null || true) && echo ok)
 }
+rw() {
+	mount -o remount,rw $AR
+	pwd | grep -q $AR || cd $AR/sm
+}
 
 if [ -d /etc/apk/ ] ; then
 	alias tmux='TERM=rxvt-256color tmux -2u'

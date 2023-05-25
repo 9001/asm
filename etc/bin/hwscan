@@ -18,6 +18,13 @@ fs_mp=$(df "$out_fs" | awk '{v=$NF} END{print v}')
 fs_attrs=$(cat /proc/mounts | awk -v mp="$fs_mp" '$2==mp{print","$4","}')
 printf '%s\n' "$fs_attrs" | grep -q ,ro, && fs_ro=1 || fs_ro=
 
+alsainfo() {
+	for f in cards devices hwdep modules pcm timers version; do
+		printf '\n\033[7m[ %s ]\033[0m\n' $f
+		cat /proc/asound/$f
+	done
+}
+
 runcmds() {
 	for cmd in "$@"; do
 		[ -z "$cmd" ] && {
@@ -52,6 +59,7 @@ cmds=(
 	"lspci -bnnvvv" "lspci -mmnn" "lspci -mmnnvvv"
 	"cpuid_tool --save=cpuid.raw --outfile=cpuid.txt --all --clock --clock-rdtsc --sgx --hypervisor"
 	dmidecode "dmidecode -u" "nvme list"
+	alsainfo tinypcminfo "tinymix contents"
 )
 
 for d in /dev/nvme[0-9]; do
