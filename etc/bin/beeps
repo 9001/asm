@@ -19,8 +19,10 @@ shift
 # native beep
 nbeep() {
     while [ $# -gt 0 ]; do
-        beep -f $1 -l $d
+        f=$1
         shift
+        [ $f = 0 ] && sleep $(awk "BEGIN {print $d/1000}" </dev/null) && continue
+        beep -f $f -l $d
     done
 }
 
@@ -34,7 +36,7 @@ abeep() {
 
     # b=samplebits c=chans r=samplerate
     b=; c=; r=;
-    eval "$(tinypcminfo 2>/dev/null | awk '
+    eval "$(tinypcminfo 2>/dev/shm/pcmerr | awk '
         /^PCM /{o=0}
         /^PCM out:/{o=1}
         !o{next}
