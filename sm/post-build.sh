@@ -104,7 +104,7 @@ party() {
 nomodeset() {
     ( cd /mnt/boot;
     for f in */syslinux.cfg */grub.cfg; do sed -ri '
-        s/( quiet)( .*|$)/\1\2 nomodeset i915.modeset=0 nouveau.modeset=0 /;
+        s/( quiet)( .*|$)/ nomodeset i915.modeset=0 nouveau.modeset=0 module_blacklist=i915,snd_hda_codec_hdmi\1\2/;
         ' $f; 
     done )
 }
@@ -216,10 +216,12 @@ imshrink_nosig() {
     gzip -d < $f | cpio -idm
     rm -f var/cache/misc/modloop-*.SIGN.RSA.*
     log repacking initramfs
+    free -m
+    local m=$(awk '/^MemAvailable:/{printf("%d\n",$2*1024*0.9)}' < /proc/meminfo)
     # https://github.com/alpinelinux/mkinitfs/blob/a5f05c98f690d95374b69ae5405052b250305fdf/mkinitfs.in#L177
     umask 0077
     comp="zstd -19 -T0"     # boots ~.5sec / 10% faster, --long/--ultra can OOM
-    comp="xz -C crc32 -T0"  # 320k..3M smaller
+    comp="xz -C crc32 -T0 -M$m"  # 320k..3M smaller
     find . | sort | cpio --renumber-inodes -o -H newc | $comp > $f
     cd; rm -rf x
 }

@@ -254,7 +254,7 @@ log disabling modloop verification
 mount -t vfat /dev/vda1 /mnt
 ( cd /mnt/boot;
 for f in */syslinux.cfg */grub.cfg; do sed -ri '
-    s/( quiet)( .*|$)/\1\2 modloop_verify=no /;
+    s/( quiet)( .*|$)/ modloop_verify=no\1\2/;
     s/(^TIMEOUT )[0-9]{2}$/\110/;
     s/(^set timeout=)[0-9]$/\11/;
     ' $f; 
@@ -302,7 +302,7 @@ mkfifo s.{in,out}
 
 cores=$(lscpu -p | awk -F, '/^[0-9]+,/{t[$2":"$3":"$4]=1} END{n=0;for(v in t)n++;print n}')
 
-$qemu $accel -cpu host -nographic -serial pipe:s -cdrom "$iso" -cpu host -smp $cores -m 1024 \
+$qemu $accel -cpu host -nographic -serial pipe:s -cdrom "$iso" -cpu host -smp $cores -m 1536 \
   -drive format=raw,if=virtio,discard=unmap,file=asm.usb \
   -drive format=raw,if=virtio,discard=unmap,file=ovl.img
 
