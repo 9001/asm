@@ -1,0 +1,6 @@
+disable login as root until unlocked by asm.sh
+@@ -868,2 +868,4 @@
+ 
++chroot $sysroot passwd -l root 2>/dev/null
++
+ # switch over to new root

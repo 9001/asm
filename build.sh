@@ -197,9 +197,34 @@ cp -pR etc $b/
 # live-env: add apkovl + asm contents
 msg "copying sources to $b"
 cp -pR etc sm $b/fs/sm/img/
-[ "$profile" ] &&
-    (cd p/$profile && tar -c *) |
+pdir=.
+[ "$profile" ] && {
+    pdir=p/$profile;
+    (cd $pdir && tar -c *) |
     tar -xC $b/fs/sm/img/
+}
+
+# quick smoketests if profile mentions UKI
+find $b/fs/sm/img/ -iname 'post-build*sh' -exec cat '{}' + | grep -qE '^export UKI=1|^\s*uki_make\b' && {
+    [ -e $pdir/sm/asm.sh ] && sigbase=$pdir || sigbase=.
+    [ -e $b/fs/sm/img/etc/asm.pub ] || {
+        err "UKI was requested but there is no etc/asm.pub -- please create a keypair and add your pubkey into the build:"
+        cat <<EOF
+mkdir -p ~/keys $sigbase/etc
+openssl genrsa -out ~/keys/asm.priv 4096
+openssl rsa -in ~/keys/asm.priv -pubout > ~/keys/asm.pub
+cp -pv ~/keys/asm.pub $sigbase/etc/
+EOF
+        exit 1
+    }
+    [ -e $b/fs/sm/img/sm/asm.sh.sig ] || {
+        err "UKI was requested but there is no sm/asm.sh.sig -- please sign your asm.sh using your rsa privkey:"
+        cat <<EOF
+openssl dgst -sha512 -sign ~/keys/asm.priv -out $sigbase/sm/asm.sh.sig $sigbase/sm/asm.sh
+EOF
+        exit 1
+    }
+}
 
 pushd $b >/dev/null
 

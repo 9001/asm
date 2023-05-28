@@ -2,6 +2,12 @@
 # a library of functions to reuse in daisychained post-build steps
 
 
+die() {
+    printf '%s\n' "$*"
+    exit 1
+}
+
+
 ##
 # pop a reverse shell in the build env
 #
@@ -66,7 +72,8 @@ recommended_apks() {
         bash coreutils util-linux \
         bzip2 gzip pigz xz zstd \
         bmon curl iperf3 iproute2 iputils nmap-ncat proxychains-ng rsync socat sshfs sshpass tcpdump \
-        dmidecode efibootmgr libcpuid-tool lm-sensors lshw nvme-cli pciutils sgdisk smartmontools testdisk usbutils \
+        dmidecode libcpuid-tool lm-sensors lshw nvme-cli pciutils sgdisk smartmontools testdisk usbutils \
+        efibootmgr efivar mokutil sbsigntool \
         cryptsetup fuse fuse3 nbd nbd-client partclone \
         btrfs-progs dosfstools exfatprogs mtools ntfs-3g ntfs-3g-progs squashfs-tools xfsprogs \
         bc diffutils file findutils grep hexdump htop jq less mc ncdu patch psmisc pv sqlite strace tar tmux vim \
@@ -159,7 +166,9 @@ imshrink_filter_mods() {
     #
     apk add squashfs-tools pigz pv
     cd; rm -rf x x2; mkdir x x2
-    mount -o loop /mnt/boot/modloop-* x
+    local ml=$(echo /mnt/boot/modloop-*)
+    [ -f $ml ] || die 'could not find modloop'
+    mount -o loop $ml x
     cd x
     arg="$1"; [ -z "$arg" ] || arg="/$arg/{next}"
     log unpacking modloop
@@ -185,7 +194,7 @@ imshrink_filter_mods() {
     (sleep 1; pv -i0.3 -d $(pidof mksquashfs):3) &
     mksquashfs x2/ x3 -comp xz -exit-on-error $mksfs
     umount x
-    mv x3 /mnt/boot/modloop-*
+    mv x3 $ml
     cd; rm -rf x x2 x3
 }
 
@@ -224,6 +233,100 @@ imshrink_nosig() {
     comp="xz -C crc32 -T0 -M$m"  # 320k..3M smaller
     find . | sort | cpio --renumber-inodes -o -H newc | $comp > $f
     cd; rm -rf x
+}
+
+
+########################################################################
+# uki / secureboot
+
+uki_make() {
+    # must be done after all initramfs / apkovl tweaks
+    apk add gummiboot-efistub cmd:objcopy xz openssl patch
+        #efibootmgr efivar mokutil sbsigntool efitools efi-mkkeys efi-mkuki openssl gpg gpgv
+
+    local sec=
+    [ $# -gt 0 ] && sec=secure
+
+    # sign modloop
+    local rsa=/dev/shm/modloop
+    local ml=$(echo /mnt/boot/modloop-*)
+    [ -f $ml ] || die 'could not find modloop'
+    openssl genrsa -out $rsa.priv 4096
+    openssl rsa -in $rsa.priv -pubout > $rsa.pub
+    openssl dgst -sha512 -sign $rsa.priv -out $ml.sig $ml
+
+    # add modloop pubkey into apkovl, then move apkovl into initramfs
+    cd; mkdir x; cd x
+    f=$(echo /mnt/boot/initramfs-*)
+    [ -e "$f" ] || die could not find initramfs
+
+    log unpacking initramfs
+    gzip -d < $f | cpio -idm
+    patch init </etc/patches/init-uki.patch
+    patch init </etc/patches/init-passwd.patch
+    mkdir x; cd x
+    tar -xzf /mnt/the.apkovl.tar.gz
+    rm /mnt/the.apkovl.tar.gz
+    cp -pv /dev/shm/modloop.pub .
+    tar -czf ../the.apkovl.tar.gz .
+    cd ..; rm -rf x
+
+    log repacking initramfs
+    free -m
+    local m=$(awk '/^MemAvailable:/{printf("%d\n",$2*1024*0.9)}' < /proc/meminfo)
+    # https://github.com/alpinelinux/mkinitfs/blob/a5f05c98f690d95374b69ae5405052b250305fdf/mkinitfs.in#L177
+    umask 0077
+    comp="xz -C crc32 -T0 -M$m"
+    find . | sort | cpio --renumber-inodes -o -H newc | $comp > $f
+    cd; rm -rf x
+
+    # based on https://github.com/jirutka/efi-mkuki/blob/master/efi-mkuki
+    local osrel=/etc/os-release
+    local march=
+    case $(uname -m) in
+		x86 | i686) march=ia32;;
+		x86_64) march=x64;;
+		arm*) march=arm;;
+		aarch64) march=aa64;;
+		*) die "unknown arch: $(uname -m)";;
+	esac
+    local efistub="/usr/lib/gummiboot/linux$march.efi.stub"
+    [ -f "$efistub" ] || die "could not find efistub $efistub"
+
+    local linux=$(echo /mnt/boot/vmlinuz-*)
+    local initrd=$(echo /mnt/boot/initramfs-*)
+    [ -f $linux ] && [ -f $initrd ] || die "could not find linux $linux or initrd $initrd"
+
+    local cmdline=/dev/shm/cmdline
+    awk '/boot\/vmlinuz-/ {
+        sub(/[^-]+/,"");
+        sub(/[^ ]+ /,"");
+        print $0 " apkovl=/the.apkovl.tar.gz pkgs=openssl '$sec' "
+    }' </mnt/boot/grub/grub.cfg >$cmdline
+
+    #rshell 192.168.122.1
+
+    mv /mnt/efi/boot/boot$march.efi /mnt/efi/boot/grub$march.efi
+
+    objcopy \
+        --add-section .osrel="$osrel"     --change-section-vma .osrel=0x20000    \
+        --add-section .cmdline="$cmdline" --change-section-vma .cmdline=0x30000  \
+        --add-section .splash="/dev/null" --change-section-vma .splash=0x40000   \
+        --add-section .linux="$linux"     --change-section-vma .linux=0x2000000  \
+        --add-section .initrd="$initrd"   --change-section-vma .initrd=0x3000000 \
+        "$efistub" "/mnt/efi/boot/boot$march.efi"
+}
+
+uki_only() {
+    # drop grub and bios support to save ~30 MiB
+    rm -rf \
+        /mnt/ldlinux* \
+        /mnt/efi/boot/grubx64.efi \
+        /mnt/boot/grub \
+        /mnt/boot/syslinux \
+        /mnt/boot/dtbs-* \
+        /mnt/boot/vmlinuz-* \
+        /mnt/boot/initramfs-*
 }
 
 ##

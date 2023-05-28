@@ -1,0 +1,1 @@
+the integrity check in asm.sh will fail if this file gets modified

@@ -1,0 +1,11 @@
+stronger verification of modloop
+@@ -42,2 +42,9 @@
+		tar -C "$dest" -zxvf "$ovl" > $ovlfiles
++rv=$?; [ $rv -eq 0 ] || { echo ovl unpack failed; exit 1; }
++printf ' verifying modloop '
++ml="$(find /media -mindepth 3 -type f -name modloop-\* | grep -vF .)"
++[ $ml ] && [ -f "$ml.sig" ] || { echo could not find modloop; exit 1; }
++apk add --quiet --initdb --repositories-file $repofile openssl || { echo openssl install failed; exit 1; }
++openssl dgst -sha512 -verify /sysroot/modloop.pub -signature $ml.sig $ml || { echo modloop verification failed; exit 1; }
++ 		return 0
+		return $?

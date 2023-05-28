@@ -29,6 +29,11 @@ it plays the [pc98 bootup bleep](https://www.youtube.com/watch?v=9qof0qye1ao#t=6
 see [profiles](./p/) for additional examples including a chatserver, a disk wiper and a webkiosk
 
 
+## secureboot
+
+the [uki profile](./p/uki/) shows how to securely verify the integrity of all resources during boot, using secureboot and (a bespoke alternative to) measured boot
+
+
 # build it
 
 if you are on linux,
@@ -171,5 +176,7 @@ should work on most BIOS and UEFI boxes with a few exceptions;
 # notes
 
 * [`./winpe/`](./winpe/) is unrelated bonus content
+
+* details on [how it works](./doc/how-it-works.md)
 
 * see [`./doc/notes.md`](./doc/notes.md) for more

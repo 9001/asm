@@ -3,22 +3,39 @@
 
 command -v bash >/dev/null || apk add -q bash 2>/dev/null >&2 || true
 
+SEC=$(grep -qE '\bsecure\b' /proc/cmdline && echo 1 || true)
+UKI=$(grep -q apkovl= /proc/cmdline && echo 1 || true)
+
+[ -e /etc/profile.d/asm-paths.sh ] ||
 (cat <<'EOF'
-export AR=$(dirname /media/*/the.apkovl.tar.gz)
+export AR=$(dirname /media/*/sm)
 export AP=$(df -h $AR | awk 'NR==2{sub(/.*\//,"",$1);print$1}')
 export AD=$(echo $AP | awk '/p[0-9]$/{sub(/p[0-9]$/,"");print;next} {sub(/[0-9]$/,"");print}')
-export PATH="$AR/sm/bin:/usr/local/bin/:$PATH"
 export HOME=/root
 EOF
 echo export SHELL=$(command -v bash || command -v ash)
 echo export CORES=$( (cat /proc/cpuinfo;echo) | awk -F: '{gsub(/[ \t]/,"")} /^physicalid:/{p=$2;n++} /^coreid:/{i=$2;n++} /^$/&&n{t[p"."i]=1;n=0} END {n=0;for(x in t)n++;print n}')
+echo export SEC=$SEC
+echo export UKI=$UKI
+[ $UKI ] &&
+  echo 'export PATH="/usr/local/bin/:$PATH"' ||
+  echo 'export PATH="$AR/sm/bin:/usr/local/bin/:$PATH"'
+
 )>/etc/profile.d/asm-paths.sh
 . /etc/profile.d/asm-paths.sh
 cd
 
 # switch to shell after the first run
-[ -e /dev/shm/once ] && exec $SHELL -l
+[ -e /dev/shm/once ] && {
+  [ $SEC ] || exec $SHELL -l
+  printf '\nthis console is disabled\n'
+  sleep 80386
+  exit 1
+}
 touch /dev/shm/once
+
+# enable tty unless /proc/cmdline specifies secure
+[ $SEC ] || passwd -u root 2>/dev/null
 
 # start lo
 service networking start || true
@@ -52,6 +69,25 @@ stty size | awk '$1<36{exit 1}' ||
   done
 )
 
+ebeep() {
+  beeps 96 349 349 0 349 349
+}
+
+sigchk() {
+  local f=$AR/sm/asm.sh
+  printf ' verifying \r'
+  apk add -q openssl &&
+  openssl dgst -sha512 -verify /etc/asm.pub -signature $f.sig $f >/dev/null &&
+  true || return 1
+}
+
+[ $UKI ] && {
+  sigchk || {
+    printf '\n\033[31mABORT: asm.sh does not validate against its signature, or was not signed with the expected key\n\033[0m'
+    ebeep; exit 1
+  }
+}
+
 # be noisy unless muted
 beeps 40 2000 1000 &
 
@@ -70,6 +106,6 @@ unlog
 # error; give shell
 printf "\n$s: \033[31mERROR $err\033[0m\n"
 apk add -q tmux &
-(beeps 96 349 349 0 349 349; rmmod pcspkr 2>/dev/null) &
-exec $SHELL -l
+(ebeep; rmmod pcspkr 2>/dev/null) &
+[ $SEC ] || exec $SHELL -l
 
