@@ -27,8 +27,8 @@ HISTSIZE=10000
 HISTFILESIZE=10000
 HISTCONTROL=ignoreboth
 
-shopt -s histappend
-shopt -s checkwinsize
+shopt -s histappend 2>/dev/null
+shopt -s checkwinsize 2>/dev/null
 
 alias ls='ls --color=auto'
 alias grep='grep --color=auto'

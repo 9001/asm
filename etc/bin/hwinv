@@ -178,9 +178,9 @@ def parse(ap):
     r = {}
     files = list(sorted(os.listdir(ap)))
 
-    desc = ap.split("/")[-1]
-    if "-" in desc:
-        r["desc"] = desc.split("-", 1)[1]
+    dn = ap.split("/")[-1]
+    r["desc"] = dn.split("-", 1)[1] if "-" in dn else dn
+    r["dir"] = dn
 
     parse_lshw(os.path.join(ap, "lshw-numeric-json"), r)
 
@@ -241,6 +241,10 @@ def main():
     for d in dirs:
         if not os.path.exists(d):
             print(f"WARNING: folder not found: {d}")
+            continue
+
+        if not os.path.isfile(os.path.join(d, "lshw-numeric-json")):
+            print(f"WARNING: not a hwscan folder: {d}")
             continue
 
         verbose("adding folder", d)

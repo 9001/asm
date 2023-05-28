@@ -357,8 +357,8 @@ or compress it for uploading:
 
 or try it in qemu:
   $qemu $accel $video -cpu host -drive format=raw,file=$usb_out -m 512
-  $qemu $accel $video -cpu host -drive format=raw,file=$usb_out -bios /usr/share/OVMF/OVMF_CODE.fd -m 512
   $qemu $accel $video -cpu host -drive format=raw,file=$usb_out -net bridge,br=virhost0 -net nic,model=virtio -m 192
+  $qemu $accel $video -cpu host -device virtio-blk-pci,drive=asm,bootindex=1 -drive id=asm,if=none,format=raw,file=$usb_out -bios /usr/share/OVMF/OVMF_CODE.fd -m 512
 
 some useful qemu args:
   -nic user   -nographic
