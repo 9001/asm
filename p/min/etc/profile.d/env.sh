@@ -9,11 +9,15 @@ alias l='ls -CF'
 wt() {
 	printf '\033]0;%s\033\\' "$*"
 }
-strapmod() {
+[ $UKI ] || strapmod() {
 	cd /root && tar -xf $AR/the.apkovl.tar.gz && cd etc
 }
-strapsave() {
+[ $UKI ] || strapsave() {
 	(cd /root && mount -o remount,rw $AR && tar -czf $AR/the.apkovl.tar.gz etc && sync && (fstrim $AR 2>/dev/null || true) && echo ok)
+}
+rw() {
+	mount -o remount,rw $AR
+	pwd | grep -q $AR || cd $AR/sm
 }
 
 if [ -d /etc/apk/ ] ; then
@@ -27,7 +31,7 @@ else
 fi
 
 alias q='kill -9 $$'
-alias a='tmux attach || tmux'
+alias a='tmux attach || tmux || { apk add tmux && tmux; }'
 
 PS1="\
 \[\033[90m\]-\

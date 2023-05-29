@@ -23,50 +23,73 @@ iso_out=$2
     [ "$td" ] && mkdir "$td" ||
         td=$(mktemp --tmpdir -d asm.XXXXX || mktemp -d -t asm.XXXXX)
     
-    trap "rm -rf $td || umount $td || sudo umount $td || true; rm -rf $td; true" INT TERM EXIT
+    trap "rmdir $td 2>/dev/null || umount $td || sudo umount $td || true; rmdir $td 2>/dev/null || true" INT TERM EXIT
 
-    c="mount -o ro,offset=1048576 $usb_src $td"
+    c="mount -o offset=1048576 $usb_src $td"
     $c || sudo $c || {
         warn "please run the following as root:"
         echo "    $c" >&2
         while sleep 0.2; do
-            [ -e $td/the.apkovl.tar.gz ] &&
+            [ -e $td/sm ] &&
                 sleep 1 && break
         done
     }
-    [ -e $td/the.apkovl.tar.gz ] || {
+    [ -e $td/sm ] || {
         err failed to mount the usb image for iso conversion
         exit 1
     }
 }
 
-[ -e $td/the.apkovl.tar.gz ] || {
+[ -e $td/sm ] || {
     err the source folder is not a valid asm filesystem
     exit 1
 }
 
+eimg=$td/boot/grub/efi.img
+befi=$(echo $td/efi/boot/boot*.efi)
+sz=$(wc -c <$befi | awk '{print int($1/1024)+256}')
+
+[ $sz -gt 4141 ] && [ $befi -nt $eimg ] &&
+    rm -f $eimg  # probably UKI; rebuild
+
+[ -e $eimg ] || {
+    msg upgrading $eimg ...
+    mkdir -p $td/boot/grub
+    touch $eimg
+    truncate -s ${sz}k $eimg
+    mkfs.vfat -F16 -nESP $eimg
+    mcopy -i $eimg -s $td/efi ::
+}
+
 msg now building "$iso_out" ...
 # https://github.com/alpinelinux/aports/blob/569ab4c43cba612670f1a153a077b42474c33267/scripts/mkimg.base.sh
-xorrisofs \
-    -quiet \
-    -output "$iso_out" \
-    -full-iso9660-filenames \
-    -joliet \
-    -rational-rock \
-    -sysid LINUX \
-    -volid asm-$(date +%Y-%m%d-%H%M%S) \
-    -isohybrid-mbr $td/boot/syslinux/isohdpfx.bin \
-    -eltorito-boot boot/syslinux/isolinux.bin \
-    -eltorito-catalog boot/syslinux/boot.cat \
-    -no-emul-boot \
-    -boot-load-size 4 \
-    -boot-info-table \
-    -eltorito-alt-boot \
-    -e boot/grub/efi.img \
-    -no-emul-boot \
-    -isohybrid-gpt-basdat \
-    -follow-links \
-    $td && rv= || rv=$?
+args=(
+    -quiet
+    -output "$iso_out"
+    -full-iso9660-filenames
+    -joliet
+    -rational-rock
+    -sysid LINUX
+    -volid asm-$(date +%Y-%m%d-%H%M%S)
+)
+[ -e $td/boot/syslinux/isohdpfx.bin ] && args+=(
+    -isohybrid-mbr $td/boot/syslinux/isohdpfx.bin
+    -eltorito-boot boot/syslinux/isolinux.bin
+    -eltorito-catalog boot/syslinux/boot.cat
+    -no-emul-boot
+    -boot-load-size 4
+    -boot-info-table
+)
+args+=(
+    -eltorito-alt-boot
+    -e boot/grub/efi.img
+    -no-emul-boot
+    -isohybrid-gpt-basdat
+    -follow-links
+    -m $td/efi/boot/boot*.efi
+    $td
+)
+xorrisofs "${args[@]}" && rv= || rv=$?
 
 [ -d "$usb_src" ] || {
     c="umount $td"
@@ -74,7 +97,7 @@ xorrisofs \
         warn "please run the following as root:"
         echo "    $c" >&2
         while sleep 0.2; do
-            [ ! -e $td/the.apkovl.tar.gz ] &&
+            [ ! -e $td/sm ] &&
                 sleep 1 && break
         done
     }

@@ -1,6 +1,18 @@
 example profiles (config overlays) which replace corresponding files inside `sm` and `etc` with their own at build time
 
-* usage example: `./build.sh -p r0cbox`
+* usage example: `./build.sh -p uki`
+
+
+# [`./uki/`](./uki/)
+
+* suitable for secureboot as it does full integrity verification of all resources
+  * should be impossible (but probably isn't) to get a shell
+
+
+# [`./big/`](./big/)
+
+* includes a bunch of convenient software for debugging
+  * [`./obig/`](./obig/) is the same except smaller
 
 
 # [`./r0cbox/`](./r0cbox/)

@@ -321,12 +321,42 @@ uki_only() {
     # drop grub and bios support to save ~30 MiB
     rm -rf \
         /mnt/ldlinux* \
-        /mnt/efi/boot/grubx64.efi \
+        /mnt/efi/boot/grub*.efi \
         /mnt/boot/grub \
         /mnt/boot/syslinux \
         /mnt/boot/dtbs-* \
         /mnt/boot/vmlinuz-* \
         /mnt/boot/initramfs-*
+}
+
+sign_asm() {
+    local f=/mnt/sm/asm.sh
+
+    [ -e /etc/asm.key ] || {
+        log "WARNING: cannot sign $f because asm privkey (-ak) was not provided"
+        return 0
+    }
+
+    log signing asm.sh with provided privkey
+    apk add openssl
+    openssl dgst -sha512 -sign /etc/asm.key -out $f.sig $f
+}
+
+sign_efi() {
+    local tf=/mnt/efi/boot/s.efi
+    local efi=$(echo /mnt/efi/boot/boot*.efi)
+
+    [ -e /etc/efi.key ] && [ -e /etc/efi.crt ] || {
+        log "WARNING: cannot sign $tf because either the efi cert (-ec) or key (-ek) was not provided"
+        return 0
+    }
+
+    log signing the.efi with provided privkey
+    apk add sbsigntool
+
+    sbsign --cert /etc/efi.crt --key /etc/efi.key --output $tf $efi
+    touch -r $efi $tf
+    mv $tf $efi
 }
 
 ##

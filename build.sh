@@ -32,6 +32,9 @@ trap "rm -rf $td; tput smam || printf '\033[?7h'" INT TERM EXIT
 
 profile=
 sz=1.8
+asm_key=
+efi_key=
+efi_crt=
 iso=
 iso_out=
 usb_out=asm.usb
@@ -51,6 +54,11 @@ arguments:
   -ou PATH  output path for usb image, default: ${usb_out:-DISABLED}
   -oi PATH  output path for isohybrid, default: ${iso_out:-DISABLED}
   -b PATH   build-dir, default: $b
+
+secureboot:
+  -ak PATH  RSA pem-key for asm.sh, default: None/Unsigned
+  -ek PATH  KEK pem-key for the.efi, default: None/Unsigned
+  -ec PATH  KEK pem-cert for the.efi, default: None/Unsigned
 
 notes:
   -s cannot be smaller than the source iso
@@ -75,6 +83,9 @@ while [ "$1" ]; do
         -s)  sz="$v";  ;;
         -b)  b="$v";   ;;
         -p)  profile="$v"; ;;
+        -ak) asm_key="$v"; ;;
+        -ek) efi_key="$v"; ;;
+        -ec) efi_crt="$v"; ;;
         -ou) usb_out="$v"; ;;
         -oi) iso_out="$v"; ;;
         -m)  mirror="${v%/}"; ;;
@@ -193,6 +204,9 @@ usb_out="$(absreal "$usb_out")"
 rm -rf $b
 mkdir -p $b/fs/sm/img
 cp -pR etc $b/
+[ "$asm_key" ] && cp -pv "$asm_key" $b/etc/asm.key
+[ "$efi_key" ] && cp -pv "$efi_key" $b/etc/efi.key
+[ "$efi_crt" ] && cp -pv "$efi_crt" $b/etc/efi.crt
 
 # live-env: add apkovl + asm contents
 msg "copying sources to $b"
@@ -203,24 +217,33 @@ pdir=.
     (cd $pdir && tar -c *) |
     tar -xC $b/fs/sm/img/
 }
+[ "$asm_key" ] &&  # derive pubkey from privkey
+    mkdir -p $b/fs/sm/img/etc &&
+    openssl rsa -in "$asm_key" -pubout > $b/fs/sm/img/etc/asm.pub
 
 # quick smoketests if profile mentions UKI
-find $b/fs/sm/img/ -iname 'post-build*sh' -exec cat '{}' + | grep -qE '^export UKI=1|^\s*uki_make\b' && {
+find $b/fs/sm/img/ -iname 'post-build*sh' -exec cat '{}' + | grep -qE '^export UKI=1|^\s*uki_make([^(]|$)' && {
     [ -e $pdir/sm/asm.sh ] && sigbase=$pdir || sigbase=.
-    [ -e $b/fs/sm/img/etc/asm.pub ] || {
-        err "UKI was requested but there is no etc/asm.pub -- please create a keypair and add your pubkey into the build:"
+    [ -e $b/fs/sm/img/etc/asm.pub ] || [ "$asm_key" ] || {
+        err "UKI was requested but there is no etc/asm.pub"
+        warn "either provide a privkey with -ek, or create a keypair and add your pubkey into the build:"
         cat <<EOF
+---------------------------------------------------------------------
 mkdir -p ~/keys $sigbase/etc
-openssl genrsa -out ~/keys/asm.priv 4096
-openssl rsa -in ~/keys/asm.priv -pubout > ~/keys/asm.pub
+openssl genrsa -out ~/keys/asm.key 4096
+openssl rsa -in ~/keys/asm.key -pubout > ~/keys/asm.pub
 cp -pv ~/keys/asm.pub $sigbase/etc/
+---------------------------------------------------------------------
 EOF
         exit 1
     }
-    [ -e $b/fs/sm/img/sm/asm.sh.sig ] || {
-        err "UKI was requested but there is no sm/asm.sh.sig -- please sign your asm.sh using your rsa privkey:"
+    [ -e $b/fs/sm/img/sm/asm.sh.sig ] || [ "$asm_key" ] || {
+        err "UKI was requested but there is no sm/asm.sh.sig"
+        warn "either provide a privkey with -ek, or manually sign your asm.sh using your rsa privkey:"
         cat <<EOF
-openssl dgst -sha512 -sign ~/keys/asm.priv -out $sigbase/sm/asm.sh.sig $sigbase/sm/asm.sh
+---------------------------------------------------------------------
+openssl dgst -sha512 -sign ~/keys/asm.key -out $sigbase/sm/asm.sh.sig $sigbase/sm/asm.sh
+---------------------------------------------------------------------
 EOF
         exit 1
     }

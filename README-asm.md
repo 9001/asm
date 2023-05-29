@@ -72,9 +72,9 @@ mkdir -p m; mount -o offset=1048576,uid=1000 asm.usb m
 cat <asm.iso >/dev/sdx
 ```
 
-> `cat <asm.iso >/dev/sdx` can be replaced with `revert /dev/sdx <asm.iso` for much faster writes; see[revert](https://github.com/9001/usr-local-bin/blob/master/revert)
-
-you still need to do a full build when you change the set of included packages or make changes to the initramfs
+* `cat <asm.iso >/dev/sdx` can be replaced with `revert /dev/sdx <asm.iso` for much faster writes; see [revert](https://github.com/9001/usr-local-bin/blob/master/revert)
+* if you need secureboot / measured-boot, run this before u2i: `./mod.sh -u m -ak ~/keys/asm.key`
+* you still need to do a full build when you change the set of included packages or make changes to the initramfs
 
 
 # make it your own
