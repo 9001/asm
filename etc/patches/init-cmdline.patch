@@ -1,0 +1,4 @@
+some uefis provide uninitialized memory as cmdline
+@@ -372 +372 @@
+-set -- $(cat "$ROOT"/proc/cmdline)
++set -- $(cat /cmdline)

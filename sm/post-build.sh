@@ -247,6 +247,13 @@ uki_make() {
     local sec=
     [ $# -gt 0 ] && sec=secure
 
+    local cmdline=/dev/shm/cmdline
+    awk '/boot\/vmlinuz-/ {
+        sub(/[^-]+/,"");
+        sub(/[^ ]+ /,"");
+        print $0 " apkovl=/the.apkovl.tar.gz pkgs=openssl '$sec' "
+    }' </mnt/boot/grub/grub.cfg >$cmdline
+
     # sign modloop
     local rsa=/dev/shm/modloop
     local ml=$(echo /mnt/boot/modloop-*)
@@ -264,6 +271,8 @@ uki_make() {
     gzip -d < $f | cpio -idm
     patch init </etc/patches/init-uki.patch
     patch init </etc/patches/init-passwd.patch
+    patch init </etc/patches/init-cmdline.patch
+    cp /dev/shm/cmdline .
     mkdir x; cd x
     tar -xzf /mnt/the.apkovl.tar.gz
     rm /mnt/the.apkovl.tar.gz
@@ -297,13 +306,6 @@ uki_make() {
     local initrd=$(echo /mnt/boot/initramfs-*)
     [ -f $linux ] && [ -f $initrd ] || die "could not find linux $linux or initrd $initrd"
 
-    local cmdline=/dev/shm/cmdline
-    awk '/boot\/vmlinuz-/ {
-        sub(/[^-]+/,"");
-        sub(/[^ ]+ /,"");
-        print $0 " apkovl=/the.apkovl.tar.gz pkgs=openssl '$sec' "
-    }' </mnt/boot/grub/grub.cfg >$cmdline
-
     #rshell 192.168.122.1
 
     mv /mnt/efi/boot/boot$march.efi /mnt/efi/boot/grub$march.efi
@@ -311,8 +313,7 @@ uki_make() {
     objcopy \
         --add-section .osrel="$osrel"     --change-section-vma .osrel=0x20000    \
         --add-section .cmdline="$cmdline" --change-section-vma .cmdline=0x30000  \
-        --add-section .splash="/dev/null" --change-section-vma .splash=0x40000   \
-        --add-section .linux="$linux"     --change-section-vma .linux=0x2000000  \
+        --add-section .linux="$linux"     --change-section-vma .linux=0x40000    \
         --add-section .initrd="$initrd"   --change-section-vma .initrd=0x3000000 \
         "$efistub" "/mnt/efi/boot/boot$march.efi"
 }

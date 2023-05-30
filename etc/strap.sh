@@ -3,11 +3,10 @@
 
 command -v bash >/dev/null || apk add -q bash 2>/dev/null >&2 || true
 
-SEC=$(grep -qE '\bsecure\b' /proc/cmdline && echo 1 || true)
-UKI=$(grep -q apkovl= /proc/cmdline && echo 1 || true)
-
-[ -e /etc/profile.d/asm-paths.sh ] ||
-(cat <<'EOF'
+[ -e /etc/profile.d/asm-paths.sh ] || (
+SEC=$(grep -qE ^root:: /etc/shadow || echo 1)
+UKI=$(awk 'NR>1{next} {v=1} /modules=/{v=""} /apkovl=/{v=1} END{print v}' /proc/cmdline)
+cat <<'EOF'
 export AR=$(dirname /media/*/sm)
 export AP=$(df -h $AR | awk 'NR==2{sub(/.*\//,"",$1);print$1}')
 export AD=$(echo $AP | awk '/p[0-9]$/{sub(/p[0-9]$/,"");print;next} {sub(/[0-9]$/,"");print}')
