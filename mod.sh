@@ -22,8 +22,8 @@ modifies an existing asm.usb (secureboot-sign and/or replace resources)
 arguments:
   -u PATH   usb image to modify, default: ${usb_img}
   -ak PATH  RSA pem-key for asm.sh, default: Do-Not-Modify
-  -ek PATH  KEK pem-key for the.efi, default: Do-Not-Modify
-  -ec PATH  KEK pem-cert for the.efi, default: Do-Not-Modify
+  -ek PATH  SB pem-key for the.efi, default: Do-Not-Modify
+  -ec PATH  SB pem-cert for the.efi, default: Do-Not-Modify
   -sm PATH  delete and replace sm folder with PATH
   -z yes    zero free space if fstrim fails
 

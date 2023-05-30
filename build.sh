@@ -57,8 +57,8 @@ arguments:
 
 secureboot:
   -ak PATH  RSA pem-key for asm.sh, default: None/Unsigned
-  -ek PATH  KEK pem-key for the.efi, default: None/Unsigned
-  -ec PATH  KEK pem-cert for the.efi, default: None/Unsigned
+  -ek PATH  SB pem-key for the.efi, default: None/Unsigned
+  -ec PATH  SB pem-cert for the.efi, default: None/Unsigned
 
 notes:
   -s cannot be smaller than the source iso
@@ -226,7 +226,7 @@ find $b/fs/sm/img/ -iname 'post-build*sh' -exec cat '{}' + | grep -qE '^export U
     [ -e $pdir/sm/asm.sh ] && sigbase=$pdir || sigbase=.
     [ -e $b/fs/sm/img/etc/asm.pub ] || [ "$asm_key" ] || {
         err "UKI was requested but there is no etc/asm.pub"
-        warn "either provide a privkey with -ek, or create a keypair and add your pubkey into the build:"
+        warn "either provide a privkey with -ak, or create a keypair and add your pubkey into the build:"
         cat <<EOF
 ---------------------------------------------------------------------
 mkdir -p ~/keys $sigbase/etc
@@ -239,7 +239,7 @@ EOF
     }
     [ -e $b/fs/sm/img/sm/asm.sh.sig ] || [ "$asm_key" ] || {
         err "UKI was requested but there is no sm/asm.sh.sig"
-        warn "either provide a privkey with -ek, or manually sign your asm.sh using your rsa privkey:"
+        warn "either provide a privkey with -ak, or manually sign your asm.sh using your rsa privkey:"
         cat <<EOF
 ---------------------------------------------------------------------
 openssl dgst -sha512 -sign ~/keys/asm.key -out $sigbase/sm/asm.sh.sig $sigbase/sm/asm.sh

@@ -242,7 +242,6 @@ imshrink_nosig() {
 uki_make() {
     # must be done after all initramfs / apkovl tweaks
     apk add gummiboot-efistub cmd:objcopy xz openssl patch
-        #efibootmgr efivar mokutil sbsigntool efitools efi-mkkeys efi-mkuki openssl gpg gpgv
 
     local sec=
     [ $# -gt 0 ] && sec=secure
