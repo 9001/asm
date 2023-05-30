@@ -1,0 +1,5 @@
+#!/bin/ash
+# undo add if error
+/sbin/apk --force-non-repository --wait 10 add "$@" && exit 0 || rv=$?
+/sbin/apk --force-non-repository --wait 10 del "$@"
+exit $rv

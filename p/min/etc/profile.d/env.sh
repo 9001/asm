@@ -31,7 +31,7 @@ else
 fi
 
 alias q='kill -9 $$'
-alias a='tmux attach || tmux || { apk add tmux && tmux; }'
+alias a='tmux attach || tmux || { apka tmux && tmux; }'
 
 PS1="\
 \[\033[90m\]-\

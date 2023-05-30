@@ -390,3 +390,6 @@ activate host-only-network if necessary:
   ./doc/setup-virhost.sh
 
 EOF
+
+
+# sound: -device ich9-intel-hda,id=sound0 -device hda-duplex,id=sound0-codec0,bus=sound0.0,cad=0 -global ICH9-LPC.disable_s3=1 -global ICH9-LPC.disable_s4=1

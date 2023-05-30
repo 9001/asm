@@ -57,17 +57,17 @@ if [ -d /etc/apk/ ] ; then
 	[ "x$TERM" == "xrxvt" ] && export TERM=rxvt-256color
 	[ "x$TERM" == "xxterm" ] && export TERM=rxvt-256color
 	alias apk='/sbin/apk --force-non-repository --wait 10'
-	alias mc='[ -e /usr/bin/mc ] || apk add mc; /usr/bin/mc -S /usr/share/mc/skins/nicedark.ini'
+	alias mc='[ -e /usr/bin/mc ] || apka mc; /usr/bin/mc -S /usr/share/mc/skins/nicedark.ini'
 	alias i='apk add'
 else
 	alias tmux='TERM=screen-256color tmux'
 fi
 for c in bmon htop lshw ncdu ranger sshfs vim; do
-	alias $c="unalias $c; which $c >/dev/null || apk add $c; $c"
+	alias $c="unalias $c; which $c >/dev/null || apka $c; $c"
 done
 
 alias q='kill -9 $$'
-alias a='tmux attach || tmux || { apk add tmux && tmux; }'
+alias a='tmux attach || tmux || { apka tmux && tmux; }'
 alias yssh='ssh -oUserKnownHostsFile=/dev/null -oStrictHostKeyChecking=no'
 
 PS1="\

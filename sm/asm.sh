@@ -119,16 +119,16 @@ infograb() {
 	p2="coreutils"
 	p3="dmidecode lshw smartmontools nvme-cli libcpuid-tool"
 
-	apk add $p1 $p2 $p3 || {
-		apk add $p1
-		apk add $p2 || true
-		apk add $p3 || true
+	apka $p1 $p2 $p3 || {
+		apka $p1
+		apka $p2 || true
+		apka $p3 || true
 	}
 
 	# to timeout the comment prompt after 3 sec, uncomment the '' 3
 	hwscan $AR/sm/infos  # '' 3
 
-	apk add python3 && (
+	apka python3 && (
 		cd /dev/shm
 		rm -f hw-inv.*
 		hwinv $AR/sm/infos \

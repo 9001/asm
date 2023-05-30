@@ -91,7 +91,7 @@ command -v tinyplay >/dev/null && {
 }
 
 echo $AR/apks/*/tinyalsa-* | grep -q apk$ && {
-    apk add -q tinyalsa; abeep "$@"
+    apka -q tinyalsa && abeep "$@"
     exit
 }
 

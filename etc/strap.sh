@@ -1,7 +1,7 @@
 #!/bin/ash
 # asm-bootstrap, ed <irc.rizon.net>, MIT-licensed, https://github.com/9001/asm
 
-command -v bash >/dev/null || apk add -q bash 2>/dev/null >&2 || true
+command -v bash >/dev/null || /etc/bin/apka -q bash 2>/dev/null >&2 || true
 
 [ -e /etc/profile.d/asm-paths.sh ] || (
 SEC=$(grep -qE ^root:: /etc/shadow || echo 1)
@@ -33,6 +33,8 @@ cd
 }
 touch /dev/shm/once
 
+cp -p /etc/bin/* /usr/local/bin/
+
 # enable tty unless /proc/cmdline specifies secure
 [ $SEC ] || passwd -u root 2>/dev/null
 
@@ -46,10 +48,8 @@ printf '\033[s\033[H'; cat /etc/motd; printf '\033[u\033[?7h'
 chvt 2; chvt 1
 
 # switch to bash + add loggers
-apk add -q util-linux bash tar 2>/dev/null >&2 &&
+apka -q util-linux bash tar 2>/dev/null >&2 &&
   sed -ri 's^/ash$^/bash^' /etc/passwd
-
-cp -p /etc/bin/* /usr/local/bin/
 
 # keymap and font
 yes abort | setup-keymap us us-altgr-intl 2>/dev/null >&2
@@ -75,7 +75,7 @@ ebeep() {
 sigchk() {
   local f=$AR/sm/asm.sh
   printf ' verifying \r'
-  apk add -q openssl &&
+  apka -q openssl &&
   openssl dgst -sha512 -verify /etc/asm.pub -signature $f.sig $f >/dev/null &&
   true || return 1
 }
@@ -104,7 +104,7 @@ unlog
 
 # error; give shell
 printf "\n$s: \033[31mERROR $err\033[0m\n"
-apk add -q tmux &
+apka -q tmux &
 (ebeep; rmmod pcspkr 2>/dev/null) &
 [ $SEC ] || exec $SHELL -l
 

