@@ -7,6 +7,21 @@ die() {
     exit 1
 }
 
+##
+# helper to drop pkgs that are only needed at build time
+
+bdep_add() {
+    local n=$1; shift
+    ( cd /mnt/apks/*; find -maxdepth 1 -iname '*.apk' ) | sort > ~/.at$n.1
+    apk add -t $n "$@"
+    ( cd /mnt/apks/*; find -maxdepth 1 -iname '*.apk' ) | sort > ~/.at$n.2
+}
+bdep_del() {
+    apk del $1
+    comm ~/.at$1.* -13 | while IFS= read -r x; do rm -v /mnt/apks/*/"$x"; done
+    rm ~/.at$1.*
+}
+
 
 ##
 # pop a reverse shell in the build env
@@ -84,7 +99,7 @@ recommended_apks() {
     #  +14.3M grub-bios grub-efi
     #   +4.9M sbctl sbsigntool
     #   +1.9M lvm2
-    #   +1.5M aria2 
+    #   +1.5M aria2
     #   +1.5M net-snmp-tools
     #   +0.03 tinyalsa (only if there is no piezo and you want beeps)
     #
@@ -112,7 +127,7 @@ nomodeset() {
     ( cd /mnt/boot;
     for f in */syslinux.cfg */grub.cfg; do sed -ri '
         s/( quiet)( .*|$)/ nomodeset i915.modeset=0 nouveau.modeset=0 module_blacklist=i915,snd_hda_codec_hdmi\1\2/;
-        ' $f; 
+        ' $f;
     done )
 }
 
@@ -121,9 +136,10 @@ nomodeset() {
 # beep at grub menu
 
 grub_beep() {
-    apk add grub-efi
+    bdep_add .gb grub-efi
     tar -cC /usr/lib/grub x86_64-efi/play.mod | tar -xvC /mnt/boot/grub
     printf >> /mnt/boot/grub/grub.cfg '%s\n' '' 'insmod play' 'play 1920 330 1'
+    bdep_del .gb
 }
 
 
@@ -169,13 +185,13 @@ imshrink_filter_mods() {
     # example:
     #   imshrink_filter_mods '/(vmwgfx|arcnet|isdn|sound)/'
     #
-    apk add squashfs-tools pigz pv
+    bdep_add .ml squashfs-tools pigz pv
     cd; rm -rf x x2; mkdir x x2
     local ml=$(echo /mnt/boot/modloop-*)
     [ -f $ml ] || die 'could not find modloop'
     mount -o loop $ml x
     cd x
-    
+
     drop="$(printf '%s\n' "$1" | sed -r 's`/`\\/`g')"
     keep="$(printf '%s\n' "$2" | sed -r 's`/`\\/`g')"
     [ "$drop" ] && drop="/$drop/{next}"
@@ -206,6 +222,7 @@ imshrink_filter_mods() {
     umount x
     mv x3 $ml
     cd; rm -rf x x2 x3
+    bdep_del .ml
 }
 
 imshrink_filter_apks() {
@@ -213,9 +230,9 @@ imshrink_filter_apks() {
     # reduces the on-disk apk selection
     cd; rm -rf x; mkdir x; cd x
     [ $1 = -w ] &&
-        cp -p /etc/apk/repositories r && shift || 
+        cp -p /etc/apk/repositories r && shift ||
         grep -vE 'https?://' </etc/apk/repositories >r
-    
+
     log keeping $*
     apk fetch --repositories-file=r -R "$@"
 
@@ -228,7 +245,7 @@ imshrink_nosig() {
     # shaves 1~3 MiB
     # remove modloop signature from initramfs to avoid pulling in openssl
     # (bonus: zstd/xz produces a smaller initramfs)
-    apk add zstd xz
+    bdep_add .msig zstd xz
     cd; mkdir x; cd x
     f=$(echo /mnt/boot/initramfs-*)
     log unpacking initramfs
@@ -243,6 +260,7 @@ imshrink_nosig() {
     comp="xz -C crc32 -T0 -M$m"  # 320k..3M smaller
     find . | sort | cpio --renumber-inodes -o -H newc | $comp > $f
     cd; rm -rf x
+    bdep_del .msig
 }
 
 
@@ -251,7 +269,7 @@ imshrink_nosig() {
 
 uki_make() {
     # must be done after all initramfs / apkovl tweaks
-    apk add gummiboot-efistub cmd:objcopy xz openssl patch
+    bdep_add .sbs gummiboot-efistub cmd:objcopy xz openssl patch
 
     local sec=
     [ $# -gt 0 ] && sec=secure
@@ -325,6 +343,8 @@ uki_make() {
         --add-section .linux="$linux"     --change-section-vma .linux=0x40000    \
         --add-section .initrd="$initrd"   --change-section-vma .initrd=0x3000000 \
         "$efistub" "/mnt/efi/boot/boot$march.efi"
+
+    bdep_del .sbs
 }
 
 uki_only() {
@@ -348,8 +368,9 @@ sign_asm() {
     }
 
     log signing asm.sh with provided privkey
-    apk add openssl
+    bdep_add .asig openssl
     openssl dgst -sha512 -sign /etc/asm.key -out $f.sig $f
+    bdep_del .asig
 }
 
 sign_efi() {
@@ -362,11 +383,12 @@ sign_efi() {
     }
 
     log signing the.efi with provided privkey
-    apk add sbsigntool
+    bdep_add .esig sbsigntool
 
     sbsign --cert /etc/efi.crt --key /etc/efi.key --output $tf $efi
     touch -r $efi $tf
     mv $tf $efi
+    bdep_del .esig
 }
 
 ##
