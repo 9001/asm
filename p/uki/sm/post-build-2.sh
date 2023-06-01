@@ -9,7 +9,12 @@ wrepo
 
 # optional
 fetch_apks mokutil efitools  # autoinstall secureboot certs into uefi
-imshrink_filter_mods  # saves ~50 MiB
+nomodeset  # faster boot
+
+# optional -- shaves 106 MiB (arg1=drop, arg2=keep)
+imshrink_filter_mods \
+    '/(modules/firmware|net/(ethernet|usb|dsa|can|ppp|fddi|arcnet)|infiniband|drivers/gpu|echoaudio|staging|mei|thunderbolt|firewire|f2fs|btrfs|nfsd?|sunrpc|cifs|ceph|gfs2|ksmbd|reiserfs|mac80211)/|/xt_|/scsi/(lpfc|qla|elx|mpt|aic|pm|mpi|aac|be2|fco)' \
+    'bnx2|rtl_nic|tigon|intel/(i40e|ix?gb|e1000e)|ethernet/(broadcom|realtek|amd)'
 
 # keep these last
 uki_make 1  # secureboot + measured-boot; remove `1` to allow tty

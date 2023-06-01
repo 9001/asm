@@ -161,8 +161,13 @@ imshrink_filter_mods() {
     # shaves ~54 MiB
     # shrink modloop by removing rarely-useful stuff + invokes imshrink_fake_gz
     #
-    # accepts optional regex for additional mods to remove; for example
-    # imshrink_filter_mods '\/(vmwgfx|arcnet|isdn)\/'
+    # accepts one, two, or three optional args:
+    #   arg 1: regex of additional mods to remove
+    #   arg 2: regex of mods to keep (override remove)
+    #   arg 3: disables all default rules if non-empty
+    #
+    # example:
+    #   imshrink_filter_mods '/(vmwgfx|arcnet|isdn|sound)/'
     #
     apk add squashfs-tools pigz pv
     cd; rm -rf x x2; mkdir x x2
@@ -170,18 +175,23 @@ imshrink_filter_mods() {
     [ -f $ml ] || die 'could not find modloop'
     mount -o loop $ml x
     cd x
-    arg="$1"; [ -z "$arg" ] || arg="/$arg/{next}"
-    log unpacking modloop
-    find -type f | awk '
+    
+    drop="$(printf '%s\n' "$1" | sed -r 's`/`\\/`g')"
+    keep="$(printf '%s\n' "$2" | sed -r 's`/`\\/`g')"
+    [ "$drop" ] && drop="/$drop/{next}"
+    [ "$keep" ] && keep="/$keep/{print;next}"
+    base='
         /\/(brcm|mrvl|ath1.k|ti-connectivity|rtlwifi|rtl_bt|wireless|bluetooth)\/|iwlwifi/{next}  # wifi/bt
         /\/(amdgpu|radeon|nvidia|nouveau)\//{next}  # pcie gpus
         /\/(netronome)\//{next}  # agilio smartnics
-        /\/(sound)\//{next}  # soundcards
         /\/(drivers\/multimedia|kernel\/drivers\/media)\//{next}  # capturecards, webcams
         /\/(ueagle-atm)\//{next}  # adsl modems
         /\/(ocfs2)\//{next}  # filesystems
-        '"$arg"'  # from argv
-    1' | tar -cT- | tar -xC ../x2
+    '
+    [ "$3" ] && base=
+
+    log unpacking modloop
+    find -type f | (set -x; awk "${keep}${base}${drop}1") | tar -cT- | tar -xC ../x2
     imshrink_fake_gz
     cd
     # https://github.com/alpinelinux/alpine-conf/blob/b511518795b03520248d9a64ff488716e3f01c38/update-kernel.in#L326
