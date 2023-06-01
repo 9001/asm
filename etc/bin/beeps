@@ -30,7 +30,7 @@ nbeep() {
 abeep() {
     killall -q tinyplay || true
     for m in 'Master Playback' 'PCM Playback'; do
-        tinymix set "$m Volume" 100% 2>/dev/null || true
+        tinymix set "$m Volume" 89% 2>/dev/null || true
         tinymix set "$m Switch" 1 2>/dev/null || true
     done
 

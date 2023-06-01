@@ -364,7 +364,11 @@ popd >/dev/null
 mv $b/asm.usb "$usb_out"
 rm -rf $b
 
-[ "$iso_out" ] && ./u2i.sh "$usb_out" "$iso_out" "$b"
+[ "$iso_out" ] &&
+    ./u2i.sh "$usb_out" "$iso_out" -td "$b" &&
+    du -sk "$iso_out"
+
+du -sk "$usb_out"
 
 cat <<EOF
 
