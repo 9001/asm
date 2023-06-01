@@ -1,7 +1,11 @@
-disable login as root until unlocked by asm.sh
-@@ -868,2 +868,5 @@
+disable login as root until unlocked by asm.sh,
+and block the modloop verification by removing the signature
+(we have our own sig since we usually rebuild the modloop)
+@@ -868,2 +868,7 @@
  
 +#printf 'k\nk\n' | chroot $sysroot passwd root 2>/dev/null
 +chroot $sysroot passwd -l root 2>/dev/null
++
++rm -f /sysroot/var/cache/misc/modloop*
 +
  # switch over to new root

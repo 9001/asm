@@ -36,9 +36,15 @@ install_secureboot_certs() {
     }
     echo installing secureboot certs
     chattr -i /sys/firmware/efi/efivars/*
-    efi-updatevar -f $AR/certs/db.auth db
-    efi-updatevar -f $AR/certs/kek.auth KEK
-    efi-updatevar -f $AR/certs/pk.auth PK  # keep last
+    for k in db KEK PK; do
+        fp=$AR/certs/$k
+        [ -e $fp.auth ] ||
+            fp=$AR/certs/$(echo $k | tr [:upper:] [:lower:])
+
+        echo " - $fp"
+        efi-updatevar -f $fp.auth $k ||
+        efi-updatevar -e -f $fp.esl $k
+    done
     mokutil --sb-state | grep -q Setup &&
         log 'WARNING: secureboot did not leave setup mode' ||
         echo 'secureboot was configured successfully'
