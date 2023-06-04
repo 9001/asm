@@ -244,7 +244,6 @@ imshrink_filter_apks() {
 imshrink_nosig() {
     # shaves 1~3 MiB
     # remove modloop signature from initramfs to avoid pulling in openssl
-    # (bonus: zstd/xz produces a smaller initramfs)
     bdep_add .msig zstd xz
     cd; mkdir x; cd x
     f=$(echo /mnt/boot/initramfs-*)

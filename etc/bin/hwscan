@@ -41,8 +41,8 @@ runcmds() {
 			continue
 		}
 		log "running $cmd"
-		fn="$(printf '%s\n' "$cmd" | tr -s ' -./=&<>' -)"
-		printf '%s\n' "$fn" | grep -E ^cpuid_tool && fn=x
+		fn="$(printf '%s' "$cmd" | tr -cs '[:alnum:]' -)"
+		printf '%s\n' "$fn" | grep -E ^cpuid_tool && fn=/dev/null
 		(eval "$cmd") >"$fn" && continue || rc=$?
 		printf '%s\n' "$cmd" | grep -q json && continue
 		echo "CMD FAILED: $cmd => $?" | tee -a "$fn"
@@ -97,6 +97,7 @@ cmt="$1"
 }
 [ ! $ask ] && REPLY="$1" || read -u1 -rp 'optional-comment> '
 echo
+REPLY="$(printf '%s' "$REPLY" | tr -cs '[:alnum:]' -)"
 [ "$REPLY" ] && d="$d-$REPLY"
 td=$(mktemp --tmpdir -d hwscan.XXXXX || mktemp -d -t hwscan.XXXXX)
 cd $td
