@@ -21,6 +21,8 @@ trim=
 
 [ $(id -u) -eq 0 ] && ex= || ex=1
 
+export MTOOLS_SKIP_CHECK=1
+
 help() {
     sed -r $'s/^( +)(-\w+ +)([A-Z]\w* +)/\\1\\2\e[36m\\3\e[0m/; s/(.*default: )(.*)/\\1\e[35m\\2\e[0m/' <<EOF
 
@@ -156,16 +158,31 @@ usb_close() {
 
 mt_build() {
     msg building new image with mtools
-    [ "$sz" ] && sz=$(echo "(($sz*1024*1024*1024+511)/512)*512" | tr , . | LC_ALL=C bc)
+    [ "$sz" ] && sz=$(echo "(($sz*1024*1024*1024+16383)/16384)*16384" | tr , . | LC_ALL=C bc)
     [ "$sz" ] || sz=$(wc -c < "$img" | awk '{print$1}')
+    head -c 1048576 "$img" > "$img.mbr"
     truncate -s 0 "$img"
     truncate -s $sz "$img"
-    echo ',,0c,*' | sfdisk -q --label dos "$img"
+    echo ',,0c,*' | sfdisk -q --label dos "$img" 2>/dev/null || {
+        msg using sfdisk fallback
+        cat "$img.mbr" > "$img"
+        truncate -s $sz "$img"
+    }
+    rm "$img.mbr"
     [ "$di" ] && sfdisk -q --disk-id "$img" 0x$di
     local args=
     [ "$vi" ] && args="-i $vi"
-    mkfs.vfat -F32 -n"$vn" $args --mbr=n -S512 --offset=2048 "$img"
-    (cd "$td" && mcopy -Qbmsi "$img"@@1M ./* ./.* ::)
+    mkfs.vfat -F32 -n"$vn" $args --mbr=n -S512 --offset=2048 "$img" &&
+    (shopt -s dotglob; cd "$td" && mcopy -Qbmsi "$img"@@1M ./* ::) || {
+        msg using mkfs.vfat fallback
+        rm -rf "$img.fs"
+        touch "$img.fs"
+        truncate -s $((sz-1048576)) "$img.fs"
+        mkfs.vfat -F32 -n"$vn" $args -S512 "$img.fs"
+        (shopt -s dotglob; cd "$td" && mcopy -Qbmsi "$img.fs" ./* ::)
+        dd if="$img.fs" of="$img" bs=65536 seek=16 conv=notrunc,sparse
+        rm "$img.fs"
+    }
 }
 
 [ -d "$img" ] ||

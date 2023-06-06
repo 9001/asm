@@ -252,11 +252,11 @@ imshrink_nosig() {
     rm -f var/cache/misc/modloop-*.SIGN.RSA.*
     log repacking initramfs
     free -m
-    local m=$(awk '/^MemAvailable:/{printf("%d\n",$2*1024*0.9)}' < /proc/meminfo)
+    local m=$(awk '/^MemAvailable:/{printf("%d\n",($2*0.9)/1024)}' < /proc/meminfo)
     # https://github.com/alpinelinux/mkinitfs/blob/a5f05c98f690d95374b69ae5405052b250305fdf/mkinitfs.in#L177
     umask 0077
     comp="zstd -19 -T0"     # boots ~.5sec / 10% faster, --long/--ultra can OOM
-    comp="xz -C crc32 -T0 -M$m"  # 320k..3M smaller
+    comp="xz -C crc32 -T0 -M${m}MiB"  # 320k..3M smaller
     find . | sort | cpio --renumber-inodes -o -H newc | $comp > $f
     cd; rm -rf x
     bdep_del .msig
@@ -308,10 +308,10 @@ uki_make() {
 
     log repacking initramfs
     free -m
-    local m=$(awk '/^MemAvailable:/{printf("%d\n",$2*1024*0.9)}' < /proc/meminfo)
+    local m=$(awk '/^MemAvailable:/{printf("%d\n",($2*0.9)/1024)}' < /proc/meminfo)
     # https://github.com/alpinelinux/mkinitfs/blob/a5f05c98f690d95374b69ae5405052b250305fdf/mkinitfs.in#L177
     umask 0077
-    comp="xz -C crc32 -T0 -M$m"
+    comp="xz -C crc32 -T0 -M${m}MiB"
     find . | sort | cpio --renumber-inodes -o -H newc | $comp > $f
     cd; rm -rf x
 

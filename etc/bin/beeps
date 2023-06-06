@@ -1,6 +1,9 @@
 #!/bin/ash
 set -e
 
+# volume is 89% unless specified in /sm/avol.txt;
+# mute by creating an empty file at /sm/quiet
+
 [ -e $AR/sm/quiet ] && {
     rmmod pcspkr 2>/dev/null || true
     exit 0
@@ -18,9 +21,7 @@ shift
 
 # native beep
 nbeep() {
-    while [ $# -gt 0 ]; do
-        f=$1
-        shift
+    for f; do
         [ $f = 0 ] && sleep $(awk "BEGIN {print $d/1000}" </dev/null) && continue
         beep -f $f -l $d
     done
@@ -29,8 +30,9 @@ nbeep() {
 # alsa-beep
 abeep() {
     killall -q tinyplay || true
+    avol=$(sed s/%// $AR/sm/avol.txt 2>/dev/null || echo 89)
     for m in 'Master Playback' 'PCM Playback'; do
-        tinymix set "$m Volume" 89% 2>/dev/null || true
+        tinymix set "$m Volume" $avol% 2>/dev/null || true
         tinymix set "$m Switch" 1 2>/dev/null || true
     done
 
@@ -57,9 +59,8 @@ abeep() {
             touch $fl
             fgen 386 0  # metal
         }
-        while [ $# -gt 0 ]; do
-            fgen $d $1
-            shift
+        for f; do
+            fgen $d $f
         done
         fgen 333 0  # qemu
     } |

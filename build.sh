@@ -310,7 +310,7 @@ done )
 
 log adding ./sm/
 cp -pR $AR/sm/img/* /mnt/ 2>&1 | grep -vF 'preserve ownership of' || true
-mkdir /mnt/sm/bin
+mkdir -p /mnt/sm/bin
 
 f=$AR/sm/img/sm/post-build.sh
 [ -e $f ] && log $f && $SHELL $f
@@ -340,8 +340,8 @@ mkfs.ext3 -Fd fs $a ovl.img || {
     rmdir m
 }
 
-# user-provided; ceil to 512b
-sz=$(echo "(($sz*1024*1024*1024+511)/512)*512" | tr , . | LC_ALL=C bc)
+# user-provided; ceil to 16k
+sz=$(echo "(($sz*1024*1024*1024+16383)/16384)*16384" | tr , . | LC_ALL=C bc)
 truncate -s ${sz} asm.usb
 
 mkfifo s.{in,out}
