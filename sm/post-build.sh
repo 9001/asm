@@ -7,6 +7,9 @@ die() {
     exit 1
 }
 
+. /etc/profile.d/buildvars.sh
+
+
 ##
 # helper to drop pkgs that are only needed at build time
 
@@ -158,6 +161,7 @@ imshrink_fake_gz() {
     printf '\033[?7h'
     log uncompressing kmods using $CORES cores
     find -iname '*.gz' > ~/l
+    [ -s ~/l ] || return 0
     local nc=0
     while true; do
         awk \$NR%$CORES==$nc ~/l |
@@ -171,6 +175,22 @@ imshrink_fake_gz() {
     done
     wait
     echo
+}
+
+imshrink_zinfo() {
+    # shaves ~3 MiB by compressing symbols (only useful for debugging kernel bugs)
+    log compressing kernel info
+    bdep_add .zki xz
+    cd /mnt/boot
+    xz -z9T0 System.map*
+    xz -z9T0 config*
+    cd
+    bdep_del .zki
+}
+
+imshrink_rmkinfo() {
+    # or shave 3.7 MiB by just deleting them entirely
+    rm -f /mnt/boot/System.map* /mnt/boot/config*
 }
 
 imshrink_filter_mods() {
@@ -296,8 +316,8 @@ uki_make() {
     log unpacking initramfs
     gzip -d < $f | cpio -idm
     patch init </etc/patches/init-uki.patch
-    patch init </etc/patches/init-passwd.patch
     patch init </etc/patches/init-cmdline.patch
+    [ $sec ] && patch init </etc/patches/init-passwd.patch
     cp /dev/shm/cmdline .
     mkdir x; cd x
     tar -xzf /mnt/the.apkovl.tar.gz

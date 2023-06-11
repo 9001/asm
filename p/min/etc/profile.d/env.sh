@@ -32,6 +32,7 @@ fi
 
 alias q='kill -9 $$'
 alias a='tmux attach || tmux || { apka tmux && tmux; }'
+alias sfnt='(cd /etc/cfnt; setfont $(ls -1))'
 
 PS1="\
 \[\033[90m\]-\

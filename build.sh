@@ -35,6 +35,8 @@ sz=1.8
 asm_key=
 efi_key=
 efi_crt=
+bvars=()
+bvarf=
 iso=
 iso_out=
 usb_out=asm.usb
@@ -55,6 +57,11 @@ arguments:
   -oi PATH  output path for isohybrid, default: ${iso_out:-DISABLED}
   -b PATH   build-dir, default: $b
 
+build-vars:
+  -v A,B,C  export A, B and C into build env
+  -v K=V    export K into build env (assigned to V)
+  -vf PATH  is copied into /etc/profile.d/buildvars.sh
+
 secureboot:
   -ak PATH  RSA pem-key for asm.sh, default: None/Unsigned
   -ek PATH  SB pem-key for the.efi, default: None/Unsigned
@@ -62,6 +69,7 @@ secureboot:
 
 notes:
   -s cannot be smaller than the source iso
+  -v can be repeated, -vf cannot
 
 examples:
   $0 -i dl/alpine-extended-$v-x86_64.iso
@@ -83,6 +91,8 @@ while [ "$1" ]; do
         -s)  sz="$v";  ;;
         -b)  b="$v";   ;;
         -p)  profile="$v"; ;;
+        -v)  bvars+=("$v"); ;;
+        -vf) bvarf="$v";   ;;
         -ak) asm_key="$v"; ;;
         -ek) efi_key="$v"; ;;
         -ec) efi_crt="$v"; ;;
@@ -208,6 +218,20 @@ cp -pR etc $b/
 [ "$efi_key" ] && cp -pv "$efi_key" $b/etc/efi.key
 [ "$efi_crt" ] && cp -pv "$efi_crt" $b/etc/efi.crt
 
+# export -v|-vf
+f=$b/etc/profile.d/buildvars.sh
+mkdir -p $(dirname $f)
+[ "$bvarf" ] && cat "$bvarf" >$f
+for bvar in "${bvars[@]}"; do
+    [[ $bvar == *=* ]] && {
+        printf 'export %q\n' "$bvar"
+        continue
+    }
+    printf '%s\n' "$bvar" | tr , '\n' | while IFS= read -r x; do
+        printf 'export %q\n' "$x=${!x}"
+    done
+done >>$f
+
 # live-env: add apkovl + asm contents
 msg "copying sources to $b"
 cp -pR etc sm $b/fs/sm/img/
@@ -309,7 +333,7 @@ for f in */syslinux.cfg */grub.cfg; do sed -ri '
 done )
 
 log adding ./sm/
-cp -pR $AR/sm/img/* /mnt/ 2>&1 | grep -vF 'preserve ownership of' || true
+(cd $AR/sm/img && tar --exclude 'sm/post-build*' -c *) | tar -xC /mnt
 mkdir -p /mnt/sm/bin
 
 f=$AR/sm/img/sm/post-build.sh
