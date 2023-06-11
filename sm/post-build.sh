@@ -182,8 +182,9 @@ imshrink_zinfo() {
     log compressing kernel info
     bdep_add .zki xz
     cd /mnt/boot
-    xz -z9T0 System.map*
-    xz -z9T0 config*
+    xz -z9 System.map* &
+    xz -z9 config* &
+    wait
     cd
     bdep_del .zki
 }

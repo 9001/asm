@@ -10,6 +10,8 @@ absreal() { realpath "$1" || readlink -f "$1"; }
 img=asm.usb
 td=
 sm=
+c_add=()
+c_rm=()
 sz=
 mi=
 vi=
@@ -38,6 +40,8 @@ arguments:
   -ek PATH  SB pem-key for the.efi, default: Do-Not-Modify
   -ec PATH  SB pem-cert for the.efi, default: Do-Not-Modify
   -sm PATH  delete and replace sm folder with PATH
+  -add S:D  insert all files inside S into image-root:/D/
+  -rm PATH  delete file at PATH inside image (wildcards OK)
   -z y      zero free space if fstrim fails
   -ex y     extract+rebuild with mtools (default if not root)
 
@@ -66,6 +70,8 @@ while [ "$1" ]; do
         -ek) efi_key="$v"; ;;
         -ec) efi_crt="$v"; ;;
         -sm) sm_path="$v"; ;;
+        -add) c_add+=("$v"); ;;
+        -rm) c_rm+=("$v"); ;;
         -z)  trim="$v"; ;;
         -ex) ex="$v"; ;;
         *)   err "unexpected argument: $k"; help; ;;
@@ -114,6 +120,22 @@ mt_extract() {
     rm -rf "$d"
     cp -R --preserve=timestamps "$sm_path" "$d"
 }
+
+for x in "${c_rm[@]}"; do
+    msg "deleting img:/$x"
+    if [[ $x = *" "* ]]; then
+        rm -rfv "$td/$x"  # cannot glob with spaces
+    else
+        rm -rfv "$td/"$x
+    fi
+done
+
+for x in "${c_add[@]}"; do
+    IFS=: read v1 v2 <<<"$x"
+    msg "inserting $v1 into img:/$v2"
+    mkdir -p "$td/$v2"
+    tar -cC "$v1" . | tar -xvC "$td/$v2"
+done
 
 [ "$asm_key" ] && {
     f="$td/sm/asm.sh"

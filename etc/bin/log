@@ -1,8 +1,10 @@
 #!/bin/ash
 
+t=$(date +%H:%M:%S)
+
 # no banner if tty is serial
-case $(tty) in *S*) printf '\033[%s' "7m $* " K $'27m\n' >&2; exit 0; ;; esac
+case $(tty) in *S*) printf '\033[%s' "7m $* " K "27m($t)"$'\n' >&2; exit 0; ;; esac
 
 # banner and inline
-printf '\033[%s' s 2r H "0;1;37;44m$*" K u "7m $* " K $'27m\n' >&2
+printf '\033[%s' s 2r H "0;1;37;44m$* ($t)" K u "7m $* " K "27m($t)"$'\n' >&2
 

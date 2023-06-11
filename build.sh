@@ -304,12 +304,12 @@ trap eh INT TERM EXIT
 
 log hello from asm builder
 sed -ri 's/for i in \$initrds; do/for i in ${initrds\/\/,\/ }; do/' /sbin/setup-bootable
-c="apk add -q util-linux sfdisk syslinux dosfstools"
+c="apk add -q bash util-linux sfdisk syslinux dosfstools"
 if ! $c; then
     wrepo
     $c
 fi
-if apk add -q sfdisk; then
+if command -v sfdisk; then
     echo ',,0c,*' | sfdisk -q --label dos /dev/vda
 else
     # deadcode -- this branch is never taken --
@@ -337,7 +337,7 @@ log adding ./sm/
 mkdir -p /mnt/sm/bin
 
 f=$AR/sm/img/sm/post-build.sh
-[ -e $f ] && log $f && $SHELL $f
+[ -e $f ] && log $f && $(command -v bash || echo $SHELL) $f
 
 log all done -- shutting down
 sync
