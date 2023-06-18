@@ -318,6 +318,7 @@ uki_make() {
     gzip -d < $f | cpio -idm
     patch init </etc/patches/init-uki.patch
     patch init </etc/patches/init-cmdline.patch
+    patch init </etc/patches/init-no-ml-pgp.patch
     [ $sec ] && patch init </etc/patches/init-passwd.patch
     cp /dev/shm/cmdline .
     mkdir x; cd x

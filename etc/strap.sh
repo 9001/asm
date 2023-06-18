@@ -83,7 +83,12 @@ sigchk() {
 [ $UKI ] && {
   sigchk || {
     printf '\n\033[31mABORT: asm.sh does not validate against its signature, or was not signed with the expected key\n\033[0m'
-    ebeep; exit 1
+    if [ $SEC ]; then
+      ebeep; exit 1
+    else
+      printf '\033[33mbut shell is allowed, so continuing anyways\033[0m\n'
+      sleep 1
+    fi
   }
 }
 
@@ -92,7 +97,40 @@ beeps 40 2000 1000 &
 
 # run the payload
 s=$AR/sm/asm.sh
-$SHELL $s && err= || err=$?
+cmd="$SHELL $s"
+logcfg=$(cat $AR/sm/log.cfg 2>/dev/null)
+logcom=
+logdir=
+if [ "$logcfg" ] && apka -q util-linux; then
+  for logcfg in $logcfg; do
+    case $logcfg in
+      *tty*)
+        [ -e /dev/$logcfg ] && echo >/dev/$logcfg && logcom=$logcfg ||
+          echo "comport unavailable: $logcfg"
+        ;;
+      1)
+        apka -q dosfstools && fsck.vfat -a /dev/$AP >/dev/null
+        mount -o remount,rw $AR && logdir=$AR
+        ;;
+      *)
+        logdir=/media/$AD$logcfg
+        mkdir -p $logdir
+        mount /dev/$AD$logcfg $logdir || logdir=
+        ;;
+    esac
+  done
+  [ $logdir ] && touch $logdir/runlog.txt || logdir=
+  while true; do sleep 5; killall -USR1 script 2>/dev/null; done &
+fi
+[ $logcom ] && [ $logdir ] && cmd="script -eqfc \"$cmd\" /dev/$logcom"
+if [ $logdir ]; then
+  script -B $logdir/runlog.txt -T $logdir/runlog.pce -eqc "$cmd" && err= || err=$?
+  setterm --dump --file $logdir/runlog.scr 2>/dev/null
+elif [ $logcom ]; then
+  script -eqfc "$cmd" /dev/$logcom && err= || err=$?
+else
+  $cmd && err= || err=$?
+fi
 unlog
 
 # success? exit

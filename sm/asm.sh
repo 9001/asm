@@ -128,6 +128,8 @@ infograb() {
 	# to timeout the comment prompt after 3 sec, uncomment the '' 3
 	hwscan $AR/sm/infos  # '' 3
 
+	touch $AR/sm/infos 2>/dev/null || fs_ro=1
+
 	apka python3 && (
 		cd /dev/shm
 		rm -f hw-inv.*
@@ -137,7 +139,7 @@ infograb() {
 			--csv=hw-inv.csv \
 			--txt=hw-inv.txt
 
-		mount -o remount,rw $AR
+		[ $fs_ro ] && mount -o remount,rw $AR
 		mv hw-inv.* $AR/sm/infos/
 
 		mkdir -p $AR/sm/bin
@@ -146,7 +148,7 @@ infograb() {
 		done
 	)
 
-	mount -o remount,ro $AR
+	[ $fs_ro ] && mount -o remount,ro $AR
 	menu
 }
 

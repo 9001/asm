@@ -1,3 +1,16 @@
+# logging
+
+`echo 1 > sm/log.cfg` to enable logging to disk, or `echo ttyS0` to log to serial port instead (or both with `echo 1 ttyS0`)
+
+* needs `util-linux` (so either `recommended_apks` or `fetch_apks util-linux` in post-build)
+* note that execution will halt if the logging destination dies
+* log can be replayed with `scriptreplay -t runlog.pce -B runlog.txt`
+* `echo 2 > sm/log.cfg` logs to the 2nd partition instead (must be created manually) and is probably much safer since the primary partition can remain read-only
+  * to create a 2nd partition, `truncate -s +64M asm.usb && echo ',,0c' | sfdisk -qa asm.usb && mkfs.vfat -F16 -nLOGS --offset=$(sfdisk asm.usb -l | awk '{v=$2}END{print v}') asm.usb`
+
+
+# misc 
+
 * need to debug the alpine init? boot it like this to stream a verbose log out through the serial port: `lts console=ttyS0,115200,n8 debug_init=1`
   * or append the extra args after `modloop_verify=no` in `build.sh`
   * qemu: `-serial pipe:s` as extra arg, and `mkfifo s.{in,out}; tee serial.log <s.out&` before launch

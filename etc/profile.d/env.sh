@@ -56,7 +56,6 @@ if [ -d /etc/apk/ ] ; then
 	alias tmux='TERM=rxvt-256color tmux -2u'
 	[ "x$TERM" == "xrxvt" ] && export TERM=rxvt-256color
 	[ "x$TERM" == "xxterm" ] && export TERM=rxvt-256color
-	alias apk='/sbin/apk --force-non-repository --wait 10'
 	alias mc='[ -e /usr/bin/mc ] || apka mc; /usr/bin/mc -S /usr/share/mc/skins/nicedark.ini'
 	alias i='apk add'
 else

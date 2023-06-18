@@ -1,0 +1,7 @@
+block the modloop verification by removing the signature
+(we have our own sig since we usually rebuild the modloop)
+@@ -868,2 +868,4 @@
+ 
++rm -f /sysroot/var/cache/misc/modloop*
++
+ # switch over to new root

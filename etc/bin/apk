@@ -1,0 +1,2 @@
+#!/bin/ash
+exec /sbin/apk --force-non-repository --wait 10 "$@"
