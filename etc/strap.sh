@@ -105,7 +105,8 @@ if [ "$logcfg" ] && apka -q util-linux; then
   for logcfg in $logcfg; do
     case $logcfg in
       *tty*)
-        [ -e /dev/$logcfg ] && echo >/dev/$logcfg && logcom=$logcfg ||
+        IFS=, read logcfg baud x < <(echo $logcfg,115200)
+        [ -e /dev/$logcfg ] && stty -F /dev/$logcfg $baud && echo >/dev/$logcfg && logcom=$logcfg ||
           echo "comport unavailable: $logcfg"
         ;;
       1)
@@ -122,12 +123,12 @@ if [ "$logcfg" ] && apka -q util-linux; then
   [ $logdir ] && touch $logdir/runlog.txt || logdir=
   while true; do sleep 5; killall -USR1 script 2>/dev/null; done &
 fi
-[ $logcom ] && [ $logdir ] && cmd="script -eqfc \"$cmd\" /dev/$logcom"
+[ $logcom ] && [ $logdir ] && cmd="script -eqc \"$cmd\" /dev/$logcom"
 if [ $logdir ]; then
   script -B $logdir/runlog.txt -T $logdir/runlog.pce -eqc "$cmd" && err= || err=$?
   setterm --dump --file $logdir/runlog.scr 2>/dev/null
 elif [ $logcom ]; then
-  script -eqfc "$cmd" /dev/$logcom && err= || err=$?
+  script -eqc "$cmd" /dev/$logcom && err= || err=$?
 else
   $cmd && err= || err=$?
 fi

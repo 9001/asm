@@ -176,6 +176,7 @@ usb_close() {
             rm "$td/nil"
         }
     }
+    true
 }
 
 mt_build() {

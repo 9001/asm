@@ -1,6 +1,6 @@
 # logging
 
-`echo 1 > sm/log.cfg` to enable logging to disk, or `echo ttyS0` to log to serial port instead (or both with `echo 1 ttyS0`)
+`echo 1 > sm/log.cfg` to enable logging to disk, or `echo ttyS0,38400` to log to serial port instead (or both with `echo 1 ttyS0` using default baud 115200)
 
 * needs `util-linux` (so either `recommended_apks` or `fetch_apks util-linux` in post-build)
 * note that execution will halt if the logging destination dies

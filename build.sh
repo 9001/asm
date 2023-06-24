@@ -412,7 +412,7 @@ or try it in qemu:
   $qemu $accel $video -cpu host -device virtio-blk-pci,drive=asm,bootindex=1 -drive id=asm,if=none,format=raw,file=$usb_out -bios /usr/share/OVMF/OVMF_CODE.fd -m 512
 
 some useful qemu args:
-  -nic user   -nographic   -display gtk,zoom-to-fit=on
+  -nic user   -nographic   -serial stdio   -display gtk,zoom-to-fit=on
 
 activate host-only-network if necessary:
   ./doc/setup-virhost.sh

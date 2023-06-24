@@ -114,23 +114,12 @@ disksel() {
 
 # collect and store some hardware info
 infograb() {
-	# p1 definitely exists, p2 hopefully, p3 would be nice
-	p1="pciutils usbutils"
-	p2="coreutils"
-	p3="dmidecode lshw smartmontools nvme-cli libcpuid-tool"
-
-	apka $p1 $p2 $p3 || {
-		apka $p1
-		apka $p2 || true
-		apka $p3 || true
-	}
-
 	# to timeout the comment prompt after 3 sec, uncomment the '' 3
 	hwscan $AR/sm/infos  # '' 3
 
 	touch $AR/sm/infos 2>/dev/null || fs_ro=1
 
-	apka python3 && (
+	apka -q python3 && (
 		cd /dev/shm
 		rm -f hw-inv.*
 		hwinv $AR/sm/infos \
