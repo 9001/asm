@@ -119,7 +119,7 @@ infograb() {
 
 	touch $AR/sm/infos 2>/dev/null || fs_ro=1
 
-	apka -q python3 && (
+	apka -q python3 !pyc && (
 		cd /dev/shm
 		rm -f hw-inv.*
 		hwinv $AR/sm/infos \

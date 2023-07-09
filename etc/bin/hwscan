@@ -3,17 +3,9 @@ set -e
 
 type log &>/dev/null || log() { echo "$*"; }
 
-type apka &>/dev/null && {
-	# p1 definitely exists, p2 hopefully, p3 would be nice
-	p1="pciutils usbutils"
-	p2="coreutils"
-	p3="dmidecode lshw smartmontools nvme-cli libcpuid-tool"
-	apka -q $p1 $p2 $p3 || {
-		apka -q $p1
-		apka -q $p2 || true
-		apka -q $p3 || true
-	}
-}
+type apka &>/dev/null && apka -q \
+	coreutils dmidecode libcpuid-tool lshw \
+	nvme-cli pciutils smartmontools usbutils || true
 
 outdir="$1"
 [ -z "$outdir" ] && {

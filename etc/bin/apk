@@ -1,2 +1,7 @@
 #!/bin/ash
-exec /sbin/apk --force-non-repository --wait 10 "$@"
+
+aa="--force-non-repository --wait 10"
+grep -q tty $AR/sm/log.cfg 2>/dev/null &&
+    aa="$aa --no-progress"
+
+exec /sbin/apk $aa "$@"

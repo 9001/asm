@@ -1,5 +1,26 @@
 #!/bin/ash
 # undo add if error
-/sbin/apk --force-non-repository --wait 10 add "$@" && exit 0 || rv=$?
-/sbin/apk --force-non-repository --wait 10 del "$@"
+
+aa="--force-non-repository --wait 10"
+grep -q tty $AR/sm/log.cfg 2>/dev/null &&
+    aa="$aa --no-progress"
+
+/sbin/apk $aa add "$@" && exit 0 || rv=$?
+
+# packages from argv
+pkgs="$(
+    printf '%s\n' "$@" |
+    grep -vE '^[!-]' |
+    tr '\n' ' '
+)"
+
+# determine which ones failed
+rm="$(
+    apk policy $pkgs |
+    awk 'function c(){ if(p&&!k) printf "%s ",p} !/^ /{c();p=$1;k=0} /installed$/{k=1} END{c()}'
+)"
+
+echo "skipping unavailable pkgs: $rm" >&2
+apk $aa del -q $rm
+printf '%s\n' "$rm" > /dev/shm/apka.rm
 exit $rv
