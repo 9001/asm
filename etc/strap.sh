@@ -2,8 +2,10 @@
 # asm-bootstrap, ed <irc.rizon.net>, MIT-licensed, https://github.com/9001/asm
 
 command -v bash >/dev/null || /etc/bin/apka -q bash 2>/dev/null >&2 || true
+hash -r
+. /etc/profile
 
-[ -e /etc/profile.d/asm-paths.sh ] || (
+[ -e /etc/profile.d/asm-paths.sh ] || { (
 SEC=$(grep -qE ^root:: /etc/shadow || echo 1)
 UKI=$(awk 'NR>1{next} {v=1} /modules=/{v=""} /apkovl=/{v=1} END{print v}' /proc/cmdline)
 cat <<'EOF'
@@ -16,12 +18,13 @@ echo export SHELL=$(command -v bash || command -v ash)
 echo export CORES=$( (cat /proc/cpuinfo;echo) | awk -F: '{gsub(/[ \t]/,"")} /^physicalid:/{p=$2;n++} /^coreid:/{i=$2;n++} /^$/&&n{t[p"."i]=1;n=0} END {n=0;for(x in t)n++;print n}')
 echo export SEC=$SEC
 echo export UKI=$UKI
-[ $UKI ] &&
-  echo 'export PATH="/usr/local/bin/:$PATH"' ||
-  echo 'export PATH="$AR/sm/bin:/usr/local/bin/:$PATH"'
+[ $UKI ] ||
+  echo 'export PATH="$AR/sm/bin:$PATH"'
 
 )>/etc/profile.d/asm-paths.sh
 . /etc/profile.d/asm-paths.sh
+}
+hash -r
 cd
 
 # switch to shell after the first run
