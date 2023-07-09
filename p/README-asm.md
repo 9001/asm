@@ -35,6 +35,7 @@ r0cbox hardware requirements:
   * no questions asked, it just GOES
   * also tries to blkdiscard for instant effect on SSD / NVMe drives
   * the "securely" part only applies to conventional magnetic drives (CMR), no guarantees for SMR / SSD / eMMC / NVMe
+* logs output to USB and the first serial-port
 
 
 # [`./webkiosk/`](./webkiosk/)

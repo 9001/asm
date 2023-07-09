@@ -9,11 +9,12 @@ log setting up network and packages
 yes '' | setup-interfaces -r &
 sleep 0.1  # cosmetic
 echo
+# vmware-3d needs pciutils-libs
 apk add -q \
     xorg-server xf86-video-{fbdev,vesa,vmware} \
     mesa-dri-gallium mesa-{egl,gl} \
+    pciutils-libs \
     ttf-dejavu xdotool eudev hhpc firefox-esr
-apk add -q pciutils-libs  # vmware-3d
 setup-devd udev
 wait
 

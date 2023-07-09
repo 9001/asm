@@ -12,7 +12,8 @@ export UKI=1
 wrepo
 
 # optional
-fetch_apks mokutil efitools  # autoinstall secureboot certs into uefi
+# note: `util-linux` adds 2 MiB and is unnecessary except for muting some harmless yet scary-looking warnings on startup
+fetch_apks mokutil efitools util-linux  # autoinstall secureboot certs into uefi
 nomodeset  # faster boot
 
 # optional -- shaves 3 MiB (zinfo) + 106 MiB (filtermods; arg1=drop, arg2=keep)

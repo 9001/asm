@@ -2,7 +2,7 @@
 # asm profile example @ https://github.com/9001/asm/blob/hovudstraum/p/dban/sm/asm.sh
 set -e
 
-apk add openssl pv
+apka -q openssl pv
 
 log shredding disks ...
 while IFS= read -r disk; do
