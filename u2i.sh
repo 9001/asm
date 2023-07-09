@@ -55,8 +55,8 @@ mt_extract() {
 
 [ -d $usb_src ] && td="$usb_src" || {
     [ "$td" ] && mkdir "$td" ||
-        td=$(mktemp --tmpdir -d asm.XXXXX || mktemp -d -t asm.XXXXX)
-    
+        td=$(mktemp --tmpdir -d asm.XXXXX || mktemp -d -t asm.XXXXX || mktemp -d)
+
     if [ $ex ]; then mt_extract; else usb_open; fi
 }
 

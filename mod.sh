@@ -101,7 +101,7 @@ mt_extract() {
 }
 
 [ -d "$img" ] && td="$img" || {
-    td=$(mktemp --tmpdir -d asm.XXXXX || mktemp -d -t asm.XXXXX)
+    td=$(mktemp --tmpdir -d asm.XXXXX || mktemp -d -t asm.XXXXX || mktemp -d)
     if [ $ex ]; then mt_extract; else usb_open; fi
 }
 
@@ -147,8 +147,8 @@ done
     efi="$(echo "$td"/efi/boot/boot*efi)"
     msg "signing $efi with $efi_key"
 
-    t1="$(mktemp asm.XXXXX)"  # sbattach modifies inline...
-    t2="$(mktemp asm.XXXXX)"  # ...but sbsign doesn't
+    t1="$(mktemp asm.XXXXX || mktemp)"  # sbattach modifies inline...
+    t2="$(mktemp asm.XXXXX || mktemp)"  # ...but sbsign doesn't
     cat "$efi" > "$t1"
     sbattach --remove "$t1" || true
     sbsign --cert "$efi_crt" --key "$efi_key" --output "$t2" "$t1" || {

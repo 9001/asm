@@ -27,7 +27,7 @@ gtar=$(command -v gtar || command -v gnutar) || true
 }
 
 
-td=$(mktemp --tmpdir -d asm.XXXXX || mktemp -d -t asm.XXXXX)
+td=$(mktemp --tmpdir -d asm.XXXXX || mktemp -d -t asm.XXXXX || mktemp -d)
 trap "rm -rf $td; tput smam || printf '\033[?7h'" INT TERM EXIT
 
 profile=

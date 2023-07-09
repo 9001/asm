@@ -23,6 +23,7 @@ outdir="$1"
 	exit 1
 }
 shift
+td=$(mktemp --tmpdir -d hwscan.XXXXX || mktemp -d -t hwscan.XXXXX || mktemp -d)
 outdir="$(realpath "$outdir")"
 out_fs="$outdir"
 for _ in a a a; do [ -e "$out_fs" ] || out_fs="${out_fs%/*}"; done
@@ -111,7 +112,6 @@ cmt="$1"
 echo
 REPLY="$(printf '%s' "$REPLY" | tr -cs '[:alnum:]' -)"
 [ "$REPLY" ] && d="$d-$REPLY"
-td=$(mktemp --tmpdir -d hwscan.XXXXX || mktemp -d -t hwscan.XXXXX)
 cd $td
 runcmds "${cmds[@]}"
 
