@@ -59,6 +59,7 @@ cmds=(
 	dmesg "dmesg --color=always" blkid "free -m" "uname -a"
 	lsblk lscpu lsipc lsirq lsmod fbset
 	"lshw -numeric" "lshw -numeric -json"
+	"smartctl --scan-open --json=vu"
 	lsusb "lsusb -v" "lsusb -tvvv" "stdbuf -o0 -e0 lsusb -v 2>&1"
 	lspci "lspci -nnP" "lspci -nnPP" "lspci -nnvvv"
 	"lspci -bnnvvv" "lspci -mmnn" "lspci -mmnnvvv"
@@ -82,16 +83,19 @@ for n in /dev/nvme[0-9]n[0-9]; do
 done
 
 while IFS= read -r x; do
+	x="${x%% # *}"
 	cmds+=(
-		"smartctl -x /dev/$x"
-		"smartctl -x /dev/$x --json=vu"
+		"smartctl -x $x"
+		"smartctl -x $x --json=vu"
 	)
-done < <(lsblk -bo SIZE,KNAME,SUBSYSTEMS,TYPE |
-	awk 'NR>1 && !/:usb/ && $1 && / disk$/ {print$2}')
+done < <(smartctl --scan-open | tee $td/smartctl-scan-open | grep -vE '^#')
 
 cmds+=("" "lspci -mmnnvvvxxxx" "")
 
-d="$outdir/$(utime 2>/dev/null || date +%s.%N)"
+d=/
+while [ -e $d ]; do
+	d="$outdir/$(utime 2>/dev/null || date +%s.%N)"
+done
 cmt="$1"
 [ $# -gt 0 ] && ask= || ask=1
 [ $# -gt 1 ] && {
@@ -106,20 +110,6 @@ REPLY="$(printf '%s' "$REPLY" | tr -cs '[:alnum:]' -)"
 [ "$REPLY" ] && d="$d-$REPLY"
 cd $td
 runcmds "${cmds[@]}"
-
-megadev=$(grep -l megaraid, $d/smartctl-* 2>/dev/null | head -n 1 | sed -r 's/.*-dev-//; s/-.*//')
-[ -z "$megadev" ] || {
-	cmds=()
-	for n in {0..31}; do
-		cmds+=(
-			"smartctl -x /dev/$megadev -d megaraid,$n"
-			"smartctl -x /dev/$megadev -d megaraid,$n --json=vu"
-		)
-	done
-	runcmds "${cmds[@]}"
-	grep -lRE 'open device:.*INQUIRY failed' . | xargs -r rm
-	runcmds ""
-}
 
 rm -rf "$td"
 log info collected to "$d"

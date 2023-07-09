@@ -7,6 +7,9 @@ import html
 import argparse
 
 
+VER = 1
+
+
 def noop(*a, **ka):
     pass
 
@@ -141,7 +144,23 @@ def parse_smart(ap, r):
     hrs = j.get("power_on_time", {}).get("hours")
     cyc = j.get("power_cycle_count")
     temp = j.get("temperature", {}).get("current")
-    wear = j.get("nvme_smart_health_information_log", {}).get("percentage_used")
+    wear = 0
+
+    zk1 = ("percentage_used",)
+    zk2 = ("available_spare",)
+    for k, v in j.get("nvme_smart_health_information_log", {}).items():
+        if k in zk2:
+            v = 100 - v
+        elif k not in zk1:
+            continue
+        wear = max(wear, v)
+
+    zs = "Wear_Leveling_Count|SSD_Life_Left|Remaining_Lifetime_Perc|Media_Wearout_Indicator|Used_Rsvd_Blk_Cnt_Tot|Unused_Rsvd_Blk_Cnt_Tot|Valid_Spare_Block_Cnt|Retired_Block_Count"
+    zks = set(zs.split("|"))
+    for ent in j.get("ata_smart_attributes", {}).get("table", []):
+        if ent["name"] in zks:
+            v = 100 - ent["value"]
+            wear = max(wear, v)
 
     if hdd and fw:
         hdd += f" (FW:{fw})"
@@ -152,8 +171,13 @@ def parse_smart(ap, r):
     err = 0
     for ent in j.get("ata_smart_attributes", {}).get("table", []):
         if ent["name"] in bad:
-            # print(ent["name"])
             err += ent["raw"]["value"]
+
+    bads = "critical_warning|media_errors_s"
+    bad = set(bads.split("|"))
+    for k, v in j.get("nvme_smart_health_information_log", {}).items():
+        if k in bad:
+            err += int(v)
 
     hdds = r["hdd"] = r.get("hdd") or []
     hddsns = r["hdd-sn"] = r.get("hdd-sn") or []
@@ -206,6 +230,7 @@ def main():
     ap = argparse.ArgumentParser(description="hardware summarizer", epilog="default columns: " + cols)
     ap.add_argument("infos", type=str, nargs="+", help="folders of infos to parse")
     ap.add_argument("-v", action="store_true", help="verbose")
+    ap.add_argument("--cache", type=str, metavar="PATH", help="use old json as cache")
     ap.add_argument("--json", type=str, metavar="PATH", help="write json to PATH")
     ap.add_argument("--html", type=str, metavar="PATH", help="write html to PATH")
     ap.add_argument("--txt", type=str, metavar="PATH", help="write text to PATH")
@@ -216,6 +241,27 @@ def main():
     cols = al.col
     if al.v:
         verbose = print
+
+    try:
+        with open(al.cache, "r", encoding="utf-8") as f:
+            cdoc = json.load(f)
+
+        ccol = cdoc["cfg"]["col"]
+        cver = cdoc["cfg"]["ver"]
+
+        if ccol != al.col:
+            raise Exception("--col mismatch")
+
+        if cver != VER:
+            raise Exception(f"version mismatch; {cver} in cache, {VER} in script")
+
+        cache = {x["dir"]: x for x in cdoc["data"]}
+
+        verbose("loaded", len(cache), "from", al.cache)
+
+    except Exception as ex:
+        print("not using cache;", ex)
+        cache = {}
 
     dirs = []
     for bdir in al.infos:
@@ -239,6 +285,14 @@ def main():
 
     infs = []
     for d in dirs:
+        d = d.rstrip("/")
+        dn = d.split("/")[-1]
+        if dn in cache:
+            verbose("adding from cache", d)
+            inf = cache[dn]
+            infs.append(inf)
+            continue
+
         if not os.path.exists(d):
             print(f"WARNING: folder not found: {d}")
             continue
@@ -248,13 +302,13 @@ def main():
             continue
 
         verbose("adding folder", d)
-        infs.append(parse(d.rstrip("/")))
-        # print(json.dumps(
+        infs.append(parse(d))
 
     if al.json:
         verbose("writing json", al.json)
+        jdoc = {"data": infs, "cfg": {"ver": VER, "col": al.col}}
         with open(al.json, "w", encoding="utf-8") as f:
-            json.dump(infs, f)
+            json.dump(jdoc, f)
 
     # flatten lists into columns
     colset = []

@@ -122,11 +122,16 @@ infograb() {
 	apka -q python3 !pyc && (
 		cd /dev/shm
 		rm -f hw-inv.*
+
+		# html: recommended (readable by libreoffice-calc)
+		# json: recommended (enables caching)
+		# txt/csv: indifferent; no particular usecase
 		hwinv $AR/sm/infos \
-			--json=hw-inv.json \
-			--html=hw-inv.html \
+			--txt=hw-inv.txt \
 			--csv=hw-inv.csv \
-			--txt=hw-inv.txt
+			--html=hw-inv.html \
+			--json=hw-inv.json \
+			--cache=$AR/sm/infos/hw-inv.json
 
 		[ $fs_ro ] && mount -o remount,rw $AR
 		mv hw-inv.* $AR/sm/infos/
