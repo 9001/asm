@@ -26,7 +26,7 @@ trim=
 export MTOOLS_SKIP_CHECK=1
 
 help() {
-    sed -r $'s/^( +)(-\w+ +)([A-Z]\w* +)/\\1\\2\e[36m\\3\e[0m/; s/(.*default: )(.*)/\\1\e[35m\\2\e[0m/' <<EOF
+    sed -r $'s/^( +)(-\w+ +)([A-Z][a-zA-Z:]* +)/\\1\\2\e[36m\\3\e[0m/; s/(.*default: )(.*)/\\1\e[35m\\2\e[0m/' <<EOF
 
 modifies an existing asm.usb (secureboot-sign and/or replace resources)
 

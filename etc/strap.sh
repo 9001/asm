@@ -51,7 +51,8 @@ printf '\033[s\033[H'; cat /etc/motd; printf '\033[u\033[?7h'
 chvt 2; chvt 1
 
 # switch to bash + add loggers
-apka -q util-linux bash tar 2>/dev/null >&2 &&
+apka -q util-linux bash tar 2>/dev/null >&2 || true
+[ $SHELL = /bin/bash ] &&
   sed -ri 's^/ash$^/bash^' /etc/passwd
 
 # keymap and font
@@ -113,7 +114,11 @@ if [ "$logcfg" ] && apka -q util-linux; then
           echo "comport unavailable: $logcfg"
         ;;
       1)
-        apka -q dosfstools && fsck.vfat -a /dev/$AP >/dev/null
+        if apka -q dosfstools 2>/dev/null; then
+          fsck.vfat -a /dev/$AP >/dev/null
+        else
+          echo "note: skipping fsck.vfat (dosfstools unavailable)"
+        fi
         mount -o remount,rw $AR && logdir=$AR
         ;;
       *)
@@ -126,12 +131,12 @@ if [ "$logcfg" ] && apka -q util-linux; then
   [ $logdir ] && touch $logdir/runlog.txt || logdir=
   while true; do sleep 5; killall -USR1 script 2>/dev/null; done &
 fi
-[ $logcom ] && [ $logdir ] && cmd="script -eqc \"$cmd\" /dev/$logcom"
+[ $logcom ] && [ $logdir ] && cmd="script -eqc \"$cmd;unlog\" /dev/$logcom"
 if [ $logdir ]; then
   script -B $logdir/runlog.txt -T $logdir/runlog.pce -eqc "$cmd" && err= || err=$?
   setterm --dump --file $logdir/runlog.scr 2>/dev/null
 elif [ $logcom ]; then
-  script -eqc "$cmd" /dev/$logcom && err= || err=$?
+  script -eqc "$cmd;unlog" /dev/$logcom && err= || err=$?
 else
   $cmd && err= || err=$?
 fi

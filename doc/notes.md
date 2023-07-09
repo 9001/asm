@@ -24,8 +24,7 @@
 
 * local apk cache; `-m http://192.168.122.1:3923/am` and...
   ```
-  echo http://192.168.122.1:3923/am/ > am/mirrors.txt && PYTHONPATH=~/dev/copyparty python3 -um copyparty -v am:am:r | tee log
-  awk '!/GET  \/am\//{next} {sub(/.*GET  \/am\//,"");sub(/ @.$/,"")} 1' ../log | sort | uniq | while IFS= read -r x; do [ -e "$x" ] || echo "https://mirrors.edge.kernel.org/alpine/$x"; done | wget -xnH --cut-dirs=1 -i-
+  echo http://192.168.122.1:3923/am/ > am/mirrors.txt && PYTHONPATH=~/dev/copyparty python3 -um copyparty -v am:am:r:c,on404=~/dev/copyparty/bin/handlers/caching-proxy.py
   ```
 
 * initramfs hacking:
