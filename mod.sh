@@ -5,6 +5,7 @@ msg()  { printf '\033[0;36;7m*\033[27m %s\033[0m%s\n' "$*" >&2; }
 inf()  { printf '\033[1;92;7m+\033[27m %s\033[0m%s\n' "$*" >&2; }
 warn() { printf '\033[0;33;7m!\033[27m %s\033[0m%s\n' "$*" >&2; }
 err()  { printf '\033[1;91;7mx\033[27m %s\033[0m%s\n' "$*" >&2; }
+die()  { err "$*"; exit 1; }
 absreal() { realpath "$1" || readlink -f "$1"; }
 
 img=asm.usb
@@ -13,6 +14,7 @@ sm=
 c_add=()
 c_rm=()
 sz=
+autosize=
 mi=
 vi=
 vn=ASM
@@ -80,9 +82,13 @@ done
 
 img="$(absreal "$img")"
 
-[ ! "$efi_key$efi_crt" ] || [ "$efi_key" -a "$efi_crt" ] || {
-    err "need both -ek and -ec to produce a secureboot-signed efi"
-    exit 1
+[ ! "$efi_key$efi_crt" ] || [ "$efi_key" -a "$efi_crt" ] ||
+    die "need both -ek and -ec to produce a secureboot-signed efi"
+
+# exact size in GiB, or 'a' for autosize, or 'a.1' for autosize + .1G (102 MiB) padding
+[ $sz ] && {
+    [ "${sz#a}" = $sz ] || autosize=1
+    sz=$(awk 'END{print int((0'${sz#a}'*1024*1024+15)/16)*16}' /dev/null)
 }
 
 
@@ -105,10 +111,8 @@ mt_extract() {
     if [ $ex ]; then mt_extract; else usb_open; fi
 }
 
-[ -e "$td/sm" ] || {
-    err the source folder is not a valid asm filesystem
-    exit 1
-}
+[ -e "$td/sm" ] ||
+    die the source folder is not a valid asm filesystem
 
 
 #####################################################################
@@ -152,9 +156,8 @@ done
     cat "$efi" > "$t1"
     sbattach --remove "$t1" || true
     sbsign --cert "$efi_crt" --key "$efi_key" --output "$t2" "$t1" || {
-        err "secureboot signing failed"
         rm "$t1" "$t2"
-        exit 1
+        die "secureboot signing failed"
     }
     cat "$t2" > "$efi"
     rm "$t1" "$t2"
@@ -180,32 +183,54 @@ usb_close() {
 }
 
 mt_build() {
-    msg building new image with mtools
-    [ "$sz" ] && sz=$(echo "(($sz*1024*1024*1024+16383)/16384)*16384" | tr , . | LC_ALL=C bc)
-    [ "$sz" ] || sz=$(wc -c < "$img" | awk '{print$1}')
+    sz0=$(wc -c < "$img" | awk '{print int(($1+1023)/1024)}')
+    [ $sz ] || sz=$sz0
+    [ $autosize ] || {
+        msg "building new image with mtools"
+        mt_build2
+        return
+    }
+    pad=$sz
+    for bump in {1..128}; do
+        # pad (64k base, 8k each dentry, 4k each 2MiB, 1 MiB MBR), ceil to MiB
+        sz=$(cd "$td" && find -type f -printf '%s\n' | awk -v p=$pad '
+            {n++;s+=int(($1+4095)/4096)*4}
+            END{s+=64+n*8;s+=int(s/512);if(n)print int((s+p+1024+1023)/1024)*1024}
+        ')
+        [ $sz ] || die calculation failed
+        msg "building $((sz/1024)) MiB image with mtools"
+        mt_build2 && return
+        pad=$((pad+1024))
+    done
+}
+
+mt_build2() {
     head -c 1048576 "$img" > "$img.mbr"
     truncate -s 0 "$img"
-    truncate -s $sz "$img"
-    echo ',,0c,*' | sfdisk -q --label dos "$img" 2>/dev/null || {
-        msg using sfdisk fallback
+    truncate -s ${sz}K "$img"
+    echo ',,0c,*' | sfdisk -q --no-tell-kernel --label dos "$img" 2>/dev/null || {
+        sz=$sz0
+        msg "sfdisk too old, using fallback (image will be $((sz/1024)) MiB)"
         cat "$img.mbr" > "$img"
-        truncate -s $sz "$img"
+        truncate -s ${sz}K "$img"
     }
     rm "$img.mbr"
     [ "$di" ] && sfdisk -q --disk-id "$img" 0x$di
     local args=
     [ "$vi" ] && args="-i $vi"
-    mkfs.vfat -F32 -n"$vn" $args --mbr=n -S512 --offset=2048 "$img" &&
-    (shopt -s dotglob; cd "$td" && mcopy -Qbmsi "$img"@@1M ./* ::) || {
-        msg using mkfs.vfat fallback
-        rm -rf "$img.fs"
-        touch "$img.fs"
-        truncate -s $((sz-1048576)) "$img.fs"
-        mkfs.vfat -F32 -n"$vn" $args -S512 "$img.fs"
-        (shopt -s dotglob; cd "$td" && mcopy -Qbmsi "$img.fs" ./* ::)
-        dd if="$img.fs" of="$img" bs=65536 seek=16 conv=notrunc,sparse
-        rm "$img.fs"
+
+    mkfs.vfat -F32 -n"$vn" $args --mbr=n -S512 --offset=2048 "$img" >/dev/null && {
+        (shopt -s dotglob; cd "$td" && mcopy -Qbmsi "$img"@@1M ./* ::) || return 1
+        return 0
     }
+    msg mkfs.vfat too old, using fallback
+    rm -rf "$img.fs"
+    touch "$img.fs"
+    truncate -s $((sz-1024))K "$img.fs"
+    mkfs.vfat -F32 -n"$vn" $args -S512 "$img.fs" >/dev/null || exit 1
+    (shopt -s dotglob; cd "$td" && mcopy -Qbmsi "$img.fs" ./* ::) || return 1
+    dd if="$img.fs" of="$img" bs=65536 seek=16 conv=notrunc,sparse
+    rm "$img.fs"
 }
 
 [ -d "$img" ] ||
