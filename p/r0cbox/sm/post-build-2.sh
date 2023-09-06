@@ -3,7 +3,7 @@ set -e
 
 setup-interfaces -ar
 
-# optional image shrinker, from 154 to 81 MiB 
+# optional image shrinker, from 206 to 111 MiB (x64), or 169 to 87 (i386)
 shrink() {
     zram
     wrepo

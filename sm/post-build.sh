@@ -195,7 +195,7 @@ imshrink_rmkinfo() {
 }
 
 imshrink_filter_mods() {
-    # shaves ~54 MiB
+    # shaves ~79 MiB
     # shrink modloop by removing rarely-useful stuff + invokes imshrink_fake_gz
     #
     # accepts one, two, or three optional args:
@@ -239,7 +239,7 @@ imshrink_filter_mods() {
         *) mksfs=
     esac
     (sleep 1; pv -i0.3 -d $(pidof mksquashfs):3) &
-    mksquashfs x2/ x3 -comp xz -exit-on-error $mksfs
+    mksquashfs x2/ x3 -comp xz -b 1024k -exit-on-error $mksfs
     umount x
     mv x3 $ml
     cd; rm -rf x x2 x3
