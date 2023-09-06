@@ -88,7 +88,7 @@ fetch_apks() {
 recommended_apks() {
     fetch_apks \
         bash coreutils util-linux \
-        bzip2 gzip pigz xz zstd \
+        bzip2 gzip pigz xxhash xz zstd \
         bmon curl iperf3 iproute2 iputils nmap-ncat proxychains-ng rsync socat sshfs sshpass tcpdump \
         dmidecode libcpuid-tool lm-sensors lshw nvme-cli pciutils sgdisk smartmontools testdisk usbutils \
         efibootmgr efivar mokutil sbsigntool \
