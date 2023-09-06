@@ -140,7 +140,7 @@ nomodeset() {
 
 grub_beep() {
     bdep_add .gb grub-efi
-    tar -cC /usr/lib/grub x86_64-efi/play.mod | tar -xvC /mnt/boot/grub
+    (cd /usr/lib/grub; tar -c ./*-efi/play.mod) | tar -xvoC /mnt/boot/grub
     printf >> /mnt/boot/grub/grub.cfg '%s\n' '' 'insmod play' 'play 1920 330 1'
     bdep_del .gb
 }

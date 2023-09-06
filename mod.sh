@@ -138,7 +138,7 @@ for x in "${c_add[@]}"; do
     IFS=: read v1 v2 <<<"$x"
     msg "inserting $v1 into img:/$v2"
     mkdir -p "$td/$v2"
-    tar -cC "$v1" . | tar -xvC "$td/$v2"
+    tar -cC "$v1" . | tar -xvoC "$td/$v2"
 done
 
 [ "$asm_key" ] && {

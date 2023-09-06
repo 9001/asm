@@ -45,7 +45,7 @@ mirror=https://mirrors.edge.kernel.org/alpine
 
 
 help() {
-    v=3.18.2
+    v=3.18.3
     sed -r $'s/^( +)(-\w+ +)([A-Z]\w* +)/\\1\\2\e[36m\\3\e[0m/; s/(.*default: )(.*)/\\1\e[35m\\2\e[0m/' <<EOF
 
 arguments:
@@ -333,7 +333,7 @@ for f in */syslinux.cfg */grub.cfg; do sed -ri '
 done )
 
 log adding ./sm/
-(cd $AR/sm/img && tar --exclude 'sm/post-build*' -c *) | tar -xC /mnt
+(cd $AR/sm/img && tar --exclude 'sm/post-build*' -c *) | tar -xoC /mnt
 mkdir -p /mnt/sm/bin
 
 f=$AR/sm/img/sm/post-build.sh
