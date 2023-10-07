@@ -50,3 +50,5 @@ test it in qemu,
 ```bash
 cp -pv /usr/share/OVMF/OVMF_*.secboot.fd .; qemu-system-x86_64 -machine q35,smm=on,accel=kvm -global ICH9-LPC.disable_s3=1 -drive if=pflash,format=raw,unit=0,file=OVMF_CODE.secboot.fd,readonly=on -drive if=pflash,format=raw,unit=1,file=OVMF_VARS.secboot.fd -device virtio-blk-pci,drive=d0,bootindex=1 -drive id=d0,if=none,format=raw,file=asm.usb -m 512
 ```
+
+if you want to allow editing of `asm.sh` (dangerous; arbitrary code execution) then disable the signature check by commenting/removing the `sign_asm` in `post_build_2.sh` (or see the obig profile's)

@@ -265,6 +265,7 @@ imshrink_filter_apks() {
 imshrink_nosig() {
     # shaves 1~3 MiB
     # remove modloop signature from initramfs to avoid pulling in openssl
+    # (also increases boot speed since it disables the modloop sigcheck)
     bdep_add .msig zstd xz
     cd; mkdir x; cd x
     f=$(echo /mnt/boot/initramfs-*)
@@ -315,7 +316,7 @@ uki_make() {
     [ -e "$f" ] || die could not find initramfs
 
     log unpacking initramfs
-    gzip -d < $f | cpio -idm
+    (gzip -d < $f || xz -d < $f) | cpio -idm
     patch init </etc/patches/init-uki.patch
     patch init </etc/patches/init-cmdline.patch
     patch init </etc/patches/init-no-ml-pgp.patch

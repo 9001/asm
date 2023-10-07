@@ -77,6 +77,10 @@ ebeep() {
 }
 
 sigchk() {
+  [ -e /etc/asm.pub ] || {
+    printf '\033[33mbuilt with unsigned asm.sh; cannot verify integrity\033[0m\n'
+    return
+  }
   local f=$AR/sm/asm.sh
   printf ' verifying \r'
   apka -q openssl &&

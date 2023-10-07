@@ -67,7 +67,7 @@ mt_extract() {
 
 eimg="$td"/boot/grub/efi.img
 befi=$(echo "$td"/efi/boot/boot*.efi)
-sz=$(wc -c <$befi | awk '{print int($1/1024)+256}')
+sz=$(cat "$td"/efi/boot/* | wc -c | awk '{print int($1/1024)+256}')
 
 [ $sz -gt 4141 ] && [ $befi -nt $eimg ] &&
     rm -f $eimg  # probably UKI; rebuild

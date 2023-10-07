@@ -6,4 +6,5 @@ ls /mnt/apks/*/pv-* ||
     fetch_apks util-linux pv
 
 # faster boot
+imshrink_nosig
 nomodeset

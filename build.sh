@@ -246,7 +246,7 @@ pdir=.
     openssl rsa -in "$asm_key" -pubout > $b/fs/sm/img/etc/asm.pub
 
 # quick smoketests if profile mentions UKI
-find $b/fs/sm/img/ -iname 'post-build*sh' -exec cat '{}' + | grep -qE '^export UKI=1|^\s*uki_make([^(]|$)' && {
+find $b/fs/sm/img/ -iname 'post-build*sh' -exec cat '{}' + | grep -qE '^export UKI=1|^\s*sign_asm([^(]|$)' && {
     [ -e $pdir/sm/asm.sh ] && sigbase=$pdir || sigbase=.
     [ -e $b/fs/sm/img/etc/asm.pub ] || [ "$asm_key" ] || {
         err "UKI was requested but there is no etc/asm.pub"
@@ -390,7 +390,8 @@ rm -rf $b
 
 [ "$iso_out" ] &&
     ./u2i.sh "$usb_out" "$iso_out" -td "$b" &&
-    du -sk "$iso_out"
+    du -sk "$iso_out" ||
+    echo "conversion to iso failed (but the usb image is fine)"
 
 du -sk "$usb_out"
 

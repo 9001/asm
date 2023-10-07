@@ -104,8 +104,21 @@ cpu=product
 
 def parse_lshw(ap, r):
     verbose("reading", ap)
-    with open(ap, "r", encoding="utf-8") as f:
-        j = json.load(f)
+    try:
+        with open(ap, "rb") as f:
+            jt = f.read().decode("utf-8")
+
+        if not jt:
+            raise Exception("json file empty")
+    except Exception as ex:
+        print("parse_lshw(%s) failed; %s" % (ap, ex))
+        return r
+
+    try:
+        j = json.loads(jt)
+    except Exception as ex:
+        print("parse_lshw(%s) failed; %s" % (ap, ex))
+        return r
 
     try:
         if j[0]["class"] == "system":
