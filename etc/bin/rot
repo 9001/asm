@@ -1,0 +1,11 @@
+#!/bin/ash
+set -e
+
+# portrait display rotation (requires kms/modeset)
+#
+# mandatory arg 1:
+#   0=None 1=90deg 2=180deg 3=270deg
+
+printf '%s\n' "$1" | grep -qE '^[0-3]$'
+
+echo $1 > /sys/class/graphics/fbcon/rotate_all

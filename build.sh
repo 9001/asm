@@ -45,7 +45,7 @@ mirror=https://mirrors.edge.kernel.org/alpine
 
 
 help() {
-    v=3.18.3
+    v=3.18.4
     sed -r $'s/^( +)(-\w+ +)([A-Z]\w* +)/\\1\\2\e[36m\\3\e[0m/; s/(.*default: )(.*)/\\1\e[35m\\2\e[0m/' <<EOF
 
 arguments:
@@ -388,10 +388,10 @@ popd >/dev/null
 mv $b/asm.usb "$usb_out"
 rm -rf $b
 
-[ "$iso_out" ] &&
-    ./u2i.sh "$usb_out" "$iso_out" -td "$b" &&
-    du -sk "$iso_out" ||
-    echo "conversion to iso failed (but the usb image is fine)"
+if [ "$iso_out" ]; then
+    ./u2i.sh "$usb_out" "$iso_out" -td "$b" && du -sk "$iso_out" ||
+        warn "conversion to iso failed (but the usb image is fine)"
+fi
 
 du -sk "$usb_out"
 
