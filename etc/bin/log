@@ -2,8 +2,11 @@
 
 t=$(date +%H:%M:%S)
 
-# no banner if tty is serial
-case $(tty) in *S*) printf '\033[%s' "7m $* " K "27m($t)"$'\n' >&2; exit 0; ;; esac
+# no banner in podman/docker, or if tty is serial
+x=
+[ -e /z ] && x=1
+case $(tty) in *S*) x=1;; esac
+[ $x ] && { printf '\033[%s' "7m $* " K "27m($t)"$'\n' >&2; exit 0; }
 
 # banner and inline
 printf '\033[%s' s 2r H "0;1;37;44m$*" "36m $t" K u "7m $* " K "27m($t)"$'\n' >&2

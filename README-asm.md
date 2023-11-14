@@ -43,7 +43,9 @@ if you are on linux,
 * you will get `asm.usb` which you can write to a usb flashdrive
   * can additionally produce a hybrid ISO for burning to CD/DVD with `-oi`
 
-alternatively, you may [build it manually](./doc/manual-build.md) instead of using [`./build.sh`](./build.sh)
+optionally specify `-cb alpine:latest` to disable qemu and use podman/docker instead; can be 30% faster but has too many drawbacks to be recommended (cannot crosscompile, not as reliable or predictable, requires root + access to /dev for losetup, is less cool)
+
+and, if all else fails, a very basic build can be made [manually](./doc/manual-build.md) instead of using [`./build.sh`](./build.sh) at all
 
 
 ## write it to a flashdrive

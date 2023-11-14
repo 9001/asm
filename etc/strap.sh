@@ -48,7 +48,7 @@ service networking start || true
 . /etc/profile.d/bifrost.sh
 printf '\033[36m * %s ready\033[0m\n' "$(cat $AR/.alpine-release)"
 printf '\033[s\033[H'; cat /etc/motd; printf '\033[u\033[?7h'
-chvt 2; chvt 1
+[ -e /z ] || { chvt 2; chvt 1; }
 
 # switch to bash + add loggers
 apka -q util-linux bash tar 2>/dev/null >&2 || true

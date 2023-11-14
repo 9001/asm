@@ -28,7 +28,13 @@ gtar=$(command -v gtar || command -v gnutar) || true
 
 
 td=$(mktemp --tmpdir -d asm.XXXXX || mktemp -d -t asm.XXXXX || mktemp -d)
-trap "rm -rf $td; tput smam || printf '\033[?7h'" INT TERM EXIT
+cln() {
+    trap - INT TERM EXIT
+    rm -rf $td; tput smam || printf '\033[?7h'
+    losetup -a | awk -F: '/asm\.usb \(deleted/{print$1}' | xargs -rl losetup -d || true
+    exit
+}
+trap cln INT TERM EXIT
 
 profile=
 sz=1.8
@@ -40,13 +46,14 @@ bvarf=
 iso=
 iso_out=
 usb_out=asm.usb
+cb=
 b=$td/b
 mirror=https://mirrors.edge.kernel.org/alpine
 
 
 help() {
     v=3.18.4
-    sed -r $'s/^( +)(-\w+ +)([A-Z]\w* +)/\\1\\2\e[36m\\3\e[0m/; s/(.*default: )(.*)/\\1\e[35m\\2\e[0m/' <<EOF
+    sed -r $'s/^( +)(-\w+ +)([A-Z,=]+ +)/\\1\\2\e[36m\\3\e[0m/; s/(.*default: )(.*)/\\1\e[35m\\2\e[0m/' <<EOF
 
 arguments:
   -i ISO    original/input alpine release iso
@@ -55,6 +62,9 @@ arguments:
   -m URL    mirror (for iso/APKs), default: $mirror
   -ou PATH  output path for usb image, default: ${usb_out:-DISABLED}
   -oi PATH  output path for isohybrid, default: ${iso_out:-DISABLED}
+
+backend:
+  -cb IMG   use podman/docker IMG instead of qemu; see examples
   -b PATH   build-dir, default: $b
 
 build-vars:
@@ -74,6 +84,7 @@ notes:
 examples:
   $0 -i dl/alpine-extended-$v-x86_64.iso
   $0 -i dl/alpine-extended-$v-x86_64.iso -oi asm.iso -s 3.6 -b b
+  $0 -i dl/alpine-standard-$v-x86_64.iso -cb alpine:latest
   $0 -i dl/alpine-standard-$v-x86_64.iso -p webkiosk
   $0 -i dl/alpine-standard-$v-x86.iso -s 0.2 -p r0cbox
 
@@ -87,19 +98,20 @@ while [ "$1" ]; do
     k="$1"; shift
     v="$1"; shift || true
     case "$k" in
-        -i)  iso="$v"; ;;
-        -s)  sz="$v";  ;;
-        -b)  b="$v";   ;;
-        -p)  profile="$v"; ;;
-        -v)  bvars+=("$v"); ;;
-        -vf) bvarf="$v";   ;;
-        -ak) asm_key="$v"; ;;
-        -ek) efi_key="$v"; ;;
-        -ec) efi_crt="$v"; ;;
-        -ou) usb_out="$v"; ;;
-        -oi) iso_out="$v"; ;;
-        -m)  mirror="${v%/}"; ;;
-        *)   err "unexpected argument: $k"; help; ;;
+        -i)  iso="$v";;
+        -s)  sz="$v";;
+        -b)  b="$v";;
+        -cb) cb="$v";;
+        -p)  profile="$v";;
+        -v)  bvars+=("$v");;
+        -vf) bvarf="$v";;
+        -ak) asm_key="$v";;
+        -ek) efi_key="$v";;
+        -ec) efi_crt="$v";;
+        -ou) usb_out="$v";;
+        -oi) iso_out="$v";;
+        -m)  mirror="${v%/}";;
+        *)   err "unexpected argument: $k"; help;;
     esac
 done
 
@@ -285,45 +297,60 @@ EOF
 
 # live-env: finalize apkovl
 ( cd fs/sm/img
-  tar -czvf the.apkovl.tar.gz etc
+  tar -czf the.apkovl.tar.gz etc
   rm -rf etc )
 
 # build-env: finalize apkovl (tty1 is ttyS0 due to -nographic)
 sed -ri 's/^tty1/ttyS0/' etc/inittab
-tar -czvf fs/the.apkovl.tar.gz etc
+tar -czf fs/the.apkovl.tar.gz etc
 
 cat >>fs/sm/asm.sh <<'EOF'
 set -ex
 eh() {
-    [ $? -eq 0 ] && exit 0
+    r=$?
+    trap - INT TERM EXIT
+    [ $r -eq 0 ] && exit 0
     printf "\033[A\033[1;37;41m\n\n  asm build failed; blanking partition header  \n\033[0m\n"
-    sync; head -c1024 /dev/zero >/dev/vda
+    sync; head -c1024 /dev/zero >$vda
     poweroff
+    exit
 }
 trap eh INT TERM EXIT
 
 log hello from asm builder
-sed -ri 's/for i in \$initrds; do/for i in ${initrds\/\/,\/ }; do/' /sbin/setup-bootable
-c="apk add -q bash util-linux sfdisk syslinux dosfstools"
+sed -ri /:/d /etc/apk/repositories
+c="apk add -q bash util-linux sfdisk syslinux dosfstools alpine-conf"
 if ! $c; then
     wrepo
     $c
 fi
+
+vda=/dev/vda; vda1=${vda}1
+[ -e $vda ] || {
+    vda=$(cat /z/dev)
+    vda1=${vda}p1
+}
+
+sed -ri 's/for i in \$initrds; do/for i in ${initrds\/\/,\/ }; do/' /sbin/setup-bootable
+
 if command -v sfdisk; then
-    echo ',,0c,*' | sfdisk -q --label dos /dev/vda
+    echo ',,0c,*' | sfdisk -q --label dos $vda
 else
     # deadcode -- this branch is never taken --
     # left for reference if you REALLY cant install sfdisk
     printf '%s\n' o n p 1 '' '' t c a 1 w | fdisk -ub512 /dev/vda
 fi
 mdev -s
-mkfs.vfat -n ASM /dev/vda1
-log setup-bootable
-setup-bootable -v /media/cdrom/ /dev/vda1
-echo 1 | fsck.vfat -w /dev/vda1 | grep -vE '^  , '
+mkfs.vfat -n ASM $vda1
+
+iso=/z/src.iso
+[ -e $iso ] || iso=/media/cdrom/
+log setup-bootable $iso
+setup-bootable -v $iso $vda1
+echo 1 | fsck.vfat -w $vda1 | grep -vE '^  , '
 
 log disabling modloop verification
-mount -t vfat /dev/vda1 /mnt
+mount -t vfat $vda1 /mnt
 ( cd /mnt/boot;
 for f in */syslinux.cfg */grub.cfg; do sed -ri '
     s/( quiet)( .*|$)/ modloop_verify=no\1\2/;
@@ -348,35 +375,51 @@ poweroff
 EOF
 chmod 755 fs/sm/asm.sh
 
-echo
-msg "ovl size calculation..."
-# 32 KiB per inode + apparentsize x1.1 + 8 MiB padding, ceil to 512b
-osz=$(find fs -printf '%s\n' | awk '{n++;s+=$1}END{print int((n*32*1024+s*1.1+8*1024*1024)/512)*512}')
-msg "ovl size estimate $osz"
-truncate -s $osz ovl.img
-a="-T big -I 128 -O ^ext_attr"
-mkfs.ext3 -Fd fs $a ovl.img || {
-    mkfs.ext3 -F $a ovl.img
-    mkdir m
-    mount ovl.img m
-    cp -prT fs m
-    umount m
-    rmdir m
-}
-
 # user-provided; ceil to 16k
 sz=$(echo "(($sz*1024*1024*1024+16383)/16384)*16384" | tr , . | LC_ALL=C bc)
 truncate -s ${sz} asm.usb
 
-mkfifo s.{in,out}
-[ $flavor = virt ] && kern=virt || kern=lts
-(awk '1;/^ISOLINUX/{exit}' <s.out; echo "$kern console=ttyS0" >s.in; cat s.out) &
+if [ $cb ]; then
+    rmmod loop 2>/dev/null || true
+    modprobe loop max_part=63
+    # setup-bootable must be able to losetup inside the container as well,
+    # but doing this one out here makes cleanup easier (and shows intent)
+    losetup -f --show asm.usb >dev
+    ln "$iso" src.iso 2>/dev/null || cp "$iso" src.iso
+    $(which podman || which docker) run --privileged=true -v /dev:/dev -v .:/z:z -i "$cb" /bin/ash <<'EOF'
+mkdir -p /media/rd
+echo apkovl...; tar -xf /z/fs/the.apkovl.tar.gz -C/
+echo files...; tar -cC /z/fs sm | tar -xC /media/rd
+echo exec...; . /etc/strap.sh
+EOF
+    losetup -d $(cat dev)
+else
+    echo
+    msg "ovl size calculation..."
+    # 32 KiB per inode + apparentsize x1.1 + 8 MiB padding, ceil to 512b
+    osz=$(find fs -printf '%s\n' | awk '{n++;s+=$1}END{print int((n*32*1024+s*1.1+8*1024*1024)/512)*512}')
+    msg "ovl size estimate $osz"
+    truncate -s $osz ovl.img
+    a="-T big -I 128 -O ^ext_attr"
+    mkfs.ext3 -Fd fs $a ovl.img || {
+        mkfs.ext3 -F $a ovl.img
+        mkdir m
+        mount ovl.img m
+        cp -prT fs m
+        umount m
+        rmdir m
+    }
 
-cores=$(lscpu -p | awk -F, '/^[0-9]+,/{t[$2":"$3":"$4]=1} END{n=0;for(v in t)n++;print n}')
+    mkfifo s.{in,out}
+    [ $flavor = virt ] && kern=virt || kern=lts
+    (awk '1;/^ISOLINUX/{exit}' <s.out; echo "$kern console=ttyS0" >s.in; cat s.out) &
 
-$qemu $accel -cpu host -nographic -serial pipe:s -cdrom "$iso" -cpu host -smp $cores -m 1536 \
-  -drive format=raw,if=virtio,discard=unmap,file=asm.usb \
-  -drive format=raw,if=virtio,discard=unmap,file=ovl.img
+    cores=$(lscpu -p | awk -F, '/^[0-9]+,/{t[$2":"$3":"$4]=1} END{n=0;for(v in t)n++;print n}')
+
+    $qemu $accel -cpu host -nographic -serial pipe:s -cdrom "$iso" -cpu host -smp $cores -m 1536 \
+    -drive format=raw,if=virtio,discard=unmap,file=asm.usb \
+    -drive format=raw,if=virtio,discard=unmap,file=ovl.img
+fi
 
 # builder nukes the partition header on error; check if it did
 od -v <asm.usb | awk 'NR>4{exit e}{$1=""}/[^0 ]/{e=1}END{exit e}' && {
