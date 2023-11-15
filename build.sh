@@ -318,18 +318,19 @@ eh() {
 trap eh INT TERM EXIT
 
 log hello from asm builder
-sed -ri /:/d /etc/apk/repositories
 c="apk add -q bash util-linux sfdisk syslinux dosfstools alpine-conf"
 if ! $c; then
     wrepo
     $c
 fi
 
-vda=/dev/vda; vda1=${vda}1
-[ -e $vda ] || {
+if [ -e /z ]; then
     vda=$(cat /z/dev)
     vda1=${vda}p1
-}
+else
+    vda=/dev/vda
+    vda1=${vda}1
+fi
 
 sed -ri 's/for i in \$initrds; do/for i in ${initrds\/\/,\/ }; do/' /sbin/setup-bootable
 
@@ -386,7 +387,9 @@ if [ $cb ]; then
     # but doing this one out here makes cleanup easier (and shows intent)
     losetup -f --show asm.usb >dev
     ln "$iso" src.iso 2>/dev/null || cp "$iso" src.iso
-    $(which podman || which docker) run --privileged=true -v /dev:/dev -v .:/z:z -i "$cb" /bin/ash <<'EOF'
+    $(which podman || which docker) run \
+        --privileged -v /dev:/dev \
+        -v .:/z:z -i "$cb" /bin/ash <<'EOF'
 mkdir -p /media/rd
 echo apkovl...; tar -xf /z/fs/the.apkovl.tar.gz -C/
 echo files...; tar -cC /z/fs sm | tar -xC /media/rd

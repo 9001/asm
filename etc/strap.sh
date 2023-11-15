@@ -1,6 +1,8 @@
 #!/bin/ash
 # asm-bootstrap, ed <irc.rizon.net>, MIT-licensed, https://github.com/9001/asm
 
+[ -e /z/asm.usb ] && sed -ri /:/d /etc/apk/repositories  # managed by wrepo
+
 command -v bash >/dev/null || /etc/bin/apka -q bash 2>/dev/null >&2 || true
 hash -r
 . /etc/profile
