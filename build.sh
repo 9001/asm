@@ -170,8 +170,12 @@ qemu=qemu-system-$arch
 [ $arch = x86 ] && qemu=${qemu}_64
 command -v $qemu >/dev/null || qemu=$(
     PATH="/usr/libexec:$PATH" command -v qemu-kvm || echo $qemu)
-need $qemu
-need qemu-img
+
+if [ "$cb" ]; then
+    command -v docker >/dev/null || need podman
+else
+    need $qemu
+fi
 need bc
 need truncate
 need mkfs.ext3

@@ -97,6 +97,8 @@ by default it does nothing but it provides a library of helpers / examples,
 * shrinking the output image
 * adding more APKs
 
+see how the profiles extend it by providing a `post-build-2.sh` which gets chainloaded:
+
 
 ## [profiles](./p/)
 
