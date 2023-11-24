@@ -43,6 +43,7 @@ efi_key=
 efi_crt=
 bvars=()
 bvarf=
+qa=
 iso=
 iso_out=
 usb_out=asm.usb
@@ -65,6 +66,7 @@ arguments:
 
 backend:
   -cb IMG   use podman/docker IMG instead of qemu; see examples
+  -qa ARGS  qemu: extra args for the builder vm
   -b PATH   build-dir, default: $b
 
 build-vars:
@@ -102,6 +104,7 @@ while [ "$1" ]; do
         -s)  sz="$v";;
         -b)  b="$v";;
         -cb) cb="$v";;
+        -qa) qa="$v";;
         -p)  profile="$v";;
         -v)  bvars+=("$v");;
         -vf) bvarf="$v";;
@@ -419,9 +422,16 @@ else
 
     cores=$(lscpu -p | awk -F, '/^[0-9]+,/{t[$2":"$3":"$4]=1} END{n=0;for(v in t)n++;print n}')
 
-    $qemu $accel -cpu host -nographic -serial pipe:s -cdrom "$iso" -cpu host -smp $cores -m 1536 \
-    -drive format=raw,if=virtio,discard=unmap,file=asm.usb \
-    -drive format=raw,if=virtio,discard=unmap,file=ovl.img
+    mach=
+    qemu-system-x86_64 --machine help 2>&1 | grep -qE '^q35\b' &&
+        mach='--machine q35'
+
+    $qemu $accel -nographic -serial pipe:s \
+        $mach -cpu host -smp $cores -m 1536 -cdrom "$iso" \
+        -drive format=raw,if=virtio,discard=unmap,file=asm.usb \
+        -drive format=raw,if=virtio,discard=unmap,file=ovl.img \
+        -netdev user,id=n1 -device virtio-net-pci,netdev=n1 \
+        $qa
 fi
 
 # builder nukes the partition header on error; check if it did
@@ -431,7 +441,7 @@ od -v <asm.usb | awk 'NR>4{exit e}{$1=""}/[^0 ]/{e=1}END{exit e}' && {
 }
 
 popd >/dev/null
-mv $b/asm.usb "$usb_out"
+mv -f $b/asm.usb "$usb_out"
 rm -rf $b
 
 if [ "$iso_out" ]; then

@@ -114,6 +114,11 @@ should work on most BIOS and UEFI boxes with a few exceptions;
   * **workaround:** modify the fdisk/sfdisk invocation to build a GPT-formatted flashdrive instead of MBR, killing BIOS support
 
 
+# alternatives
+
+* [mkosi](https://github.com/systemd/mkosi) ([article](https://fedoramagazine.org/create-images-directly-from-rhel-and-rhel-ubi-package-using-mkosi/)) looks interesting; for systemd-based distros only
+
+
 # notes
 
 * [`./winpe/`](./winpe/) is unrelated bonus content

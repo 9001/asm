@@ -43,12 +43,12 @@ while [ "$1" ]; do
 done
 
 usb_open() {
-    trap "rmdir '$td' 2>/dev/null || umount '$td' || true; rmdir '$td' 2>/dev/null || true" INT TERM EXIT
+    trap "rmdir '$td' 2>/dev/null || umount '$td' || true; rmdir '$td' 2>/dev/null || true; exit" INT TERM EXIT
     mount -o offset=1048576 "$usb_src" "$td"
 }
 
 mt_extract() {
-    trap "rm -rf '$td'" INT TERM EXIT
+    trap "rm -rf '$td'; exit" INT TERM EXIT
     msg "extracting $usb_src to $td"
     mcopy -Qbmsi "$usb_src"@@1M '::*' "$td/"
 }

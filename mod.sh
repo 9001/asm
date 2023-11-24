@@ -96,12 +96,12 @@ img="$(absreal "$img")"
 # mount / extract
 
 usb_open() {
-    trap "rmdir '$td' 2>/dev/null || umount '$td' || sudo umount '$td' || true; rmdir '$td' 2>/dev/null || true" INT TERM EXIT
+    trap "rmdir '$td' 2>/dev/null || umount '$td' || sudo umount '$td' || true; rmdir '$td' 2>/dev/null || true; exit" INT TERM EXIT
     mount -o offset=1048576 "$img" "$td"
 }
 
 mt_extract() {
-    trap "rm -rf '$td'" INT TERM EXIT
+    trap "rm -rf '$td'; exit" INT TERM EXIT
     msg "extracting $img to $td"
     mcopy -Qbmsi "$img"@@1M '::*' "$td/"
 }

@@ -6,7 +6,7 @@ set -e
     exit 1
 }
 
-trap 'rm -f host-only.xml' INT TERM EXIT
+trap 'rm -f host-only.xml; exit' INT TERM EXIT
 
 cat >host-only.xml <<'EOF'
 <network>
