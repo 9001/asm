@@ -43,7 +43,7 @@ if you are on linux,
 * you will get `asm.usb` which you can write to a usb flashdrive
   * can additionally produce a hybrid ISO for burning to CD/DVD with `-oi`
 
-optionally specify `-cb alpine:latest` to disable qemu and use podman/docker instead; can be 30% faster but has too many drawbacks to be recommended (cannot crosscompile, not as reliable or predictable, requires root + access to /dev for losetup, is less cool)
+optionally specify `-cb alpine:latest` to disable qemu and use podman/docker instead; about 12 sec faster but has too many drawbacks to be recommended (cannot crosscompile, not as reliable or predictable, requires root + access to /dev for losetup, a typo in postbuild can wipe your HDD, is less cool)
 
 and, if all else fails, a very basic build can be made [manually](./doc/manual-build.md) instead of using [`./build.sh`](./build.sh) at all
 
@@ -118,7 +118,7 @@ should work on most BIOS and UEFI boxes with a few exceptions;
 
 # alternatives
 
-* [mkosi](https://github.com/systemd/mkosi) ([article](https://fedoramagazine.org/create-images-directly-from-rhel-and-rhel-ubi-package-using-mkosi/)) looks interesting; for systemd-based distros only
+* [mkosi](https://github.com/systemd/mkosi) ([article](https://fedoramagazine.org/create-images-directly-from-rhel-and-rhel-ubi-package-using-mkosi/)) looks interesting (but doesn't support alpine yet)
 
 
 # notes

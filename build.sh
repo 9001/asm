@@ -27,6 +27,7 @@ gtar=$(command -v gtar || command -v gnutar) || true
 }
 
 
+t0=$(date +%s.%N)
 td=$(mktemp --tmpdir -d asm.XXXXX || mktemp -d -t asm.XXXXX || mktemp -d)
 cln() {
     trap - INT TERM EXIT
@@ -455,11 +456,13 @@ fi
 
 du -sk "$usb_out"
 
+btime=$(awk "END{printf \"%.2f\", $(date +%s.%N)-$t0}" /dev/null)
+
 cat <<EOF
 
 =======================================================================
 
-alpine-service-mode was built successfully (nice)
+alpine-service-mode was built successfully in ${btime}s (nice)
 
 you can now write the image to a usb flashdrive:
   cat $usb_out >/dev/sdi && sync

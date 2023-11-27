@@ -1,17 +1,14 @@
 #!/bin/ash
 set -e
 
-setup-interfaces -ar
-
 # optional image shrinker, from 206 to 111 MiB (x64), or 169 to 87 (i386)
 shrink() {
-    zram
-    wrepo
     imshrink_nosig
     imshrink_filter_mods
     imshrink_filter_apks alpine-base openssh-server openssl
 }
 
+wrepo
 shrink
 fetch_apks \
     alpine-base openssh-server openssl \

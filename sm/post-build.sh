@@ -250,8 +250,11 @@ imshrink_filter_apks() {
     # shaves ~10 MiB when going from virt to just alpine-base;
     # reduces the on-disk apk selection
     cd; rm -rf x; mkdir x; cd x
-    [ $1 = -w ] &&
-        cp -p /etc/apk/repositories r && shift ||
+    local web=
+    [ -e /z ] && web=1
+    [ $1 = -w ] && shift && web=1
+    [ $web ] &&
+        cp -p /etc/apk/repositories r ||
         grep -vE 'https?://' </etc/apk/repositories >r
 
     log keeping $*

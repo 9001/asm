@@ -1,7 +1,6 @@
 #!/bin/bash
 set -e
 
-setup-interfaces -ar
 fetch_apks \
     firefox-esr bash \
     xorg-server xf86-input-libinput eudev mesa \

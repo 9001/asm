@@ -2,7 +2,6 @@
 set -e
 
 # preconditions
-zram
 wrepo
 
 # options

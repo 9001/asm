@@ -27,6 +27,11 @@
   echo http://192.168.122.1:3923/am/ > am/mirrors.txt && PYTHONPATH=~/dev/copyparty python3 -um copyparty -v am:am:r:c,on404=~/dev/copyparty/bin/handlers/caching-proxy.py
   ```
 
+* need an alpine base-image for podman? you could make one from scratch:
+  ```
+  podman import https://mirrors.edge.kernel.org/alpine/v3.19/releases/x86_64/alpine-minirootfs-3.19.0-x86_64.tar.gz alpine:latest
+  ```
+
 * initramfs hacking:
   ```
   mkdir x x2
