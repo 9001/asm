@@ -31,7 +31,8 @@ t0=$(date +%s.%N)
 td=$(mktemp --tmpdir -d asm.XXXXX || mktemp -d -t asm.XXXXX || mktemp -d)
 cln() {
     trap - INT TERM EXIT
-    rm -rf $td; tput smam || printf '\033[?7h'
+    cd; rm -rf $td; tput smam || printf '\033[?7h'
+    [ $di_rm ] && $podman rmi -fi $di_rm >/dev/null || true
     losetup -a | awk -F: '/asm\.usb \(deleted/{print$1}' | xargs -rl losetup -d || true
     exit
 }
@@ -49,6 +50,7 @@ iso=
 iso_out=
 usb_out=asm.usb
 cb=
+di_rm=  # temp base-image to delet during cleanup
 b=$td/b
 mirror=https://mirrors.edge.kernel.org/alpine
 
@@ -66,7 +68,10 @@ arguments:
   -oi PATH  output path for isohybrid, default: ${iso_out:-DISABLED}
 
 backend:
-  -cb IMG   use podman/docker IMG instead of qemu; see examples
+  -cb IMG   use podman/docker IMG instead of qemu; examples:
+             -cb alpine:latest    # downloads from dockerhub
+             -cb -                # builds from mirror (-m)
+             -cb http://n/fs.tgz  # URL to minirootfs.tgz
   -qa ARGS  qemu: extra args for the builder vm
   -b PATH   build-dir, default: $b
 
@@ -87,7 +92,7 @@ notes:
 examples:
   $0 -i dl/alpine-extended-$v-x86_64.iso
   $0 -i dl/alpine-extended-$v-x86_64.iso -oi asm.iso -s 3.6 -b b
-  $0 -i dl/alpine-standard-$v-x86_64.iso -cb alpine:latest
+  $0 -i dl/alpine-standard-$v-x86_64.iso -cb -
   $0 -i dl/alpine-standard-$v-x86_64.iso -p webkiosk
   $0 -i dl/alpine-standard-$v-x86.iso -s 0.2 -p r0cbox
 
@@ -150,8 +155,8 @@ not_mounted "$usb_out" || {
 }
 
 isoname="${iso##*/}"
-read flavor ver arch < <(echo "$isoname" |
-  awk -F- '{sub(/.iso$/,"");v=$3;sub(/.[^.]+$/,"",v);print$2,v,$4}')
+read flavor fullver arch < <(echo "$isoname" | awk -F- '{sub(/.iso$/,"");print$2,$3,$4}')
+ver=${fullver%.*}
 
 [ $macos ] && {
     accel="-M accel=hvf"
@@ -172,8 +177,13 @@ qemu=qemu-system-$arch
 command -v $qemu >/dev/null || qemu=$(
     PATH="/usr/libexec:$PATH" command -v qemu-kvm || echo $qemu)
 
+podman=$(
+    command -v podman ||
+    command -v docker ||
+    true
+)
 if [ "$cb" ]; then
-    command -v docker >/dev/null || need podman
+    need ${podman:-podman}
 else
     need $qemu
 fi
@@ -327,7 +337,7 @@ trap eh INT TERM EXIT
 
 log hello from asm builder
 c="apk add -q bash util-linux sfdisk syslinux dosfstools alpine-conf"
-if ! $c; then
+if ! $c 2>/dev/null; then
     wrepo
     $c
 fi
@@ -388,16 +398,31 @@ chmod 755 fs/sm/asm.sh
 sz=$(echo "(($sz*1024*1024*1024+16383)/16384)*16384" | tr , . | LC_ALL=C bc)
 truncate -s ${sz} asm.usb
 
-if [ $cb ]; then
+if [ "$cb" ]; then
+    # building with podman/docker was requested
+    case "$cb" in
+        -) url=$mirror/v$ver/releases/$arch/alpine-minirootfs-$fullver-$arch.tar.gz;;
+        htt*://*) url="$cb";;
+        *:*) url=;;
+        *) err "invalid value for -cb: [$cb]"; help;;
+    esac
+
+    [ "$url" ] && {
+        # create temporary base-image
+        cb=asm:$(base64 /dev/urandom | tr -dc a-z | head -c9)
+        di_rm=$cb  # delete during cleanup
+        $podman import "$url" $cb
+    }
+
     rmmod loop 2>/dev/null || true
     modprobe loop max_part=63
     # setup-bootable must be able to losetup inside the container as well,
     # but doing this one out here makes cleanup easier (and shows intent)
     losetup -f --show asm.usb >dev
     ln "$iso" src.iso 2>/dev/null || cp "$iso" src.iso
-    $(which podman || which docker) run \
+    $podman run \
         --privileged -v /dev:/dev \
-        -v .:/z:z -i "$cb" /bin/ash <<'EOF'
+        -v .:/z:z -i --rm "$cb" /bin/ash <<'EOF'
 mkdir -p /media/rd
 echo apkovl...; tar -xf /z/fs/the.apkovl.tar.gz -C/
 echo files...; tar -cC /z/fs sm | tar -xC /media/rd
@@ -430,6 +455,10 @@ else
     mach=
     qemu-system-x86_64 --machine help 2>&1 | grep -qE '^q35\b' &&
         mach='--machine q35'
+
+    # centos7 lies about q35 support (q35-acpi-dsdt.aml is missing)
+    grep -q centos:7 /etc/os-release 2>/dev/null &&
+        mach=
 
     $qemu $accel -nographic -serial pipe:s \
         $mach -cpu host -smp $cores -m 1536 -cdrom "$iso" \

@@ -44,11 +44,12 @@ cp -p /etc/bin/* /usr/local/bin/
 [ $SEC ] || passwd -u root 2>/dev/null
 
 # start lo
-service networking start || true
+command -v service >/dev/null &&
+  service networking start || true
 
 # load tty color scheme, announce we good
 . /etc/profile.d/bifrost.sh
-printf '\033[36m * %s ready\033[0m\n' "$(cat $AR/.alpine-release)"
+printf '\033[36m * %s ready\033[0m\n' "$(cat $AR/.alpine-release 2>/dev/null)"
 printf '\033[s\033[H'; cat /etc/motd; printf '\033[u\033[?7h'
 [ -e /z ] || { chvt 2; chvt 1; }
 
