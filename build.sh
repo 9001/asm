@@ -359,7 +359,7 @@ else
     # left for reference if you REALLY cant install sfdisk
     printf '%s\n' o n p 1 '' '' t c a 1 w | fdisk -ub512 /dev/vda
 fi
-mdev -s
+[ -e /z ] || mdev -s
 mkfs.vfat -n ASM $vda1
 
 iso=/z/src.iso
