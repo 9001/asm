@@ -21,8 +21,8 @@ gtar=$(command -v gtar || command -v gnutar) || true
 	sort() { gsort "$@"; }
 	command -v grealpath >/dev/null &&
 		realpath() { grealpath "$@"; }
-    
-    export PATH="/usr/local/opt/e2fsprogs/sbin/:$PATH"
+
+    export PATH="/usr/local/opt/e2fsprogs/sbin:/opt/local/sbin:/opt/local/libexec/gnubin:$PATH"
     macos=1
 }
 
@@ -33,7 +33,8 @@ cln() {
     trap - INT TERM EXIT
     cd; rm -rf $td; tput smam || printf '\033[?7h'
     [ $di_rm ] && $podman rmi -fi $di_rm >/dev/null || true
-    losetup -a | awk -F: '/asm\.usb \(deleted/{print$1}' | xargs -rl losetup -d || true
+    command -v losetup >/dev/null &&
+        losetup -a | awk -F: '/asm\.usb \(deleted/{print$1}' | xargs -rl losetup -d || true
     exit
 }
 trap cln INT TERM EXIT
@@ -52,6 +53,8 @@ usb_out=asm.usb
 cb=
 di_rm=  # temp base-image to delet during cleanup
 b=$td/b
+mirror=https://mirror.leaseweb.com/alpine
+mirror=https://ftp.lysator.liu.se/pub/alpine
 mirror=https://mirrors.edge.kernel.org/alpine
 
 
@@ -158,14 +161,6 @@ isoname="${iso##*/}"
 read flavor fullver arch < <(echo "$isoname" | awk -F- '{sub(/.iso$/,"");print$2,$3,$4}')
 ver=${fullver%.*}
 
-[ $macos ] && {
-    accel="-M accel=hvf"
-    video=""
-} || {
-    accel="-enable-kvm"
-    video="-vga qxl"
-}
-
 need() {
     command -v $1 >/dev/null || {
         err need $1
@@ -202,6 +197,18 @@ mkfs.ext3 -h 2>&1 | grep -qE '\[-d\b' ||
     err "because your mkfs.ext3 is too old to have -d"
     exit 1
 }
+
+[ $macos ] && {
+    $qemu -accel help | grep -q hvf &&
+        accel="-M accel=hvf"
+    video=""
+} || {
+    accel="-enable-kvm"
+    video="-vga qxl"
+}
+
+$qemu -cpu help | grep -qE '^[^ ]* *host\b' &&
+    cpu=host || cpu=max
 
 mkdir -p "$(dirname "$iso")"
 iso="$(absreal "$iso")"
@@ -450,7 +457,11 @@ else
     [ $flavor = virt ] && kern=virt || kern=lts
     (awk '1;/^ISOLINUX/{exit}' <s.out; echo "$kern console=ttyS0" >s.in; cat s.out) &
 
-    cores=$(lscpu -p | awk -F, '/^[0-9]+,/{t[$2":"$3":"$4]=1} END{n=0;for(v in t)n++;print n}')
+    if command -v lscpu >/dev/null; then
+        cores=$(lscpu -p | awk -F, '/^[0-9]+,/{t[$2":"$3":"$4]=1} END{n=0;for(v in t)n++;print n}')
+    else
+        cores=$(sysctl -a | awk '/machdep.cpu.core_count/{n=$2} END{print n+0}')
+    fi
 
     mach=
     qemu-system-x86_64 --machine help 2>&1 | grep -qE '^q35\b' &&
@@ -461,7 +472,7 @@ else
         mach=
 
     $qemu $accel -nographic -serial pipe:s \
-        $mach -cpu host -smp $cores -m 1536 -cdrom "$iso" \
+        $mach -cpu $cpu -smp $cores -m 1536 -cdrom "$iso" \
         -drive format=raw,if=virtio,discard=unmap,file=asm.usb \
         -drive format=raw,if=virtio,discard=unmap,file=ovl.img \
         -netdev user,id=n1 -device virtio-net-pci,netdev=n1 \
@@ -500,9 +511,9 @@ or compress it for uploading:
   pigz $usb_out
 
 or try it in qemu:
-  $qemu $accel $video -cpu host -drive format=raw,file=$usb_out -m 512
-  $qemu $accel $video -cpu host -drive format=raw,file=$usb_out -net bridge,br=virhost0 -net nic,model=virtio -m 192
-  $qemu $accel $video -cpu host -device virtio-blk-pci,drive=asm,bootindex=1 -drive id=asm,if=none,format=raw,file=$usb_out -bios /usr/share/OVMF/OVMF_CODE.fd -m 512
+  $qemu $accel $video -cpu $cpu -drive format=raw,file=$usb_out -m 512
+  $qemu $accel $video -cpu $cpu -drive format=raw,file=$usb_out -net bridge,br=virhost0 -net nic,model=virtio -m 192
+  $qemu $accel $video -cpu $cpu -device virtio-blk-pci,drive=asm,bootindex=1 -drive id=asm,if=none,format=raw,file=$usb_out -bios /usr/share/OVMF/OVMF_CODE.fd -m 512
 
 some useful qemu args:
   -nic user   -nographic   -serial stdio   -display gtk,zoom-to-fit=on

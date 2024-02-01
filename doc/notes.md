@@ -9,6 +9,12 @@
   * to create a 2nd partition, `truncate -s +64M asm.usb && echo ',,0c' | sfdisk -qa asm.usb && mkfs.vfat -F16 -nLOGS --offset=$(sfdisk asm.usb -l | awk '{v=$2}END{print v}') asm.usb`
 
 
+# macos
+
+* install deps: `port install bash coreutils gnutar gsed findutils patchutils e2fsprogs` + probably some more
+* use iterm2 or something because the default terminal doesn't support [s/[u (save/restore cursor position)
+
+
 # misc 
 
 * need to debug the alpine init? boot it like this to stream a verbose log out through the serial port: `lts console=ttyS0,115200,n8 debug_init=1`

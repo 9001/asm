@@ -38,7 +38,7 @@ the [uki profile](./p/uki/) shows how to securely verify the integrity of all re
 
 # build it
 
-if you are on linux,
+if you are on linux or macos,
 * install qemu and run [`./build.sh`](./build.sh)
 * you will get `asm.usb` which you can write to a usb flashdrive
   * can additionally produce a hybrid ISO for burning to CD/DVD with `-oi`
