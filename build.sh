@@ -386,7 +386,8 @@ for f in */syslinux.cfg */grub.cfg; do sed -ri '
 done )
 
 log adding ./sm/
-(cd $AR/sm/img && tar --exclude 'sm/post-build*' -c *) | tar -xoC /mnt
+(cd $AR/sm/img && tar --exclude 'sm/post-build*' -c *) |
+tar --no-same-permissions -xoC /mnt
 mkdir -p /mnt/sm/bin
 
 f=$AR/sm/img/sm/post-build.sh
@@ -432,7 +433,7 @@ if [ "$cb" ]; then
         -v .:/z:z -i --rm "$cb" /bin/ash <<'EOF'
 mkdir -p /media/rd
 echo apkovl...; tar -xf /z/fs/the.apkovl.tar.gz -C/
-echo files...; tar -cC /z/fs sm | tar -xC /media/rd
+echo files...; tar -cC /z/fs sm | tar --no-same-permissions -xC /media/rd
 echo exec...; . /etc/strap.sh
 EOF
     losetup -d $(cat dev)
