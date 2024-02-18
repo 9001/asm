@@ -61,7 +61,7 @@ apka -q util-linux bash tar 2>/dev/null >&2 || true
 # keymap and font
 yes abort | setup-keymap us us-altgr-intl 2>/dev/null >&2
 stty size | awk '$1<36{exit 1}' ||
-  (cd /etc/cfnt; setfont $(ls -1))
+  (cd /etc/cfnt; setfont $(ls -1|head -n1))
 
 # repos
 (m=$(cat /etc/apk/arch)

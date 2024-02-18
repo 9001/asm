@@ -19,6 +19,9 @@ rw() {
 	mount -o remount,rw $AR
 	pwd | grep -q $AR || cd $AR/sm
 }
+sfnt() {
+	(cd /etc/cfnt; setfont $(ls -1 | awk NR==${1:-1}))
+}
 
 if [ -d /etc/apk/ ] ; then
 	alias tmux='TERM=rxvt-256color tmux -2u'
@@ -31,7 +34,6 @@ fi
 
 alias q='kill -9 $$'
 alias a='tmux attach || tmux || { apka tmux && tmux; }'
-alias sfnt='(cd /etc/cfnt; setfont $(ls -1))'
 
 PS1="\
 \[\033[90m\]-\
