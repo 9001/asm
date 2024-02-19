@@ -327,7 +327,6 @@ uki_make() {
     cp /dev/shm/cmdline .
     mkdir x; cd x
     tar -xzf /mnt/the.apkovl.tar.gz
-    rm /mnt/the.apkovl.tar.gz
     cp -pv /dev/shm/modloop.pub .
     tar -czf ../the.apkovl.tar.gz .
     cd ..; rm -rf x
@@ -375,6 +374,7 @@ uki_make() {
 uki_only() {
     # drop grub and bios support to save ~30 MiB
     rm -rf \
+        /mnt/the.apkovl.tar.gz \
         /mnt/ldlinux* \
         /mnt/efi/boot/grub*.efi \
         /mnt/boot/grub \
