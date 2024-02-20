@@ -34,6 +34,8 @@ bdep_del() {
 #   ncat -lvp 4321
 # or better yet,
 #   socat file:$(tty),raw,echo=0 tcp-l:4321
+# and finally override assumed size (`stty size`),
+#   stty -F$(tty) rows 34 cols 160
 
 rshell() {
     if apka socat; then
@@ -52,10 +54,15 @@ rshell() {
 ##
 # download extra APKs
 
-read_idx() {
+read_apkidx() {
     tar -xOf $1 APKINDEX | awk -F: '
-        function pr() {if (p) {printf "%s %s\n",p,v};p=""}
-        /^P:/{p=$2} /^V:/{v=$2} /^$/{pr()} END{pr()}
+        function pr() {if (p) {print p,v,i;p="";i=""}}
+        !/^[PVi]|^$/{next}
+        /^$/{pr();next}
+        /^P:/{p=$2;next}
+        /^V:/{v=$2;next}
+        /^i:/{i=$2;gsub(/=[^ ]+/,"",i);next}
+        END{pr()}
     ';
 }
 
@@ -69,14 +76,16 @@ fetch_apks() {
     apk fetch --repositories-file=/etc/apk/w -R "$@" || e=1
 
     log checking conditional deps
-    for f in APKINDEX.*.tar.gz; do read_idx $f; done | LC_ALL=C sort > /dev/shm/nps
-    (set +x; for f in *.apk; do gzip -d <"$f" | awk '/^pkgname = /{print$3;exit}'; done >/dev/shm/apks)
-    sed -r 's/$/-openrc/' </dev/shm/apks | LC_ALL=C sort >/dev/shm/o1
-    cut -d' ' -f1 </dev/shm/nps | LC_ALL=C sort >/dev/shm/o2
-    comm -12 /dev/shm/o1 /dev/shm/o2 | xargs -r apk fetch --repositories-file=/etc/apk/w -R || e=1
+    for f in APKINDEX.*.tar.gz; do read_apkidx $f; done | LC_ALL=C sort > /dev/shm/npis
+    (set +x; for f in *.apk; do gzip -d <"$f" 2>/dev/null | awk '/^pkgname = /{print$3;exit}'; done >/dev/shm/apks)
+    # read on-disk apks into array t; if all 'i:' (install-if) of any pkg are in t, download it
+    (sed -r 's/^/- /' /dev/shm/apks; cat /dev/shm/npis) |
+        awk '/^- /{t[$2]=1;next} !t[$1] && $3 && t[$3] && (!$4||t[$4]) && (!$5||t[$5]) && (!$6||t[$6]) {print$1}' |
+    xargs -r apk fetch --repositories-file=/etc/apk/w -R || e=1
 
     log upgrading on-disk pkgs
-    read_idx APKINDEX.tar.gz | LC_ALL=C sort > /dev/shm/ops
+    awk '{print$1,$2}' </dev/shm/npis >/dev/shm/nps
+    read_apkidx APKINDEX.tar.gz | awk '{print$1,$2}' | LC_ALL=C sort > /dev/shm/ops
     comm -23 /dev/shm/ops /dev/shm/nps > /dev/shm/dps
     awk '{printf "%s-%s.apk\n",$1,$2}' </dev/shm/dps | xargs rm -f --
     cut -d' ' -f1 /dev/shm/dps | xargs -r apk fetch --repositories-file=/etc/apk/w -R || e=1
@@ -94,7 +103,8 @@ recommended_apks() {
         efibootmgr efivar mokutil sbsigntool \
         cryptsetup fuse fuse3 nbd nbd-client partclone \
         btrfs-progs dosfstools exfatprogs mtools ntfs-3g ntfs-3g-progs squashfs-tools xfsprogs \
-        bc diffutils file findutils grep hexdump htop jq less mc ncdu patch psmisc pv sqlite strace tar tmux vim \
+        bc diffutils file findutils grep hexdump htop jq less mc \
+          ncdu patch procps-ng psmisc pv sqlite strace tar tmux vim \
         "$@"
 
     # suggestions:

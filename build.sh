@@ -516,6 +516,13 @@ or try it in qemu:
   $qemu $accel $video -cpu $cpu -drive format=raw,file=$usb_out -net bridge,br=virhost0 -net nic,model=virtio -m 192
   $qemu $accel $video -cpu $cpu -device virtio-blk-pci,drive=asm,bootindex=1 -drive id=asm,if=none,format=raw,file=$usb_out -bios /usr/share/OVMF/OVMF_CODE.fd -m 512
 
+better uefi example for newer qemu versions:
+  cp /usr/share/OVMF/OVMF_VARS.fd $usb_out.efivars &&
+  $qemu $accel $video -cpu $cpu \\
+    -drive if=pflash,format=raw,unit=0,readonly=on,file=/usr/share/OVMF/OVMF_CODE.fd \\
+    -drive if=pflash,format=raw,unit=1,file=$usb_out.efivars \\
+    -device virtio-blk-pci,drive=asm,bootindex=1 -drive id=asm,if=none,format=raw,file=$usb_out -m 512
+
 some useful qemu args:
   -nic user   -nographic   -serial stdio   -display gtk,zoom-to-fit=on
 
