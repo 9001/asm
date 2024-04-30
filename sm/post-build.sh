@@ -211,10 +211,14 @@ imshrink_filter_mods() {
     # accepts one, two, or three optional args:
     #   arg 1: regex of additional mods to remove
     #   arg 2: regex of mods to keep (override remove)
-    #   arg 3: disables all default rules if non-empty
+    #   arg 3: replaces all default rules if given, empty or not
+    #
+    # the directory separator `/` should not be escaped in arg 1 and 2,
+    # but arg 3 is raw awk code so it must be escaped to `\/`
     #
     # example:
     #   imshrink_filter_mods '/(vmwgfx|arcnet|isdn|sound)/'
+    #   (note the unescaped directory separators)
     #
     bdep_add .ml squashfs-tools pigz pv
     cd; rm -rf x x2; mkdir x x2
@@ -235,7 +239,7 @@ imshrink_filter_mods() {
         /\/(ueagle-atm)\//{next}  # adsl modems
         /\/(ocfs2)\//{next}  # filesystems
     '
-    [ "$3" ] && base=
+    [ $# -ge 3 ] && base="$3"
 
     log unpacking modloop
     find -type f | (set -x; awk "${keep}${base}${drop}1") | tar -cT- | tar -xC ../x2
