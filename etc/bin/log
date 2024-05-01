@@ -8,6 +8,9 @@ x=
 case $(tty) in *S*) x=1;; esac
 [ $x ] && { printf '\033[%s' "7m $* " K "27m($t)"$'\n' >&2; exit 0; }
 
-# banner and inline
-printf '\033[%s' s 2r H "0;1;37;44m$*" "36m $t" K u "7m $* " K "27m($t)"$'\n' >&2
+banner=1; [ "$1" = -i ] && banner= && shift
+inline=1; [ "$1" = -b ] && inline= && shift
 
+[ $banner ] && printf '\033[%s' s 2r H "0;1;37;44m$*" "36m $t" K u >&2
+[ $inline ] && printf '\033[%s' "7m $* " K "27m($t)"$'\n' >&2
+true

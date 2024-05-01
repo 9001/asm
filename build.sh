@@ -47,6 +47,7 @@ efi_crt=
 bvars=()
 bvarf=
 qa=
+qm=2048
 iso=
 iso_out=
 usb_out=asm.usb
@@ -60,12 +61,12 @@ mirror=https://mirrors.edge.kernel.org/alpine
 
 help() {
     v=3.19.1
-    sed -r $'s/^( +)(-\w+ +)([A-Z,=]+ +)/\\1\\2\e[36m\\3\e[0m/; s/(.*default: )(.*)/\\1\e[35m\\2\e[0m/' <<EOF
+    sed -r $'s/^( +)(-\w+ +)([A-Z][A-Zi,=]* +)/\\1\\2\e[36m\\3\e[0m/; s/(.*default: )(.*)/\\1\e[35m\\2\e[0m/' <<EOF
 
 arguments:
   -i ISO    original/input alpine release iso
   -p NAME   profile to apply, default: <NONE>
-  -s SZ     fat32 partition size in GiB, default: $sz
+  -s GiB    fat32 partition size, default: $sz
   -m URL    mirror (for iso/APKs), default: $mirror
   -ou PATH  output path for usb image, default: ${usb_out:-DISABLED}
   -oi PATH  output path for isohybrid, default: ${iso_out:-DISABLED}
@@ -76,6 +77,7 @@ backend:
              -cb -                # builds from mirror (-m)
              -cb http://n/fs.tgz  # URL to minirootfs.tgz
   -qa ARGS  qemu: extra args for the builder vm
+  -qm MiB   qemu: ram size, default: $qm
   -b PATH   build-dir, default: $b
 
 build-vars:
@@ -385,6 +387,23 @@ for f in */syslinux.cfg */grub.cfg; do sed -ri '
     ' $f; 
 done )
 
+c32=/usr/share/syslinux/menu.c32
+[ -e $c32 ] && (
+    log adding syslinux menu
+    cd /mnt/boot/syslinux
+    cp $c32 .
+    ( cat <<'EOF2'
+UI menu.c32
+MENU TITLE kernel selection
+MENU AUTOBOOT now booting...
+MENU TABMSG to edit options, hold [Tab] before this screen appears
+MENU COLOR border 36;44 #40000000 #00000000 std
+MENU COLOR tabmsg 35;40 #90ffff00 #00000000 std
+EOF2
+    cat syslinux.cfg ) >/dev/shm/tf
+    cat /dev/shm/tf >syslinux.cfg
+)
+
 log adding ./sm/
 (cd $AF/sm/img && tar --exclude 'sm/post-build*' -c .) |
 tar --no-same-permissions -xoC /mnt
@@ -473,7 +492,7 @@ else
         mach=
 
     $qemu $accel -nographic -serial pipe:s \
-        $mach -cpu $cpu -smp $cores -m 1536 -cdrom "$iso" \
+        $mach -cpu $cpu -smp $cores -m $qm -cdrom "$iso" \
         -drive format=raw,if=virtio,discard=unmap,file=asm.usb \
         -drive format=raw,if=virtio,discard=unmap,file=ovl.img \
         -netdev user,id=n1 -device virtio-net-pci,netdev=n1 \

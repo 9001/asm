@@ -47,11 +47,15 @@ cp -p /etc/bin/* /usr/local/bin/
 command -v service >/dev/null &&
   service networking start || true
 
+motd() {
+  printf '\033[s\033[H'; cat /etc/motd; printf '\033[u\033[?7h'
+  [ -e /z ] || { chvt 2; chvt 1; }
+}
+
 # load tty color scheme, announce we good
 . /etc/profile.d/bifrost.sh
 printf '\033[36m * %s ready\033[0m\n' "$(cat $AF/.alpine-release 2>/dev/null)"
-printf '\033[s\033[H'; cat /etc/motd; printf '\033[u\033[?7h'
-[ -e /z ] || { chvt 2; chvt 1; }
+motd
 
 # switch to bash + add loggers
 apka -q util-linux bash tar 2>/dev/null >&2 || true
@@ -61,7 +65,7 @@ apka -q util-linux bash tar 2>/dev/null >&2 || true
 # keymap and font
 yes abort | setup-keymap us us-altgr-intl 2>/dev/null >&2
 stty size | awk '$1<36{exit 1}' ||
-  (cd /etc/cfnt; setfont $(ls -1|head -n1))
+  (cd /etc/cfnt; setfont $(ls -1|head -n1); motd)
 
 # repos
 (m=$(cat /etc/apk/arch)
