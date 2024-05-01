@@ -42,14 +42,14 @@ wt() {
 	printf '\033]0;%s\033\\' "$*"
 }
 [ $UKI ] || strapmod() {
-	cd /root && tar -xf $AR/the.apkovl.tar.gz && cd etc
+	cd /root && tar -xf $AF/the.apkovl.tar.gz && cd etc
 }
 [ $UKI ] || strapsave() {
-	(cd /root && mount -o remount,rw $AR && tar -czf $AR/the.apkovl.tar.gz etc && sync && (fstrim $AR 2>/dev/null || true) && echo ok)
+	(cd /root && mount -o remount,rw $AF && tar -czf $AF/the.apkovl.tar.gz etc && sync && (fstrim $AF 2>/dev/null || true) && echo ok)
 }
 rw() {
-	mount -o remount,rw $AR
-	pwd | grep -q $AR || cd $AR/sm
+	mount -o remount,rw $AF
+	pwd | grep -q $AF || cd $AF/sm
 }
 sfnt() {
 	(cd /etc/cfnt; setfont $(ls -1 | awk NR==${1:-1}))

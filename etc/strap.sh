@@ -11,8 +11,8 @@ hash -r
 SEC=$(grep -qE ^root:: /etc/shadow || echo 1)
 UKI=$(awk 'NR>1{next} {v=1} /modules=/{v=""} /apkovl=/{v=1} END{print v}' /proc/cmdline)
 cat <<'EOF'
-export AR=$(dirname /media/*/sm)
-export AP=$(df -h $AR | awk 'NR==2{sub(/.*\//,"",$1);print$1}')
+export AF=$(dirname /media/*/sm)
+export AP=$(df -h $AF | awk 'NR==2{sub(/.*\//,"",$1);print$1}')
 export AD=$(echo $AP | awk '/p[0-9]$/{sub(/p[0-9]$/,"");print;next} {sub(/[0-9]$/,"");print}')
 export HOME=/root
 EOF
@@ -21,7 +21,7 @@ echo export CORES=$( (cat /proc/cpuinfo;echo) | awk -F: '{gsub(/[ \t]/,"")} /^ph
 echo export SEC=$SEC
 echo export UKI=$UKI
 [ $UKI ] ||
-  echo 'export PATH="$AR/sm/bin:$PATH"'
+  echo 'export PATH="$AF/sm/bin:$PATH"'
 
 )>/etc/profile.d/asm-paths.sh
 . /etc/profile.d/asm-paths.sh
@@ -49,7 +49,7 @@ command -v service >/dev/null &&
 
 # load tty color scheme, announce we good
 . /etc/profile.d/bifrost.sh
-printf '\033[36m * %s ready\033[0m\n' "$(cat $AR/.alpine-release 2>/dev/null)"
+printf '\033[36m * %s ready\033[0m\n' "$(cat $AF/.alpine-release 2>/dev/null)"
 printf '\033[s\033[H'; cat /etc/motd; printf '\033[u\033[?7h'
 [ -e /z ] || { chvt 2; chvt 1; }
 
@@ -65,11 +65,11 @@ stty size | awk '$1<36{exit 1}' ||
 
 # repos
 (m=$(cat /etc/apk/arch)
-  (cd $AR/apks/$m 2>/dev/null && ls -1 | grep -E 'APKINDEX.+.tar.gz') |
+  (cd $AF/apks/$m 2>/dev/null && ls -1 | grep -E 'APKINDEX.+.tar.gz') |
   while read r; do
     d=/var/ar/$r/$m
     mkdir -p $d
-    find $AR/apks/$m/ | xargs -I{} ln -s {} $d/
+    find $AF/apks/$m/ | xargs -I{} ln -s {} $d/
     mv $d/$r $d/APKINDEX.tar.gz
     echo /var/ar/$r >> /etc/apk/repositories
   done
@@ -84,7 +84,7 @@ sigchk() {
     printf '\033[33mbuilt with unsigned asm.sh; cannot verify integrity\033[0m\n'
     return
   }
-  local f=$AR/sm/asm.sh
+  local f=$AF/sm/asm.sh
   printf ' verifying \r'
   apka -q openssl &&
   openssl dgst -sha512 -verify /etc/asm.pub -signature $f.sig $f >/dev/null &&
@@ -107,9 +107,9 @@ sigchk() {
 beeps 40 2000 1000 &
 
 # run the payload
-s=$AR/sm/asm.sh
+s=$AF/sm/asm.sh
 cmd="$SHELL $s"
-logcfg=$(cat $AR/sm/log.cfg 2>/dev/null)
+logcfg=$(cat $AF/sm/log.cfg 2>/dev/null)
 logcom=
 logdir=
 if [ "$logcfg" ] && apka -q util-linux; then
@@ -126,7 +126,7 @@ if [ "$logcfg" ] && apka -q util-linux; then
         else
           echo "note: skipping fsck.vfat (dosfstools unavailable)"
         fi
-        mount -o remount,rw $AR && logdir=$AR
+        mount -o remount,rw $AF && logdir=$AF
         ;;
       *)
         logdir=/media/$AD$logcfg

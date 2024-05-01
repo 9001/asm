@@ -18,4 +18,4 @@ printf '%s\n' k k | passwd >/dev/null
 service sshd start
 
 log starting r0c
-tmux new '$AR/sm/bin/r0c.py; ash'
+tmux new '$AF/sm/bin/r0c.py; ash'

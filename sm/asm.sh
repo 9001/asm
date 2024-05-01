@@ -72,7 +72,7 @@ EOF
 	echo
 	apk add -q openssh-server
 	sed -ri 's/(Subsystem[^/]+sftp).*/\1 internal-sftp/' /etc/ssh/sshd_config
-	keyfile=$AR/sm/authorized_keys
+	keyfile=$AF/sm/authorized_keys
 	if [ -e $keyfile ]; then
 		log allowing $(grep ssh- $keyfile | wc -l) ssh-keys from $keyfile
 		mkdir -p ~/.ssh
@@ -116,9 +116,9 @@ disksel() {
 # collect and store some hardware info
 infograb() {
 	# to timeout the comment prompt after 3 sec, uncomment the '' 3
-	hwscan $AR/sm/infos  # '' 3
+	hwscan $AF/sm/infos  # '' 3
 
-	touch $AR/sm/infos 2>/dev/null || fs_ro=1
+	touch $AF/sm/infos 2>/dev/null || fs_ro=1
 
 	apka -q python3 !pyc && (
 		cd /dev/shm
@@ -127,23 +127,23 @@ infograb() {
 		# html: recommended (readable by libreoffice-calc)
 		# json: recommended (enables caching)
 		# txt/csv: indifferent; no particular usecase
-		hwinv $AR/sm/infos \
+		hwinv $AF/sm/infos \
 			--txt=hw-inv.txt \
 			--csv=hw-inv.csv \
 			--html=hw-inv.html \
 			--json=hw-inv.json \
-			--cache=$AR/sm/infos/hw-inv.json
+			--cache=$AF/sm/infos/hw-inv.json
 
-		[ $fs_ro ] && mount -o remount,rw $AR
-		mv hw-inv.* $AR/sm/infos/
+		[ $fs_ro ] && mount -o remount,rw $AF
+		mv hw-inv.* $AF/sm/infos/
 
-		mkdir -p $AR/sm/bin
+		mkdir -p $AF/sm/bin
 		for p in hwinv hwscan; do
-			cp -npv $(which $p) $AR/sm/bin/$p 2>/dev/null || true
+			cp -npv $(which $p) $AF/sm/bin/$p 2>/dev/null || true
 		done
 	)
 
-	[ $fs_ro ] && mount -o remount,ro $AR
+	[ $fs_ro ] && mount -o remount,ro $AF
 	menu
 }
 

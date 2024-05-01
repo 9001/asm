@@ -2,7 +2,7 @@
 # undo add if error
 
 aa="--force-non-repository --wait 10"
-grep -q tty $AR/sm/log.cfg 2>/dev/null &&
+grep -q tty $AF/sm/log.cfg 2>/dev/null &&
     aa="$aa --no-progress"
 
 /sbin/apk $aa add "$@" && exit 0 || rv=$?

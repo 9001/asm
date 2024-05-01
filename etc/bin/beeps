@@ -4,7 +4,7 @@ set -e
 # volume is 89% unless specified in /sm/avol.txt;
 # mute by creating an empty file at /sm/quiet
 
-[ -e $AR/sm/quiet ] && {
+[ -e $AF/sm/quiet ] && {
     rmmod pcspkr 2>/dev/null || true
     exit 0
 }
@@ -30,7 +30,7 @@ nbeep() {
 # alsa-beep
 abeep() {
     killall -q tinyplay || true
-    avol=$(sed s/%// $AR/sm/avol.txt 2>/dev/null || echo 89)
+    avol=$(sed s/%// $AF/sm/avol.txt 2>/dev/null || echo 89)
     for m in 'Master Playback' 'PCM Playback'; do
         tinymix set "$m Volume" $avol% 2>/dev/null || true
         tinymix set "$m Switch" 1 2>/dev/null || true
@@ -91,7 +91,7 @@ command -v tinyplay >/dev/null && {
     exit
 }
 
-echo $AR/apks/*/tinyalsa-* | grep -q apk$ && {
+echo $AF/apks/*/tinyalsa-* | grep -q apk$ && {
     apka -q tinyalsa && abeep "$@"
     exit
 }

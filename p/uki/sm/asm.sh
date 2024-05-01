@@ -4,7 +4,7 @@ set -e
 # secureboot has verified everything down through this file;
 # now it's our job to verify the integrity of some.txt:
 
-(cd $AR/sm; sha512sum -c <<'EOF'
+(cd $AF/sm; sha512sum -c <<'EOF'
 77e7976f16e13fcf240d1b239ea01851360ea1d726cb9890da7c51d7dd2364b2c5ddfe9f7da1a08d339685021997a2fd347e3bd263578d3c4bfc7b86dbf4142e  some.txt
 EOF
 ) || { printf '\033[31m\nABORT: resource integrity check failed\n\033[0m'; exit 1; }
@@ -16,9 +16,9 @@ EOF
 install_secureboot_certs() {
     e="cannot install secureboot certs"
 
-    [ -e "$AR/certs/pk.auth" ] &&
-    [ -e "$AR/certs/kek.auth" ] &&
-    [ -e "$AR/certs/db.auth" ] || {
+    [ -e "$AF/certs/pk.auth" ] &&
+    [ -e "$AF/certs/kek.auth" ] &&
+    [ -e "$AF/certs/db.auth" ] || {
         echo could not find secureboot certs to install
         return
     }
@@ -37,9 +37,9 @@ install_secureboot_certs() {
     echo installing secureboot certs
     chattr -i /sys/firmware/efi/efivars/*
     for k in db KEK PK; do
-        fp=$AR/certs/$k
+        fp=$AF/certs/$k
         [ -e $fp.auth ] ||
-            fp=$AR/certs/$(echo $k | tr [:upper:] [:lower:])
+            fp=$AF/certs/$(echo $k | tr [:upper:] [:lower:])
 
         echo " - $fp"
         efi-updatevar -f $fp.auth $k ||

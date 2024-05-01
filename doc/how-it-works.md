@@ -2,7 +2,7 @@
 
 the [Alpine ISO](https://alpinelinux.org/downloads/) comes with a tool ([setup-bootable](https://wiki.alpinelinux.org/wiki/Alpine_setup_scripts#setup-bootable)) which writes a copy of the ISO onto a USB flashdrive, except you can then modify the USB contents just like a normal flashdrive
 
-> the flashdrive will be mounted read-only while inside the live-env, so yanking it at runtime is still perfectly safe -- to enable editing you have to `mount -o remount,rw $AR`
+> the flashdrive will be mounted read-only while inside the live-env, so yanking it at runtime is still perfectly safe -- to enable editing you have to `mount -o remount,rw $AF`
 
 anyways, [`./build.sh`](./build.sh) does that and splices in some stuff from this repo:
 
@@ -12,7 +12,7 @@ anyways, [`./build.sh`](./build.sh) does that and splices in some stuff from thi
 is the payload which does the cool stuff (this is probably what you want to modify)
 
 the following environment variables are available;
-* `$AR` = filesystem path to the usb, for example `/media/usb`
+* `$AF` = filesystem path to the usb, for example `/media/usb`
 * `$AP` = the usb blockdevice and partition, for example `sda1`
 * `$AD` = the usb blockdevice sans partition, for example `sda`
 * `$AN` = profile name, or blank if built without `-p`
@@ -53,9 +53,9 @@ when booting a computer with the flashdrive inserted, all the usual alpine stuff
   * a completely normal alpine bootup aside from that :^)
 
 * [`/etc/strap.sh`](./etc/strap.sh) does some basic environment setup:
-  * sets the `$AR/$AP/$AD` variables for easy access to the USB FS
+  * sets the `$AF/$AP/$AD` variables for easy access to the USB FS
   * switches the shell from `ash` to `bash` if available
   * keyboard layout, console font and colors, beeps the pc-speaker
-  * and finally runs [`$AR/sm/asm.sh`](./sm/asm.sh) aka `fs0:/sm/asm.sh` exactly once, before turning tty1 back into a normal interactive console
+  * and finally runs [`$AF/sm/asm.sh`](./sm/asm.sh) aka `fs0:/sm/asm.sh` exactly once, before turning tty1 back into a normal interactive console
 
 so considering the minimal amount of hacks, this should all JustWork in future alpine versions too 🤞🤞

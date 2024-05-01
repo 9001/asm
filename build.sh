@@ -386,11 +386,11 @@ for f in */syslinux.cfg */grub.cfg; do sed -ri '
 done )
 
 log adding ./sm/
-(cd $AR/sm/img && tar --exclude 'sm/post-build*' -c *) |
+(cd $AF/sm/img && tar --exclude 'sm/post-build*' -c *) |
 tar --no-same-permissions -xoC /mnt
 mkdir -p /mnt/sm/bin
 
-f=$AR/sm/img/sm/post-build.sh
+f=$AF/sm/img/sm/post-build.sh
 [ -e $f ] && log $f && $(command -v bash || echo $SHELL) $f
 
 log all done -- shutting down

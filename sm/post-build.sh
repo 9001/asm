@@ -440,5 +440,5 @@ sign_efi() {
 
 
 # chainload profile-specific steps
-f=$AR/sm/img/sm/post-build-2.sh
+f=$AF/sm/img/sm/post-build-2.sh
 [ ! -e $f ] || { log $f; . $f; }
