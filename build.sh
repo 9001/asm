@@ -275,7 +275,7 @@ cp -pR etc sm $b/fs/sm/img/
 pdir=.
 [ "$profile" ] && {
     pdir=p/$profile;
-    (cd $pdir && tar -c *) |
+    (cd $pdir && tar -c .) |
     tar -xC $b/fs/sm/img/
 }
 [ "$asm_key" ] &&  # derive pubkey from privkey
@@ -386,7 +386,7 @@ for f in */syslinux.cfg */grub.cfg; do sed -ri '
 done )
 
 log adding ./sm/
-(cd $AF/sm/img && tar --exclude 'sm/post-build*' -c *) |
+(cd $AF/sm/img && tar --exclude 'sm/post-build*' -c .) |
 tar --no-same-permissions -xoC /mnt
 mkdir -p /mnt/sm/bin
 
