@@ -77,16 +77,36 @@ eimg="$td"/boot/grub/efi.img
 befi=$(echo "$td"/efi/boot/boot*.efi)
 sz=$(cat "$td"/efi/boot/* | wc -c | awk '{print int($1/1024)+256}')
 
-[ $sz -gt 4141 ] && [ $befi -nt $eimg ] &&
-    rm -f $eimg  # probably UKI; rebuild
+# files are extracted (safe to tamper with) and not uki?
+[ $ex ] && [ $sz -lt 4141 ] && (
+    # write the correct volume identifier into the .efi
+    cd "$td"/efi/boot
+    grep -aboRE -- '--label "alpine-(std|ext|virt|xen) 3\.[0-9\.]+ (x86|x86_64|armv7|aarch64)".*' . |
+    while IFS=: read fn tofs torig; do
+        tmod="$(printf '%s\n' "$torig" | sed -r 's/([^"]+")[^"]+/\1'"$vn/")"
+        while [ ${#tmod} -lt ${#torig} ]; do tmod="$tmod "; done
+        msg "patching ${fn:2} @ $tofs"
+        msg ' |--orig '"[$torig]"
+        msg ' `---mod '"[$tmod]"
+        [ ${#tmod} -gt ${#torig} ] &&
+            warn 'failed; modified value exceeds original length' &&
+            continue
+        printf '%s' "$tmod" | dd of=$fn seek=$tofs bs=1 iflag=fullblock conv=sync,notrunc status=none
+        rm -f "$eimg"  # make sure efi-image gets rebuilt
+    done
+)
 
-[ -e $eimg ] || {
-    msg upgrading $eimg ...
+[ $sz -gt 4141 ] && [ "$befi" -nt "$eimg" ] &&
+    rm -f "$eimg"  # probably UKI; rebuild
+
+[ -e "$eimg" ] || {
+    [ $sz -gt 16384 ] && fat=16 || fat=12
+    msg "rebuilding ${eimg##*/} (${sz} KiB, FAT-$fat)"
     mkdir -p "$td"/boot/grub
-    touch $eimg
-    truncate -s ${sz}k $eimg
-    mkfs.vfat -F16 -nESP $eimg
-    mcopy -i $eimg -s "$td/efi" ::
+    touch "$eimg"
+    truncate -s ${sz}k "$eimg"
+    mkfs.vfat -F$fat -nESP "$eimg"
+    mcopy -i "$eimg" -s "$td/efi" ::
 }
 
 msg now building "$iso_out" ...
@@ -118,5 +138,9 @@ args+=(
     "$td"
 )
 xorrisofs "${args[@]}" && rv= || rv=$?
+
+[ $rv ] &&
+    err "failed to build iso" ||
+    inf "iso OK"
 
 exit $rv
