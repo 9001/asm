@@ -9,7 +9,7 @@ err()  { printf '\033[1;91;7mx\033[27m %s\033[0m%s\n' "$*" >&2; }
 usb_src="$1"
 iso_out="$2"
 td=
-vn=asm-$(date +%Y-%m%d-%H%M%S)
+vn=ASM_$(date +%Y_%m%d_%H%M%S)
 
 [ $(id -u) -eq 0 ] && ex= || ex=1
 
@@ -41,6 +41,14 @@ while [ "$1" ]; do
         *)   err "unexpected argument: $k"; help; ;;
     esac
 done
+
+[ ${#vn} -gt 32 ] && {
+    vn="${vn:0:32}"
+    warn "volume name cannot be longer than 32 characters; will truncate to [$vn]"
+}
+
+[ "$(printf '%s\n' "$vn" | tr -d '[A-Z0-9_]')" ] &&
+    warn "according to iso9660, the volume name should only contain uppercase A-Z, digits 0-9, and _"
 
 usb_open() {
     trap "rmdir '$td' 2>/dev/null || umount '$td' || true; rmdir '$td' 2>/dev/null || true; exit" INT TERM EXIT
