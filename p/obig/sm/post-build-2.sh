@@ -7,8 +7,8 @@ set -e
 # and disable KMS when booting the final image
 
 recommended_apks py3-requests ranger aria2
-imshrink_nosig  # faster boot (skips modloop verification)
 imshrink_zinfo  # smaller (makes kernel debugging harder)
+imshrink_filter_irmods  # faster boot (skips modloop verification + some kmods)
 imshrink_filter_mods
 nomodeset
 grub_beep

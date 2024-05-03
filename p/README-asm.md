@@ -49,8 +49,8 @@ r0cbox hardware requirements:
 
 # [`./min/`](./min/)
 
-* produces a 32 MiB iso, 27 MiB gzipped usb image:
+* produces a 24 MiB iso and/or gzipped usb image:
   ```
-  ./build.sh -i dl/alpine-virt-3.17.1-x86.iso -oi asm.iso -p min -s 0.06
+  ./build.sh -i dl/alpine-virt-3.19.1-x86.iso -oi asm.iso -p min -s 0.06
   ```
-  * (non-virt i386 is 68 / 63 MiB due to hw drivers)
+  * (non-virt i386 is 33 MiB due to hw drivers)

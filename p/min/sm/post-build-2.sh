@@ -5,10 +5,16 @@ set -e
 wrepo
 
 # options
-imshrink_nosig
 imshrink_rmkinfo
+imshrink_filter_irmods '' '' '
+    /\/scsi\/(mega|cxgb|bnx|lpfc|qla|elx|mpt|aic|pm|mpi|aac|be2|fco)/{next}
+    /\/(chelsio|firmware)\/cxgb[34]\//{next}  # big fw: old 10gbit nic
+    /\/firmware\/ql2[0-9]{3}_fw\.bin/{next}  # big fw: fibre channel scsi (qlogic)
+    /\/drivers\/infiniband\//{next}  # enterprise networking
+    /\/gpu\/drm\//{next}  # modeset? pssh
+'
 imshrink_filter_mods \
-    '/(modules/firmware|sound|net/(netfilter|bridge|bonding|team|ethernet|usb|dsa|can|ppp|fddi|arcnet|fjes)|infiniband|drivers/(gpu|platform|iio|crypto|isdn|nfc|usb/serial)|input/touchscreen|staging|mei|hwmon|thunderbolt|firewire|f2fs|btrfs|nfsd?|sunrpc|cifs|ceph|gfs2|ksmbd|reiserfs|mac80211)/|/xt_|/scsi/(mega|cxgb|bnx|lpfc|qla|elx|mpt|aic|pm|mpi|aac|be2|fco)' \
+    '/(modules/firmware|sound|net/(netfilter|bridge|bonding|team|ethernet|usb|dsa|can|ppp|fddi|arcnet|fjes)|drivers/(gpu|platform|iio|crypto|isdn|nfc|usb/serial)|input/touchscreen|staging|mei|hwmon|thunderbolt|firewire|f2fs|ubifs|btrfs|xfs|nilfs2|jfs|ntfs3?|smb|nfsd?|sunrpc|cifs|drbd|ceph|gfs2|ksmbd|reiserfs|mac80211)/|/xt_|/scsi/(mega|cxgb|bnx|lpfc|qla|elx|mpt|aic|pm|mpi|aac|be2|fco)|/arch/x86(_64)?/kvm/' \
     'rtl_nic|tigon|intel/(igb|e1000)|ethernet/(realtek|amd)|crypto/virtio'
     # hwmon is used by beefy NICs
 

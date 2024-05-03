@@ -207,6 +207,7 @@ imshrink_rmkinfo() {
 imshrink_filter_mods() {
     # shaves ~79 MiB
     # shrink modloop by removing rarely-useful stuff + invokes imshrink_fake_gz
+    # (recommendation: combine with imshrink_filter_irmods to do initramfs too)
     #
     # accepts one, two, or three optional args:
     #   arg 1: regex of additional mods to remove
@@ -235,6 +236,7 @@ imshrink_filter_mods() {
         /\/(brcm|mrvl|ath1.k|ti-connectivity|rtlwifi|rtl_bt|wireless|bluetooth)\/|iwlwifi/{next}  # wifi/bt
         /\/(amdgpu|radeon|nvidia|nouveau)\//{next}  # pcie gpus
         /\/(netronome)\//{next}  # agilio smartnics
+        /\/(infiniband)\//{next}  # enterprise networking
         /\/(drivers\/multimedia|kernel\/drivers\/media)\//{next}  # capturecards, webcams
         /\/(ueagle-atm)\//{next}  # adsl modems
         /\/(ocfs2)\//{next}  # filesystems
@@ -283,12 +285,48 @@ imshrink_nosig() {
     # shaves 1~3 MiB
     # remove modloop signature from initramfs to avoid pulling in openssl
     # (also increases boot speed since it disables the modloop sigcheck)
+    edit_initramfs 1
+}
+
+imshrink_filter_irmods() {
+    # shaves 300 KiB and then does imshrink_nosig too,
+    # gets better if you give it a regex for additional modules to remove,
+    # takes the same args as imshrink_filter_mods
+    edit_initramfs 3 "$@"
+}
+
+edit_initramfs() {
+    case $1 in
+        1) nosig=1;fmod= ;;  # mode 1: just remove modloop signature
+        2) nosig= ;fmod=1;;  # mode 2: just remove some kernel modules
+        3) nosig=1;fmod=1;;  # mode 3: both 1 and 2
+    esac
+    shift
+
     bdep_add .msig zstd xz
     cd; mkdir x; cd x
     f=$(echo /mnt/boot/initramfs-*)
     log unpacking initramfs
     gzip -d < $f | cpio -idm
-    rm -f var/cache/misc/modloop-*.SIGN.RSA.*
+
+    [ $nosig ] &&
+        rm -f var/cache/misc/modloop-*.SIGN.RSA.*
+
+    [ $fmod ] && {
+        drop="$(printf '%s\n' "$1" | sed -r 's`/`\\/`g')"
+        keep="$(printf '%s\n' "$2" | sed -r 's`/`\\/`g')"
+        [ "$drop" ] && drop="/$drop/{next}"
+        [ "$keep" ] && keep="/$keep/{print;next}"
+        base='
+            /\/drivers\/infiniband\//{next}  # enterprise networking
+        '
+        [ $# -ge 3 ] && base="$3"
+
+        find -type f | tee /l1 | (set -x; awk "${keep}${base}${drop}1") >/l2
+        diff -aU0 /l1 /l2 | awk 'NR>2&&/^-/{print substr($0,2)}' | tr '\n' '\0' | xargs -0 rm --
+        rm /l1 /l2
+    }
+
     log repacking initramfs
     free -m
     local m=$(awk '/^MemAvailable:/{printf("%d\n",($2*0.9)/1024)}' < /proc/meminfo)
@@ -296,6 +334,7 @@ imshrink_nosig() {
     umask 0077
     comp="zstd -19 -T0"     # boots ~.5sec / 10% faster, --long/--ultra can OOM
     comp="xz -C crc32 -T0 -M${m}MiB"  # 320k..3M smaller
+    # note: xbcj is counterproductive here
     find . | sort | cpio --renumber-inodes -o -H newc | $comp > $f
     cd; rm -rf x
     bdep_del .msig
