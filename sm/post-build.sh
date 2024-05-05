@@ -156,6 +156,21 @@ grub_beep() {
 }
 
 
+##
+# building an i386 image and adding support for 64bit EFI by inserting
+# a 64bit grub? in that case, it's important to remove the 32bit grub:
+
+grub64() {
+    [ -e /mnt/efi/boot/bootx64.efi ] || {
+        echo
+        ls -al /mnt/efi/boot
+        echo "ERROR: 64bit grub not found; image would become unbootable"
+        exit 1
+    }
+    rm -rf /mnt/efi/boot/bootia32.efi /mnt/boot/grub/i386-efi
+}
+
+
 ########################################################################
 # image shrinkers;
 # each of these are optional

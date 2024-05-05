@@ -139,11 +139,6 @@ printf '%s\n' "$iso" | grep -q : && {
     help
 }
 
-[ ! "$profile" ] || [ -e "p/$profile" ] || {
-    err "selected profile does not exist: $PWD/p/$profile"
-    exit 1
-}
-
 not_mounted() {
     for f in /sys/class/block/*/loop/backing_file; do
         grep -F "$1" $f >/dev/null 2>&1 && return 1
@@ -242,6 +237,13 @@ iso="$(absreal "$iso")"
         mv "$iso"{,.corrupt}
         exit 1
     }
+}
+
+[ "$profile" = - ] && exit 0  # exit-after-download
+
+[ ! "$profile" ] || [ -e "p/$profile" ] || {
+    err "selected profile does not exist: $PWD/p/$profile"
+    exit 1
 }
 
 usb_out="$(absreal "$usb_out")"

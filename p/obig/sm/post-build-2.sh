@@ -13,6 +13,11 @@ imshrink_filter_mods
 nomodeset
 grub_beep
 
+# replace 32bit grub with 64bit to support booting 32bit image on 64bit efi;
+# requires a copy of 64bit grub efi which can be obtained with the following:
+# ./doc/grub64.sh dl/alpine-extended-3.19.1-x86_64.iso p/obig/
+#grub64
+
 # enable dual-UKI/BIOS; bumps size from 151 to 174 MiB
 # (this UKI is not tamper-proof, see /p/uki for a safe one)
 #uki_make; sign_efi
