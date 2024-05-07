@@ -64,6 +64,18 @@ and, if all else fails, a very basic build can be made [manually](./doc/manual-b
     * linux-only because windows is very persistent in blanking any filesystem headers it can find
 
 
+## write it to a CD
+
+* if you haven't made an `asm.iso` yet, convert an existing `asm.usb` with `./u2i.sh asm.usb asm.iso`
+* optionally PGO the iso (runs 30% faster) by capturing the access pattern of a vm booting it
+  1. start the tracer: `./utils/isotrace.py asm.iso asm.wl`
+  2. start the vm: `qemu-system-x86_64 -enable-kvm -vga qxl -cpu host -m 1024 -audio pa,model=hda --drive file=nbd:127.0.0.1:2031`
+  3. do things you expect to do at runtime (install packages etc.) then alt-f4 the vm
+  4. build optimized iso: `./u2i.sh asm.usb asm.iso -wl asm.wl`
+* burn it: `wodim -dao speed=0 -v -data asm.iso`
+  * `-dao` runs better than `-tao` but some drives from the 90s can only read `-tao`
+
+
 ## rapid prototyping
 
 if you are working on `asm.sh` and you're testing your image by repeatedly making an iso and booting that in virtualbox/vmware/bare-metal, it would be much faster to instead mount asm.usb and make changes directly inside the image, and then use `u2i.sh` to build the iso from the mounted folder instead of doing a full build:

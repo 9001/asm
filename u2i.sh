@@ -9,6 +9,7 @@ err()  { printf '\033[1;91;7mx\033[27m %s\033[0m%s\n' "$*" >&2; }
 usb_src="$1"
 iso_out="$2"
 td=
+wl=
 vn=ASM_$(date +%Y_%m%d_%H%M%S)
 
 [ $(id -u) -eq 0 ] && ex= || ex=1
@@ -25,6 +26,7 @@ optional-args:
   -td PATH  temp dir
   -vn ID    volume name, default: $vn
   -ex y     extract with mtools (default if not root)
+  -wl PATH  weightlist (from isotrace.py)
 
 EOF
     exit 1
@@ -38,6 +40,7 @@ while [ "$1" ]; do
         -td) td="$v"; ;;
         -vn) vn="$v"; ;;
         -ex) ex="$v"; ;;
+        -wl) wl="$v"; ;;
         *)   err "unexpected argument: $k"; help; ;;
     esac
 done
@@ -49,6 +52,11 @@ done
 
 [ "$(printf '%s\n' "$vn" | tr -d '[A-Z0-9_]')" ] &&
     warn "according to iso9660, the volume name should only contain uppercase A-Z, digits 0-9, and _"
+
+[ ! "$wl" ] || [ -e "$wl" ] || {
+    echo "weightlist '$wl' given to -wl does not exist"
+    exit 1
+}
 
 usb_open() {
     trap "rmdir '$td' 2>/dev/null || umount '$td' || true; rmdir '$td' 2>/dev/null || true; exit" INT TERM EXIT
@@ -120,6 +128,9 @@ args=(
     -sysid LINUX
     -volid $vn
 )
+[ "$wl" ] && args+=(
+    --sort-weight-list "$wl"
+)
 [ -e "$td"/boot/syslinux/isohdpfx.bin ] && args+=(
     -isohybrid-mbr "$td"/boot/syslinux/isohdpfx.bin
     -eltorito-boot boot/syslinux/isolinux.bin
@@ -134,7 +145,14 @@ args+=(
     -no-emul-boot
     -isohybrid-gpt-basdat
     -follow-links
+)
+
+# excluding uki efi from fs saves enough space to outweigh the convenience
+[ $sz -gt 4141 ] && args+=(
     -m "$td"/efi/boot/boot*.efi
+)
+
+args+=(
     "$td"
 )
 xorrisofs "${args[@]}" && rv= || rv=$?

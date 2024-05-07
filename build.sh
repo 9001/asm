@@ -545,7 +545,7 @@ better uefi example for newer qemu versions:
     -device virtio-blk-pci,drive=asm,bootindex=1 -drive id=asm,if=none,format=raw,file=$usb_out -m 512
 
 some useful qemu args:
-  -nic user   -nographic   -serial stdio   -display gtk,zoom-to-fit=on
+  -nic user   -nographic   -serial stdio   -display gtk,zoom-to-fit=on   -audio pa,model=hda
 
 activate host-only-network if necessary:
   ./doc/setup-virhost.sh
