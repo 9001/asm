@@ -10,7 +10,7 @@ set -e
 #   efi/boot/bootx64.efi           # will always be created
 #
 # example usage at project root:
-# 1) ./doc/grub64.sh dl/alpine-extended-3.19.1-x86_64.iso ./p/obig
+# 1) ./utils/grub64.sh dl/alpine-extended-3.19.1-x86_64.iso ./p/obig
 # 2) uncomment the grub64 call in p/obig/sm/post-build-2.sh
 
 absreal() { realpath "$1" || readlink -f "$1"; }
