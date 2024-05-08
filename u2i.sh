@@ -10,6 +10,7 @@ usb_src="$1"
 iso_out="$2"
 td=
 wl=
+cs=
 vn=ASM_$(date +%Y_%m%d_%H%M%S)
 
 [ $(id -u) -eq 0 ] && ex= || ex=1
@@ -27,6 +28,7 @@ optional-args:
   -vn ID    volume name, default: $vn
   -ex y     extract with mtools (default if not root)
   -wl PATH  weightlist (from isotrace.py)
+  -cs TYPE  create checksums; md5, sha1, sha512, b2, b2:256
 
 EOF
     exit 1
@@ -41,6 +43,7 @@ while [ "$1" ]; do
         -vn) vn="$v"; ;;
         -ex) ex="$v"; ;;
         -wl) wl="$v"; ;;
+        -cs) cs="$v"; ;;
         *)   err "unexpected argument: $k"; help; ;;
     esac
 done
@@ -116,6 +119,27 @@ sz=$(cat "$td"/efi/boot/* | wc -c | awk '{print int($1/1024)+256}')
     mkfs.vfat -F$fat -nESP "$eimg"
     mcopy -i "$eimg" -s "$td/efi" ::
 }
+
+[ $cs ] && (
+    cd "$td"
+    case $cs in
+        md5) cmd=md5sum; sums=MD5SUMS;;
+        sha1) cmd=sha1sum; sums=SHA1SUMS;;
+        sha256) cmd=sha256sum; sums=SHA256SUMS;;
+        sha512) cmd=sha512sum; sums=SHA512SUMS;;
+        b2) cmd=b2sum; sums=B2SUMS;;
+        b2:*) cmd="b2sum -l ${cs:3}"; sums=B2SUMS;;
+        *) err "invalid -cs"; exit 1;;
+    esac
+    msg "creating $sums with $cmd"
+    tfn="$(mktemp)"
+
+    find -type f | cut -c3- |
+    grep -vE '^boot/syslinux/(boot.cat|isolinux.bin)$' |
+    LC_ALL=C sort | tr '\n' '\0' | xargs -0 $cmd -- > /$tfn
+
+    mv $tfn $sums
+)
 
 msg now building "$iso_out" ...
 # https://github.com/alpinelinux/aports/blob/569ab4c43cba612670f1a153a077b42474c33267/scripts/mkimg.base.sh

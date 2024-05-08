@@ -4,7 +4,7 @@ set -e
 # volume is 89% unless specified in /sm/avol.txt;
 # mute by creating an empty file at /sm/quiet
 
-[ -e $AF/sm/quiet ] && {
+[ -e $AF/sm/quiet ] || [ -e /dev/shm/nobeep ] && {
     rmmod pcspkr 2>/dev/null || true
     exit 0
 }
