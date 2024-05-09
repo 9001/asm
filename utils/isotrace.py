@@ -154,11 +154,13 @@ class ISO(object):
         lines = p.communicate()[0].decode("utf-8", "replace").split("\n")
 
         # Report layout: xt , Startlba ,   Blocks , Filesize , ISO image path
+        sizes = {}
         for ln in lines:
             if not ln.startswith("File data lba:"):
                 continue
             lv = ln.strip().split(",", 4)
             lba = int(lv[1].strip())
+            sizes[lba] = int(lv[3])
             fn = lv[4].strip().strip("'")
             if lba in self.map:
                 self.map[lba].append(fn)
@@ -167,6 +169,10 @@ class ISO(object):
                 self.lbas.append(lba)
 
         self.lbas.sort()
+        last_file_start = self.lbas[-1]
+        after_last_file = last_file_start + (2047 + sizes[last_file_start]) // 2048
+        self.lbas.append(after_last_file)
+        self.map[after_last_file] = ["READ_PAST_END"]
 
     def read(self, ofs, nbytes):
         lba = ofs // 2048
@@ -188,12 +194,19 @@ class ISO(object):
         else:
             lba_base = self.lbas[i - 1]
             for fn in self.map[lba_base]:
+                if fn == "READ_PAST_END":
+                    continue  # probably efi img, dontcare
+                suffix = ""
                 if fn not in self.seen_fns:
-                    self.seen_fns.add(fn)
-                    self.fn_order.append(fn)
+                    if lba == lba_base:
+                        # reading from start of file; add to weightlist
+                        self.seen_fns.add(fn)
+                        self.fn_order.append(fn)
+                    else:
+                        suffix = "[IGNORED::NOT_START_OF_FILE]"
                 elif abs(self.last_read_ofs - ofs) <= 1024 * 1024:
                     continue  # only print new files and seeks
-                print("%12d %s" % (ofs, fn))
+                print("%12d %s %s" % (ofs, fn, suffix))
 
         self.last_read_ofs = ofs
         self.f.seek(ofs)
@@ -213,7 +226,7 @@ def main():
     finally:
         with open(abspath_weightlist, "wb") as f:
             nw = 0
-            n = len(iso.fn_order) + 10001
+            n = len(iso.fn_order) + 10101
             for fn in iso.fn_order:
                 n -= 1
                 if ptn and ptn.search(fn):
