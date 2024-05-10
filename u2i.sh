@@ -89,7 +89,7 @@ befi=$(echo "$td"/efi/boot/boot*.efi)
 sz=$(cat "$td"/efi/boot/* | wc -c | awk '{print int($1/1024)+256}')
 
 # files are extracted (safe to tamper with) and not uki?
-[ $ex ] && [ $sz -lt 4141 ] && (
+[ $ex ] && [ "$td" != "$usb_src" ] && [ $sz -lt 4141 ] && (
     # write the correct volume identifier into the .efi
     cd "$td"/efi/boot
     grep -aboRE -- '--label "alpine-(std|ext|virt|xen) 3\.[0-9\.]+ (x86|x86_64|armv7|aarch64)".*' . |

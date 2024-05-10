@@ -340,7 +340,7 @@ eh() {
     trap - INT TERM EXIT
     [ $r -eq 0 ] && exit 0
     printf "\033[A\033[1;37;41m\n\n  asm build failed; blanking partition header  \n\033[0m\n"
-    sync; head -c1024 /dev/zero >$vda
+    sync; head -c1024 /dev/zero >$vda || true
     poweroff
     exit
 }

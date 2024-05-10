@@ -24,7 +24,9 @@ declare -ir ts=$((rl*tn))
 
 read ny nx < <(stty size)
 
-echo -ne '\033[?25l\033[H\033[J'
+echo -ne '\033[?25l'
+[ $# -gt 0 ] ||
+	echo -ne '\033[H\033[J'
 
 for (( i = 0; i < ts; i++ ))
 do
@@ -56,6 +58,8 @@ do
 				printf "\033[${ry[i]};${rx[i]}H\033[1;3${rf[i]}m${rc[${ra[i]}]}"
 		done
 	done
+	break
+
 	x=$((nx/2))
 	x=$((x-7))
 	y=$((ny/2))
