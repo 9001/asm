@@ -64,8 +64,8 @@ if [ -d /etc/apk/ ] ; then
 else
 	alias tmux='TERM=screen-256color tmux'
 fi
-for c in bmon htop lshw ncdu ranger sshfs vim; do
-	alias $c="unalias $c; which $c >/dev/null || apka $c !pyc; $c"
+for c in bmon htop lshw ncdu ranger sshfs telnet testdisk vim; do
+	alias $c="unalias $c; which $c >/dev/null || apka $c !pyc || apka cmd:$c !pyc; $c"
 done
 
 alias q='kill -9 $$'

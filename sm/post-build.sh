@@ -98,7 +98,8 @@ recommended_apks() {
     fetch_apks \
         bash coreutils util-linux \
         bzip2 gzip pigz xxhash xz zstd \
-        bmon curl ethtool iperf3 iproute2 iputils nmap-ncat proxychains-ng rsync socat sshfs sshpass tcpdump \
+        bmon curl ethtool inetutils-telnet iperf3 iproute2 iputils \
+          nmap-ncat proxychains-ng rsync socat sshfs sshpass tcpdump \
         dmidecode libcpuid-tool lm-sensors lshw nvme-cli pciutils sgdisk smartmontools testdisk usbutils \
         efibootmgr efivar mokutil sbsigntool \
         cryptsetup fuse fuse3 nbd nbd-client partclone \
