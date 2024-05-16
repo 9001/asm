@@ -56,13 +56,10 @@ sfnt() {
 }
 
 if [ -d /etc/apk/ ] ; then
-	alias tmux='TERM=rxvt-256color tmux -2u'
 	[ "x$TERM" == "xrxvt" ] && export TERM=rxvt-256color
 	[ "x$TERM" == "xxterm" ] && export TERM=rxvt-256color
 	alias mc='[ -e /usr/bin/mc ] || apka mc; /usr/bin/mc -S /usr/share/mc/skins/nicedark.ini'
 	alias i='apk add'
-else
-	alias tmux='TERM=screen-256color tmux'
 fi
 for c in bmon htop lshw ncdu ranger sshfs telnet testdisk vim; do
 	alias $c="unalias $c; which $c >/dev/null || apka $c !pyc || apka cmd:$c !pyc; $c"
