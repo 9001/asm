@@ -116,6 +116,7 @@ while [ "$1" ]; do
         -b)  b="$v";;
         -cb) cb="$v";;
         -qa) qa="$v";;
+        -qm) qm="$v";;
         -p)  profile="$v";;
         -v)  bvars+=("$v");;
         -vf) bvarf="$v";;
@@ -398,7 +399,7 @@ c32=/usr/share/syslinux/menu.c32
 UI menu.c32
 MENU TITLE kernel selection
 MENU AUTOBOOT now booting...
-MENU TABMSG to edit options, hold [Tab] before this screen appears
+MENU TABMSG to edit options, keep tapping [Down] or [Tab] before this appears
 MENU COLOR border 36;44 #40000000 #00000000 std
 MENU COLOR tabmsg 35;40 #90ffff00 #00000000 std
 EOF2

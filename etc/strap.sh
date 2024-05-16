@@ -13,7 +13,7 @@ UKI=$(awk 'NR>1{next} {v=1} /modules=/{v=""} /apkovl=/{v=1} END{print v}' /proc/
 cat <<'EOF'
 export AF=$(dirname /media/*/sm)
 export AP=$(df -h $AF | awk 'NR==2{sub(/.*\//,"",$1);print$1}')
-export AD=$(echo $AP | awk '/p[0-9]$/{sub(/p[0-9]$/,"");print;next} {sub(/[0-9]$/,"");print}')
+export AD=$(echo $AP | awk '/^sr/{print;next} /p[0-9]$/{sub(/p[0-9]$/,"");print;next} {sub(/[0-9]$/,"");print}')
 export HOME=/root
 EOF
 echo export SHELL=$(command -v bash || command -v ash)

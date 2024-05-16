@@ -70,6 +70,7 @@ mt_extract() {
     trap "rm -rf '$td'; exit" INT TERM EXIT
     msg "extracting $usb_src to $td"
     mcopy -Qbmsi "$usb_src"@@1M '::*' "$td/"
+    chmod -R 755 "$td/"
 }
 
 [ -d $usb_src ] && td="$usb_src" || {
