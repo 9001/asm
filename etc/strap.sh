@@ -64,8 +64,10 @@ apka -q util-linux bash tar 2>/dev/null >&2 || true
 
 # keymap and font
 yes abort | setup-keymap us us-altgr-intl 2>/dev/null >&2
-stty size | awk '$1<36{exit 1}' ||
-  (cd /etc/cfnt; setfont $(ls -1|head -n1); motd)
+(s=$(stty size | cut -d' ' -f1 | grep -E '^[0-9]+$');
+[ ! $s ] && d= || [ $s -lt 36 ] && d=. || [ $s -gt 84 ] && d=big || d=
+[ $d ] && (cd /etc/cfnt/$d; setfont $(ls -1 *.*|head -n1); motd) || true
+)
 
 # repos
 (m=$(cat /etc/apk/arch)
