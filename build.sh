@@ -55,12 +55,12 @@ cb=
 di_rm=  # temp base-image to delet during cleanup
 b=$td/b
 mirror=https://mirror.leaseweb.com/alpine
-mirror=https://ftp.lysator.liu.se/pub/alpine
+mirror=http://mirror.accum.se/mirror/alpinelinux.org
 mirror=https://mirrors.edge.kernel.org/alpine
 
 
 help() {
-    v=3.19.1
+    v=3.20.1
     sed -r $'s/^( +)(-\w+ +)([A-Z][A-Zi,=]* +)/\\1\\2\e[36m\\3\e[0m/; s/(.*default: )(.*)/\\1\e[35m\\2\e[0m/' <<EOF
 
 arguments:
@@ -207,6 +207,13 @@ mkfs.ext3 -h 2>&1 | grep -qE '\[-d\b' ||
 
 $qemu -cpu help | grep -qE '^[^ ]* *host\b' &&
     cpu=host || cpu=max
+
+mach=
+$qemu --machine help > $td/machs
+grep -qE '^q35\b' $td/machs && mach='--machine q35 '
+
+# centos7 lies about q35 support (q35-acpi-dsdt.aml is missing)
+grep -q centos:7 /etc/os-release 2>/dev/null && mach=
 
 mkdir -p "$(dirname "$iso")"
 iso="$(absreal "$iso")"
@@ -486,14 +493,6 @@ else
         cores=$(sysctl -a | awk '/machdep.cpu.core_count/{n=$2} END{print n+0}')
     fi
 
-    mach=
-    qemu-system-x86_64 --machine help 2>&1 | grep -qE '^q35\b' &&
-        mach='--machine q35'
-
-    # centos7 lies about q35 support (q35-acpi-dsdt.aml is missing)
-    grep -q centos:7 /etc/os-release 2>/dev/null &&
-        mach=
-
     $qemu $accel -nographic -serial pipe:s \
         $mach -cpu $cpu -smp $cores -m $qm -cdrom "$iso" \
         -drive format=raw,if=virtio,discard=unmap,file=asm.usb \
@@ -534,13 +533,13 @@ or compress it for uploading:
   pigz $usb_out
 
 or try it in qemu:
-  $qemu $accel $video -cpu $cpu -drive format=raw,file=$usb_out -m 512
-  $qemu $accel $video -cpu $cpu -drive format=raw,file=$usb_out -net bridge,br=virhost0 -net nic,model=virtio -m 192
-  $qemu $accel $video -cpu $cpu -device virtio-blk-pci,drive=asm,bootindex=1 -drive id=asm,if=none,format=raw,file=$usb_out -bios /usr/share/OVMF/OVMF_CODE.fd -m 512
+  $qemu $accel $mach$video -cpu $cpu -drive format=raw,file=$usb_out -m 512
+  $qemu $accel $mach$video -cpu $cpu -drive format=raw,file=$usb_out -net bridge,br=virhost0 -net nic,model=virtio -m 192
+  $qemu $accel $mach$video -cpu $cpu -device virtio-blk-pci,drive=asm,bootindex=1 -drive id=asm,if=none,format=raw,file=$usb_out -bios /usr/share/OVMF/OVMF_CODE.fd -m 512
 
 better uefi example for newer qemu versions:
   cp /usr/share/OVMF/OVMF_VARS.fd $usb_out.efivars &&
-  $qemu $accel $video -cpu $cpu \\
+  $qemu $accel $mach$video -cpu $cpu \\
     -drive if=pflash,format=raw,unit=0,readonly=on,file=/usr/share/OVMF/OVMF_CODE.fd \\
     -drive if=pflash,format=raw,unit=1,file=$usb_out.efivars \\
     -device virtio-blk-pci,drive=asm,bootindex=1 -drive id=asm,if=none,format=raw,file=$usb_out -m 512
@@ -555,3 +554,4 @@ EOF
 
 
 # sound: -device ich9-intel-hda,id=sound0 -device hda-duplex,id=sound0-codec0,bus=sound0.0,cad=0 -global ICH9-LPC.disable_s3=1 -global ICH9-LPC.disable_s4=1
+# debug secureboot: -debugcon file:/dev/stdout -global isa-debugcon.iobase=0x402

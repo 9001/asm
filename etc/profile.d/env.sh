@@ -73,7 +73,7 @@ alias a='tmux attach || tmux || { apka tmux && tmux; }'
 alias yssh='ssh -oUserKnownHostsFile=/dev/null -oStrictHostKeyChecking=no'
 
 PS1="\
-\[\033[90m\]-\
+\[\033[90;40m\]-\
 \[\033[95m\]\$?\
 \[\033[90m\]-\
 \[\033[91m\]\$(date +%H%M%S)\

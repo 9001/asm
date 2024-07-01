@@ -272,8 +272,8 @@ imshrink_filter_mods() {
     esac
     # sort by size for faster loading from cdrom (and save ~110K)
     (cd x2 && find -type f -size +32k) | cut -c3- | while IFS= read -r x; do
-        sz=$(stat -c%s "$f")
-        printf '%s %d\n' "$f" $((sz/4096))
+        sz=$(stat -c%s "x2/$x")
+        printf '%s %d\n' "$x" $((sz/4096))
     done >/modsort
     (sleep 1; pv -i0.3 -d $(pidof mksquashfs):3) &
     mksquashfs x2/ x3 -sort /modsort -comp xz -b 1024k -exit-on-error $mksfs

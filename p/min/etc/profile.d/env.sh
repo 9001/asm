@@ -36,7 +36,7 @@ alias q='kill -9 $$'
 alias a='tmux attach || tmux || { apka tmux && tmux; }'
 
 PS1="\
-\[\033[90m\]-\
+\[\033[90;40m\]-\
 \[\033[95m\]\$?\
 \[\033[90m\]-\
 \[\033[91m\]\$(date +%H%M%S)\
