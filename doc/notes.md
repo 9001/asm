@@ -9,6 +9,14 @@
   * to create a 2nd partition, `truncate -s +64M asm.usb && echo ',,0c' | sfdisk -qa asm.usb && mkfs.vfat -F16 -nLOGS --offset=$(sfdisk asm.usb -l | awk '{v=$2}END{print v}') asm.usb`
 
 
+## serial consoles
+
+the default `asm.sh` runs `ttycons`, which looks for a file named `tty.cfg` and launches interactive shells on all TTYs listed within;
+
+* `echo ttyS0 > sm/tty.cfg` to start a shell on ttyS0 (serial port #1) with baud 115200, assuming xterm
+* `echo ttyS1 38400 vt102` for something safer
+
+
 # macos
 
 * install deps: `port install bash coreutils gnutar gsed findutils patchutils e2fsprogs` + probably some more

@@ -1,0 +1,16 @@
+#!/bin/ash
+
+# launch consoles on each tty listed in /sm/tty.cfg
+# (goes well with logging to serial-port)
+
+f=$AF/sm/tty.cfg
+
+[ -e $f ] || exit 0
+mkdir /dev/shm/tty-ok || exit 0
+
+grep .. $f |
+while read tty baud term; do
+	[ "$baud" ] || baud=115200
+	[ "$term" ] || term=xterm
+	( while true; do getty -L $baud $tty $term; done &)&
+done

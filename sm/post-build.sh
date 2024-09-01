@@ -38,6 +38,7 @@ bdep_del() {
 #   stty -F$(tty) rows 34 cols 160
 
 rshell() {
+    ip r | grep -q default || setup-interfaces -ar
     if apka socat; then
         log socat rshell
         socat exec:$SHELL' -li',pty,stderr,setsid,sigint,sane tcp:$1:4321,connect-timeout=1
@@ -98,13 +99,14 @@ recommended_apks() {
     fetch_apks \
         bash coreutils util-linux \
         bzip2 gzip pigz xxhash xz zstd \
-        bmon curl ethtool inetutils-telnet iperf3 iproute2 iputils \
+        bmon curl ethtool inetutils-telnet iperf3 iproute2 iputils net-tools \
           nmap-ncat proxychains-ng rsync socat sshfs sshpass tcpdump \
-        dmidecode libcpuid-tool lm-sensors lshw nvme-cli pciutils sgdisk smartmontools testdisk usbutils \
+        acpica dmidecode libcpuid-tool lm-sensors lshw nvme-cli \
+          pciutils sgdisk smartmontools testdisk usbutils \
         efibootmgr efivar mokutil sbsigntool \
         cryptsetup fuse fuse3 nbd nbd-client partclone \
         btrfs-progs dosfstools exfatprogs mtools ntfs-3g ntfs-3g-progs squashfs-tools xfsprogs \
-        bc diffutils file findutils grep hexdump htop jq less mc \
+        bc diffutils file findutils grep hexdump htop jq less lsof mc \
           ncdu patch procps-ng psmisc pv sqlite strace tar tmux vim \
         "$@"
 

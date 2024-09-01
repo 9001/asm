@@ -60,7 +60,7 @@ mirror=https://mirrors.edge.kernel.org/alpine
 
 
 help() {
-    v=3.20.1
+    v=3.20.2
     sed -r $'s/^( +)(-\w+ +)([A-Z][A-Zi,=]* +)/\\1\\2\e[36m\\3\e[0m/; s/(.*default: )(.*)/\\1\e[35m\\2\e[0m/' <<EOF
 
 arguments:
@@ -205,15 +205,18 @@ mkfs.ext3 -h 2>&1 | grep -qE '\[-d\b' ||
     video="-vga qxl"
 }
 
-$qemu -cpu help | grep -qE '^[^ ]* *host\b' &&
-    cpu=host || cpu=max
-
 mach=
-$qemu --machine help > $td/machs
-grep -qE '^q35\b' $td/machs && mach='--machine q35 '
+cpu=host
+[ "$cb" ] || {
+    $qemu -cpu help | grep -qE '^[^ ]* *host\b' &&
+        cpu=host || cpu=max
 
-# centos7 lies about q35 support (q35-acpi-dsdt.aml is missing)
-grep -q centos:7 /etc/os-release 2>/dev/null && mach=
+    $qemu --machine help > $td/machs
+    grep -qE '^q35\b' $td/machs && mach='--machine q35 '
+
+    # centos7 lies about q35 support (q35-acpi-dsdt.aml is missing)
+    grep -q centos:7 /etc/os-release 2>/dev/null && mach=
+}
 
 mkdir -p "$(dirname "$iso")"
 iso="$(absreal "$iso")"
@@ -234,7 +237,9 @@ iso="$(absreal "$iso")"
         warn "iso.sha512 not found on mirror; trying the yaml"
         yaml_url="$mirror/v$ver/releases/$arch/latest-releases.yaml"
         wget "$yaml_url" -O "$iso.yaml" || {
-            rm -f "$iso.yaml"; exit 1
+            mv "$iso"{,.corrupt}
+            rm -f "$iso.yaml"
+            exit 1
         }
         awk -v iso="$isoname" '/^-/{o=0} $2==iso{o=1} o&&/sha512:/{print$2}' "$iso.yaml" > "$iso.sha512"
     }

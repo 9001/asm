@@ -153,4 +153,7 @@ infograb() {
 # portrait display rotation (requires kms/modeset)
 #rot 3
 
+# if /sm/tty.cfg exists, launch consoles on each tty listed inside
+ttycons
+
 menu

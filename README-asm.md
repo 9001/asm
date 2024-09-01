@@ -28,7 +28,7 @@ it plays the [pc98 bootup bleep](https://www.youtube.com/watch?v=9qof0qye1ao#t=6
 
 see [profiles](./p/) for additional examples including a chatserver, a disk wiper and a webkiosk
 
-see [logging](./doc/notes.md#logging) to log stdout to serial and/or a file on the flashdrive
+see [logging](./doc/notes.md#logging) to log stdout to serial and/or a file on the flashdrive, and/or launch interactive shells on consoles
 
 
 ## secureboot
