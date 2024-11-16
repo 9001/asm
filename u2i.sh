@@ -26,9 +26,10 @@ need arg 2: output (asm.iso)
 optional-args:
   -td PATH  temp dir
   -vn ID    volume name, default: $vn
-  -ex y     extract with mtools (default if not root)
+  -ex       extract with mtools (default if not root)
   -wl PATH  weightlist (from isotrace.py)
   -cs TYPE  create checksums; md5, sha1, sha512, b2, b2:256
+  -geniso   generic iso; continue even if input folder looks invalid
 
 EOF
     exit 1
@@ -37,13 +38,13 @@ EOF
 shift 2 || help
 while [ "$1" ]; do
     k="$1"; shift
-    v="$1"; shift || true
     case "$k" in
-        -td) td="$v"; ;;
-        -vn) vn="$v"; ;;
-        -ex) ex="$v"; ;;
-        -wl) wl="$v"; ;;
-        -cs) cs="$v"; ;;
+        -td) td="$1"; shift;;
+        -vn) vn="$1"; shift;;
+        -ex) ex=y;;
+        -wl) wl="$1"; shift;;
+        -cs) cs="$1"; shift;;
+        -geniso) geniso=y;;
         *)   err "unexpected argument: $k"; help; ;;
     esac
 done
@@ -80,7 +81,7 @@ mt_extract() {
     if [ $ex ]; then mt_extract; else usb_open; fi
 }
 
-[ -e "$td/sm" ] || {
+[ $geniso ] || [ -e "$td/sm" ] || {
     err the source folder is not a valid asm filesystem
     exit 1
 }
