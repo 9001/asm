@@ -466,6 +466,7 @@ if [ "$cb" ]; then
     # but doing this one out here makes cleanup easier (and shows intent)
     losetup -f --show asm.usb >dev
     ln "$iso" src.iso 2>/dev/null || cp "$iso" src.iso
+    rm -f /dev/shm/once
     $podman run \
         --privileged -v /dev:/dev \
         -v .:/z:z -i --rm "$cb" /bin/ash <<'EOF'
