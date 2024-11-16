@@ -60,7 +60,7 @@ mirror=https://mirrors.edge.kernel.org/alpine
 
 
 help() {
-    v=3.20.2
+    v=3.20.3
     sed -r $'s/^( +)(-\w+ +)([A-Z][A-Zi,=]* +)/\\1\\2\e[36m\\3\e[0m/; s/(.*default: )(.*)/\\1\e[35m\\2\e[0m/' <<EOF
 
 arguments:
@@ -292,6 +292,8 @@ cp -pR etc sm $b/fs/sm/img/
 pdir=.
 [ "$profile" ] && {
     pdir=p/$profile;
+    [ -e "$pdir/etc" ] &&
+        rm -rf $b/fs/sm/img/etc
     (cd $pdir && tar -c .) |
     tar -xC $b/fs/sm/img/
 }
@@ -330,12 +332,14 @@ EOF
 pushd $b >/dev/null
 
 # both-envs: add mirror and profile info
-tee fs/sm/img/etc/profile.d/asm-profile.sh >fs/sm/asm.sh <<EOF
+tee fs/sm/img/asm-profile.sh >fs/sm/asm.sh <<EOF
 export IVER=$ver
 export IARCH=$arch
 export MIRROR=$mirror
 export AN=$profile
 EOF
+mv fs/sm/img/{,etc/profile.d/}asm-profile.sh ||
+rm fs/sm/img/asm-profile.sh
 
 # live-env: finalize apkovl
 ( cd fs/sm/img
