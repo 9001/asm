@@ -141,6 +141,14 @@ infograb() {
 		for p in hwinv hwscan; do
 			cp -npv $(which $p) $AF/sm/bin/$p 2>/dev/null || true
 		done
+
+		p=$AF/sm/infos/dmesg-cln.sh
+		[ -e $p ] || cat >$p <<'EOF'
+#!/bin/bash
+# strip timestamps from dmesg
+find -iname dmesg\* | grep -E 'dmesg(-color-always)?$' | while IFS= read -r f; do
+[ -e "$f.n" ] || sed -r 's/^(.\[32m)?\[[ 0-9\.]+\] /\1» /' <"$f" >"$f.n"; done
+EOF
 	)
 
 	[ $fs_ro ] && mount -o remount,ro $AF

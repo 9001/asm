@@ -278,22 +278,32 @@ def main():
 
     dirs = []
     for bdir in al.infos:
-        log_file = os.path.join(bdir, "log")
+        if os.path.basename(bdir).lower() == "log":
+            scan_dir = False  # just load the log
+            log_file = bdir
+            bdir = os.path.dirname(bdir)
+        else:
+            scan_dir = True  # log first, then rest of dir
+            log_file = os.path.join(bdir, "log")
+
         lshw_file = os.path.join(bdir, "lshw-numeric-json")
         if os.path.exists(lshw_file):
             verbose("reading one specific directory of hardware info:", bdir)
             dirs.append(bdir)
-        elif os.path.exists(log_file):
+            continue
+
+        if os.path.exists(log_file):
             verbose("reading ordered list of hardware info dirs from", bdir)
             with open(log_file, "rb") as f:
                 for ln in f:
                     ln = ln.decode("utf-8").strip()
                     dirs.append(os.path.join(bdir, ln.split("/")[-1]))
-        else:
+
+        if scan_dir:
             verbose("selecting all info folders in", bdir)
             for inode in sorted(os.listdir(bdir)):
                 ap = os.path.join(bdir, inode)
-                if os.path.isdir(ap):
+                if os.path.isdir(ap) and ap not in dirs:
                     dirs.append(ap)
 
     infs = []
