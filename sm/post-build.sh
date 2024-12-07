@@ -38,7 +38,7 @@ bdep_del() {
 #   stty -F$(tty) rows 34 cols 160
 
 rshell() {
-    ip r | grep -q default || setup-interfaces -ar
+    ip r | grep -q default || dhcp
     if apka socat; then
         log socat rshell
         socat exec:$SHELL' -li',pty,stderr,setsid,sigint,sane tcp:$1:4321,connect-timeout=1
@@ -96,19 +96,38 @@ fetch_apks() {
 }
 
 recommended_apks() {
-    fetch_apks \
-        bash coreutils util-linux \
-        bzip2 gzip pigz xxhash xz zstd \
-        bmon curl ethtool inetutils-telnet iperf3 iproute2 iputils net-tools \
-          nmap-ncat proxychains-ng rsync socat sshfs sshpass tcpdump \
-        acpica dmidecode libcpuid-tool lm-sensors lshw nvme-cli \
-          pciutils sgdisk smartmontools testdisk usbutils \
-        efibootmgr efivar mokutil sbsigntool \
-        cryptsetup fuse fuse3 nbd nbd-client partclone \
-        btrfs-progs dosfstools exfatprogs mtools ntfs-3g ntfs-3g-progs squashfs-tools xfsprogs \
-        bc diffutils file findutils grep hexdump htop jq less lsof mc \
-          ncdu patch procps-ng psmisc pv sqlite strace tar tmux vim \
+    local pkgs=(
+        bash coreutils util-linux
+        bzip2 gzip pigz xxhash xz zstd
+        bmon curl ethtool inetutils-telnet iperf3 iproute2 iputils net-tools
+          nmap-ncat proxychains-ng rsync socat sshfs sshpass tcpdump
+        acpica dmidecode libcpuid-tool lm-sensors lshw nvme-cli
+          pciutils sgdisk smartmontools testdisk usbutils
+        efibootmgr efivar mokutil sbsigntool
+        cryptsetup fuse fuse3 nbd nbd-client partclone
+        btrfs-progs dosfstools exfatprogs mtools ntfs-3g ntfs-3g-progs squashfs-tools xfsprogs
+        bc diffutils file findutils grep hexdump htop jq less lsof mc
+          ncdu patch procps-ng psmisc pv sqlite strace tar tmux vim
         "$@"
+    )
+    local excl=()
+    grep -E '^3\.10\.' /etc/alpine-release && excl=(
+        inetutils-telnet
+        libcpuid-tool lm-sensors
+        efibootmgr efivar mokutil sbsigntool
+        partclone
+        exfatprogs
+        hexdump procps-ng
+        ranger
+    )
+    [ $excl ] && {
+        printf '%s\n' "${pkgs[@]}" >/dev/shm/plst
+        for x in "${excl[@]}"; do
+            sed -ri "/^$x$/d" /dev/shm/plst
+        done
+        readarray -t pkgs </dev/shm/plst
+    }
+    fetch_apks "${pkgs[@]}"
 
     # suggestions:
     #  +15.8M py3-requests ranger

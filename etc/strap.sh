@@ -45,7 +45,7 @@ cp -p /etc/bin/* /usr/local/bin/
 
 # start lo
 command -v service >/dev/null &&
-  service networking start || true
+  service -q networking start || true
 
 motd() {
   printf '\033[s\033[H'; cat /etc/motd; printf '\033[u\033[?7h'
@@ -65,7 +65,7 @@ apka -q util-linux bash tar 2>/dev/null >&2 || true
 # keymap and font
 yes abort | setup-keymap us us-altgr-intl 2>/dev/null >&2
 (s=$(stty size | cut -d' ' -f1 | grep -E '^[0-9]+$');
-[ ! $s ] && d= || [ $s -lt 36 ] && d=. || [ $s -gt 108 ] && d=big || d=
+[ ! $s ] && d= || { [ $s -lt 36 ] && d=. || { [ $s -gt 108 ] && d=big || d=; } }
 [ $d ] && (cd /etc/cfnt/$d; setfont $(ls -1 *.*|head -n1); motd) || true
 )
 
@@ -122,7 +122,8 @@ if [ "$logcfg" ] && apka -q util-linux; then
   for logcfg in $logcfg; do
     case $logcfg in
       *tty*)
-        IFS=, read logcfg baud x < <(echo $logcfg,115200)
+        echo $logcfg,115200 >/dev/shm/logc
+        IFS=, read logcfg baud x </dev/shm/logc
         [ -e /dev/$logcfg ] && stty -F /dev/$logcfg $baud && echo >/dev/$logcfg && logcom=$logcfg ||
           echo "comport unavailable: $logcfg"
         ;;

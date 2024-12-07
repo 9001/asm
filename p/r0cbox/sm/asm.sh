@@ -6,7 +6,8 @@ log downloading more ram
 zram 256
 
 log setting up network
-printf '%s\n' "" 10.1.2.51 24 "" done n | setup-interfaces -r
+printf '%s\n' "" 10.1.2.51 24 "" done n | setup-interfaces
+service -q networking restart
 
 log installing deps
 apka -q openssh-server python3 tmux !pyc || true

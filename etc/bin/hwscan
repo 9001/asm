@@ -3,9 +3,14 @@ set -e
 
 type log &>/dev/null || log() { echo "$*"; }
 
-type apka &>/dev/null && apka -q \
-	coreutils dmidecode libcpuid-tool lshw \
-	nvme-cli pciutils smartmontools usbutils || true
+pkgs=(
+	coreutils dmidecode lshw nvme-cli
+	pciutils smartmontools usbutils
+)
+type apka &>/dev/null && {
+	apka -q "${pkgs[@]}" libcpuid-tool ||
+	apka -q "${pkgs[@]}" || true
+}
 
 outdir="$1"
 [ -z "$outdir" ] && {

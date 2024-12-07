@@ -6,7 +6,7 @@ log downloading more ram
 zram 2048
 
 log setting up network and packages
-yes '' | setup-interfaces -r &
+dhcp &
 sleep 0.1  # cosmetic
 echo
 # vmware-3d needs pciutils-libs

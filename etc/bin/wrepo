@@ -10,10 +10,10 @@ grep -q /v$IVER/community /etc/apk/repositories ||
     tee -a /etc/apk/repositories
 
 ip r | grep -q default ||
-    setup-interfaces -ar
+    dhcp
 
 apk update || {
-    setup-interfaces -ar
+    dhcp
     apk update || {
         log "ERROR: cannot download alpine packages from $MIRROR/v$IVER/"
         exit 1

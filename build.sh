@@ -495,6 +495,7 @@ else
 
     mkfifo s.{in,out}
     [ $flavor = virt ] && kern=virt || kern=lts
+    echo $ver | grep -qE '^3\.(10|[3-9])$' && kern=vanilla
     (awk '1;/^ISOLINUX/{exit}' <s.out; echo "$kern console=ttyS0" >s.in; cat s.out) &
 
     if command -v lscpu >/dev/null; then

@@ -2,8 +2,13 @@
 bslcb() {
 	local RETVL=$? BSLMT=']' a b
 	[ -z "$BSLNFC" ] || {
-		read -r a b < <(history 1)
-		BSLMT="$a] $b [$RETVL]"
+		#read -r a b < <(history 1)
+		#BSLMT="$a] $b [$RETVL]"
+		# ^ is faster (3500 vs 1700 prompts/sec), but needs alpine v3.15
+		BSLMT="$(
+				history 1 |
+				sed 's/^ *//;s/ /]/'
+		) [$RETVL]"
 	}
 	BSLMT="$(date +'%Y-%m-%d, %H:%M:%S') [$$-$BSLMT"
 	printf '%s\n' "$BSLMT" >> ~/.bash.log

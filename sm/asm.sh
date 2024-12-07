@@ -66,12 +66,13 @@ EOF
 				echo $dev = $ip /$mask
 			done;;
 		d) (sleep 1; rm -f /tmp/setup-interfaces*/w*.noconf) &
-			yes '' | setup-interfaces -r;;
+			yes '' | setup-interfaces 
+			service -q networking restart;;
 		*) menu_net; return;;
 	esac
 	echo
 	apk add -q openssh-server
-	sed -ri 's/(Subsystem[^/]+sftp).*/\1 internal-sftp/' /etc/ssh/sshd_config
+	sed -ri 's/(Subsystem[^/-]+sftp).*/\1 internal-sftp/' /etc/ssh/sshd_config
 	keyfile=$AF/sm/authorized_keys
 	if [ -e $keyfile ]; then
 		log allowing $(grep ssh- $keyfile | wc -l) ssh-keys from $keyfile

@@ -1,0 +1,5 @@
+#!/bin/ash
+setup-interfaces -a
+grep -q dhcp /etc/network/interfaces ||
+    yes '' | setup-interfaces  # old alpine
+service -q networking restart
