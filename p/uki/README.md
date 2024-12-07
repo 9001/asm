@@ -1,5 +1,7 @@
 # uki
 
+> note: to build this profile, as a workaround for [aports#16691](https://gitlab.alpinelinux.org/alpine/aports/-/issues/16691) you must provide a copy of gummiboot-efistub from alpine 3.20 inside this folder: `wget https://dl-cdn.alpinelinux.org/alpine/v3.20/main/x86_64/gummiboot-efistub-48.1-r8.apk`
+
 this profile produces a [unified kernel image](https://uapi-group.org/specifications/specs/boot_loader_specification/#type-2-efi-unified-kernel-images) suitable for secureboot
 
 the call to `uki_make` near the end of the [post-build](sm/post-build-2.sh) does the magic

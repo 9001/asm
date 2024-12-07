@@ -388,7 +388,14 @@ edit_initramfs() {
 
 uki_make() {
     # must be done after all initramfs / apkovl tweaks
-    bdep_add .sbs gummiboot-efistub cmd:objcopy xz openssl patch
+    pkgs=(cmd:objcopy xz openssl patch)
+
+    local efistub="/usr/lib/gummiboot/linux*.efi.stub"
+    [ -e $efistub ] || {
+        printf '\033[1;31m\n  WARNING:\n   the apk `gummiboot-efistub` was not installed before calling `uki_make`; will use the current version from the alpine repos. As of alpine v3.21, this will probably NOT WORK.\n\033[0m\n'
+        pkgs+=(gummiboot-efistub)
+    }
+    bdep_add .sbs "${pkgs[@]}"
 
     local sec=
     [ $# -gt 0 ] && sec=secure
@@ -445,8 +452,7 @@ uki_make() {
 		aarch64) march=aa64;;
 		*) die "unknown arch: $(uname -m)";;
 	esac
-    local efistub="/usr/lib/gummiboot/linux$march.efi.stub"
-    [ -f "$efistub" ] || die "could not find efistub $efistub"
+    [ -f $efistub ] || die "could not find efistub $efistub"
 
     local linux=$(echo /mnt/boot/vmlinuz-*)
     local initrd=$(echo /mnt/boot/initramfs-*)
@@ -461,7 +467,7 @@ uki_make() {
         --add-section .cmdline="$cmdline" --change-section-vma .cmdline=0x30000  \
         --add-section .linux="$linux"     --change-section-vma .linux=0x40000    \
         --add-section .initrd="$initrd"   --change-section-vma .initrd=0x3000000 \
-        "$efistub" "/mnt/efi/boot/boot$march.efi"
+        $efistub "/mnt/efi/boot/boot$march.efi"
 
     bdep_del .sbs
 }

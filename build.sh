@@ -60,7 +60,7 @@ mirror=https://mirrors.edge.kernel.org/alpine
 
 
 help() {
-    v=3.20.3
+    v=3.21.0
     sed -r $'s/^( +)(-\w+ +)([A-Z][A-Zi,=]* +)/\\1\\2\e[36m\\3\e[0m/; s/(.*default: )(.*)/\\1\e[35m\\2\e[0m/' <<EOF
 
 arguments:
@@ -378,7 +378,7 @@ else
     vda1=${vda}1
 fi
 
-sed -ri 's/for i in \$initrds; do/for i in ${initrds\/\/,\/ }; do/' /sbin/setup-bootable
+sed -ri 's/for i in \$initrds; do/for i in ${initrds\/\/,\/ }; do/' $(command -v setup-bootable)
 
 if command -v sfdisk; then
     echo ',,0c,*' | sfdisk -q --label dos $vda
@@ -544,13 +544,13 @@ or compress it for uploading:
   pigz $usb_out
 
 or try it in qemu:
-  $qemu $accel $mach$video -cpu $cpu -drive format=raw,file=$usb_out -m 512
-  $qemu $accel $mach$video -cpu $cpu -drive format=raw,file=$usb_out -net bridge,br=virhost0 -net nic,model=virtio -m 192
-  $qemu $accel $mach$video -cpu $cpu -device virtio-blk-pci,drive=asm,bootindex=1 -drive id=asm,if=none,format=raw,file=$usb_out -bios /usr/share/OVMF/OVMF_CODE.fd -m 512
+  $qemu $accel $mach$video -cpu $cpu -smp 4 -drive format=raw,file=$usb_out -m 512
+  $qemu $accel $mach$video -cpu $cpu -smp 4 -drive format=raw,file=$usb_out -net bridge,br=virhost0 -net nic,model=virtio -m 192
+  $qemu $accel $mach$video -cpu $cpu -smp 4 -device virtio-blk-pci,drive=asm,bootindex=1 -drive id=asm,if=none,format=raw,file=$usb_out -bios /usr/share/OVMF/OVMF_CODE.fd -m 512
 
 better uefi example for newer qemu versions:
   cp /usr/share/OVMF/OVMF_VARS.fd $usb_out.efivars &&
-  $qemu $accel $mach$video -cpu $cpu \\
+  $qemu $accel $mach$video -cpu $cpu -smp 4 \\
     -drive if=pflash,format=raw,unit=0,readonly=on,file=/usr/share/OVMF/OVMF_CODE.fd \\
     -drive if=pflash,format=raw,unit=1,file=$usb_out.efivars \\
     -device virtio-blk-pci,drive=asm,bootindex=1 -drive id=asm,if=none,format=raw,file=$usb_out -m 512

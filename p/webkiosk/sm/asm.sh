@@ -14,13 +14,12 @@ apk add -q \
     xorg-server xf86-video-{fbdev,vesa,vmware} \
     mesa-dri-gallium mesa-{egl,gl} \
     pciutils-libs \
-    ttf-dejavu xdotool eudev hhpc firefox-esr
+    ttf-dejavu xdotool xinit eudev firefox-esr
 setup-devd udev
 wait
 
 log starting firefox
 cat >~/.xinitrc <<EOF
-hhpc &
 exec firefox-esr --kiosk 'https://ocv.me/life/#2/2c5-spaceship-gun-p690'
 EOF
 
