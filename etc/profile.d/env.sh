@@ -6,8 +6,8 @@ bslcb() {
 		#BSLMT="$a] $b [$RETVL]"
 		# ^ is faster (3500 vs 1700 prompts/sec), but needs alpine v3.15
 		BSLMT="$(
-				history 1 |
-				sed 's/^ *//;s/ /]/'
+			history 1 |
+			sed 's/^ *//;s/ /]/'
 		) [$RETVL]"
 	}
 	BSLMT="$(date +'%Y-%m-%d, %H:%M:%S') [$$-$BSLMT"
@@ -45,6 +45,7 @@ alias l='ls -CF'
 
 wt() {
 	printf '\033]0;%s\033\\' "$*"
+	[ "$TMUX" ] && tmux renamew "$*"
 }
 [ $UKI ] || strapmod() {
 	cd /root && tar -xf $AF/the.apkovl.tar.gz && cd etc
@@ -69,8 +70,11 @@ if [ -d /etc/apk/ ] ; then
 	alias mc='[ -e /usr/bin/mc ] || apka mc; /usr/bin/mc -S /usr/share/mc/skins/nicedark.ini'
 	alias i='apk add'
 fi
-for c in bmon htop lshw ncdu ranger sshfs telnet testdisk vim; do
-	alias $c="unalias $c; which $c >/dev/null || apka $c !pyc || apka cmd:$c !pyc; $c"
+for c in bmon htop lshw ncdu ranger sl sshfs testdisk vim; do
+	alias $c="unalias $c; which $c >/dev/null || apka $c !pyc; $c"
+done
+for c in telnet; do
+	alias $c="unalias $c; which $c >/dev/null || apka cmd:$c !pyc; $c"
 done
 
 alias q='kill -9 $$'

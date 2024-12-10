@@ -18,5 +18,7 @@ sed -ri 's/(Subsystem[^/]+sftp).*/\1 internal-sftp/;
 printf '%s\n' k k | passwd >/dev/null
 service sshd start
 
+(while true; do tmux renamew "< $(ip r | awk '/src /{print$NF;exit}') >" || true; sleep 5; done) >/dev/null 2>&1 &
+
 log starting r0c
 tmux new '$AF/sm/bin/r0c.py; ash'

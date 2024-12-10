@@ -32,7 +32,7 @@ td=$(mktemp --tmpdir -d asm.XXXXX || mktemp -d -t asm.XXXXX || mktemp -d)
 cln() {
     trap - INT TERM EXIT
     cd; rm -rf $td; tput smam || printf '\033[?7h'
-    [ $di_rm ] && $podman rmi -fi $di_rm >/dev/null || true
+    [ $di_rm ] && $podman rmi -f $di_rm >/dev/null || true
     command -v losetup >/dev/null &&
         losetup -a | awk -F: '/asm\.usb \(deleted/{print$1}' | xargs -rl losetup -d || true
     exit
@@ -291,11 +291,13 @@ msg "copying sources to $b"
 cp -pR etc sm $b/fs/sm/img/
 pdir=.
 [ "$profile" ] && {
-    pdir=p/$profile;
-    [ -e "$pdir/etc" ] &&
+    pdir=p/$profile
+    # profiles can decline the default asm /etc/ contents by touching `etc/.standalone`
+    [ -e $pdir/etc/.standalone ] &&
         rm -rf $b/fs/sm/img/etc
     (cd $pdir && tar -c .) |
     tar -xC $b/fs/sm/img/
+    rm -f $b/fs/sm/img/etc/.standalone
 }
 [ "$asm_key" ] &&  # derive pubkey from privkey
     mkdir -p $b/fs/sm/img/etc &&

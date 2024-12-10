@@ -20,7 +20,12 @@ rm="$(
     awk 'function c(){ if(p&&!k) printf "%s ",p} !/^ /{c();p=$1;k=0} /installed$/{k=1} END{c()}'
 )"
 
-[ "$rm" ] || exit $rv  # 404 in apkindex
+[ "$rm" ] || {
+    case "$1" in
+        cmd:*) rm=$1;;
+        *) exit $rv;;  # 404 in apkindex
+    esac
+}
 
 echo "skipping unavailable pkgs: $rm" >&2
 apk $aa del -q $rm

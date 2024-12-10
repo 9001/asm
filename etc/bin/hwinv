@@ -299,7 +299,7 @@ def main():
                     ln = ln.decode("utf-8").strip()
                     dirs.append(os.path.join(bdir, ln.split("/")[-1]))
 
-        if scan_dir:
+        if scan_dir and os.path.isdir(bdir):
             verbose("selecting all info folders in", bdir)
             for inode in sorted(os.listdir(bdir)):
                 ap = os.path.join(bdir, inode)

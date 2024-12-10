@@ -46,6 +46,9 @@ the default `asm.sh` runs `ttycons`, which looks for a file named `tty.cfg` and 
   podman import https://mirrors.edge.kernel.org/alpine/v3.19/releases/x86_64/alpine-minirootfs-3.19.0-x86_64.tar.gz alpine:latest
   ```
 
+* creating an absolutely minimal image?
+  * to exclude the default `/etc` bloat from a profile, `cd` into it and `mkdir etc; touch etc/.standalone`
+
 * initramfs hacking:
   ```
   mkdir x x2
