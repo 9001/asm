@@ -12,7 +12,7 @@ anyways, [`./build.sh`](./build.sh) does that and splices in some stuff from thi
 is the payload which does the cool stuff (this is probably what you want to modify)
 
 the following environment variables are available;
-* `$AF` = filesystem path to the usb, for example `/media/usb`
+* `$AF` = filesystem path to the usb, for example `/media/sda1`
 * `$AP` = the usb blockdevice and partition, for example `sda1`
 * `$AD` = the usb blockdevice sans partition, for example `sda`
 * `$AN` = profile name, or blank if built without `-p`
