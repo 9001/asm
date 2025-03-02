@@ -10,6 +10,12 @@ die() {
 . /etc/profile.d/buildvars.sh
 
 
+grow_tmpfs() {
+    # default size of `/` is 50% of RAM; make it 75%
+    mount -o remount,size=$(awk '/^MemTotal:/{printf "%d\n",(($2*3)/4)}' /proc/meminfo)K /
+}
+
+
 ##
 # helper to drop pkgs that are only needed at build time
 
@@ -259,6 +265,7 @@ imshrink_filter_mods() {
     #   (note the unescaped directory separators)
     #
     bdep_add .ml squashfs-tools pigz pv
+    grow_tmpfs
     cd; rm -rf x x2; mkdir x x2
     local ml=$(echo /mnt/boot/modloop-*)
     [ -f $ml ] || die 'could not find modloop'
