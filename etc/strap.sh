@@ -97,6 +97,7 @@ sigchk() {
   printf ' verifying \r'
   apka -q openssl &&
   openssl dgst -sha512 -verify /etc/asm.pub -signature $f.sig $f >/dev/null &&
+  printf ' verified \r' &&
   true || return 1
 }
 
@@ -118,11 +119,13 @@ beeps 40 2000 1000 &
 # run the payload
 s=$AF/sm/asm.sh
 cmd="$SHELL $s"
+printf ' reading log.cfg \r'
 logcfg=$(cat $AF/sm/log.cfg 2>/dev/null)
 logcom=
 logdir=
 if [ "$logcfg" ] && apka -q util-linux; then
   for logcfg in $logcfg; do
+    printf ' init logger: %s \033[K\r' "$logcfg"
     case $logcfg in
       *tty*)
         echo $logcfg,115200 >/dev/shm/logc
@@ -145,16 +148,22 @@ if [ "$logcfg" ] && apka -q util-linux; then
         ;;
     esac
   done
-  [ $logdir ] && touch $logdir/runlog.txt || logdir=
+  [ $logdir ] &&
+    printf ' poking logdir %s \r' "$logdir" &&
+    touch $logdir/runlog.txt || logdir=
   while true; do sleep 5; killall -USR1 script 2>/dev/null; done &
 fi
-[ $logcom ] && [ $logdir ] && cmd="script -eqc \"$cmd;unlog\" /dev/$logcom"
+t=
+[ $logcom ] && [ $logdir ] && t=$logcom+ && cmd="script -eqc \"$cmd;unlog\" /dev/$logcom"
 if [ $logdir ]; then
+  printf " logging to $t$logdir \033[K\r"
   script -B $logdir/runlog.txt -T $logdir/runlog.pce -eqc "$cmd" && err= || err=$?
   setterm --dump --file $logdir/runlog.scr 2>/dev/null
 elif [ $logcom ]; then
+  printf " logging to comport $logcom \033[K\r"
   script -eqc "$cmd;unlog" /dev/$logcom && err= || err=$?
 else
+  printf ' plain exec \033[K\r'
   $cmd && err= || err=$?
 fi
 unlog
