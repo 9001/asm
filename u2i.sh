@@ -134,13 +134,10 @@ sz=$(cat "$td"/efi/boot/* | wc -c | awk '{print int($1/1024)+256}')
         *) err "invalid -cs"; exit 1;;
     esac
     msg "creating $sums with $cmd"
-    tfn="$(mktemp)"
 
-    find -type f | cut -c3- |
+    find -type f | cut -c3- | grep -vE "^$sums$" |
     grep -vE '^boot/syslinux/(boot.cat|isolinux.bin)$' |
-    LC_ALL=C sort | tr '\n' '\0' | xargs -0 $cmd -- > /$tfn
-
-    mv $tfn $sums
+    LC_ALL=C sort | tr '\n' '\0' | xargs -0 $cmd -- > $sums
 )
 
 msg now building "$iso_out" ...

@@ -38,6 +38,7 @@ arguments:
   -di ID    mbr/gpt id (%08x), default: random
   -vi ID    filesystem id (%08x), default: random
   -vn ID    filesystem name, default: $vn
+  -cs TYPE  create checksums; md5, sha1, sha512, b2, b2:256
   -ak PATH  RSA pem-key for asm.sh, default: Do-Not-Modify
   -ek PATH  SB pem-key for the.efi, default: Do-Not-Modify
   -ec PATH  SB pem-cert for the.efi, default: Do-Not-Modify
@@ -68,6 +69,7 @@ while [ "$1" ]; do
         -di) di="$v"; ;;
         -vi) vi="$v"; ;;
         -vn) vn="$v"; ;;
+        -cs) cs="$v"; ;;
         -ak) asm_key="$v"; ;;
         -ek) efi_key="$v"; ;;
         -ec) efi_crt="$v"; ;;
@@ -162,6 +164,23 @@ done
     cat "$t2" > "$efi"
     rm "$t1" "$t2"
 }
+
+[ "$cs" ] && (
+    cd "$td"
+    case $cs in
+        md5) cmd=md5sum; sums=MD5SUMS;;
+        sha1) cmd=sha1sum; sums=SHA1SUMS;;
+        sha256) cmd=sha256sum; sums=SHA256SUMS;;
+        sha512) cmd=sha512sum; sums=SHA512SUMS;;
+        b2) cmd=b2sum; sums=B2SUMS;;
+        b2:*) cmd="b2sum -l ${cs:3}"; sums=B2SUMS;;
+        *) err "invalid -cs"; exit 1;;
+    esac
+    msg "creating $sums with $cmd"
+
+    find -type f | cut -c3- | grep -vE "^$sums$" |
+    LC_ALL=C sort | tr '\n' '\0' | xargs -0 $cmd -- >$sums
+)
 
 inf all modifications ok
 

@@ -199,6 +199,28 @@ grub64() {
 }
 
 
+##
+# generate a checksums-file for runtime verification
+# (`mod.sh -cs` is better if you can spare the sudo)
+
+gensums() {
+    ( cd /mnt
+    case $1 in
+        md5) cmd=md5sum; sums=MD5SUMS;;
+        sha1) cmd=sha1sum; sums=SHA1SUMS;;
+        sha256) cmd=sha256sum; sums=SHA256SUMS;;
+        sha512) cmd=sha512sum; sums=SHA512SUMS;;
+        b2) cmd=b2sum; sums=B2SUMS;;
+        b2:*) cmd="b2sum -l ${cs:3}"; sums=B2SUMS;;
+        *) err "invalid -cs"; exit 1;;
+    esac
+    echo "creating $sums with $cmd"
+
+    find -type f | cut -c3- | grep -vE "^$sums$" |
+    LC_ALL=C sort | tr '\n' '\0' | xargs -0 $cmd -- >$sums
+)}
+
+
 ########################################################################
 # image shrinkers;
 # each of these are optional
