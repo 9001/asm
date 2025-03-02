@@ -299,6 +299,8 @@ pdir=.
     tar -xC $b/fs/sm/img/
     rm -f $b/fs/sm/img/etc/.standalone
 }
+rm -f $b/fs/sm/img/etc/README*.md
+
 [ "$asm_key" ] &&  # derive pubkey from privkey
     mkdir -p $b/fs/sm/img/etc &&
     openssl rsa -in "$asm_key" -pubout > $b/fs/sm/img/etc/asm.pub

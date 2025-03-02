@@ -36,9 +36,9 @@ the default `asm.sh` runs `ttycons`, which looks for a file named `tty.cfg` and 
   mount /dev/loop0p1 /mnt/ && tar -czvf /mnt/the.apkovl.tar.gz etc && cp asm-example.sh /mnt/sm/asm.sh && umount /mnt && sync && qemu-system-x86_64 -hda ~ed/asm.raw -m 768 -accel kvm
   ```
 
-* local apk cache; `-m http://192.168.122.1:3923/am` and...
+* local apk cache; `-m http://192.168.122.1:2576/am` and...
   ```
-  echo http://192.168.122.1:3923/am/ > am/mirrors.txt && PYTHONPATH=~/dev/copyparty python3 -um copyparty -v am:am:r:c,on404=~/dev/copyparty/bin/handlers/caching-proxy.py
+  mkdir am; echo http://192.168.122.1:2576/am/ > am/mirrors.txt && PYTHONPATH=~/dev/copyparty python3 -um copyparty -p 2576 -v am:am:r:c,on404=~/dev/copyparty/bin/handlers/caching-proxy.py
   ```
 
 * need an alpine base-image for podman? you could make one from scratch:

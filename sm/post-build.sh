@@ -104,9 +104,9 @@ fetch_apks() {
 recommended_apks() {
     local pkgs=(
         bash coreutils util-linux
-        bzip2 gzip pigz xxhash xz zstd
-        bmon curl ethtool inetutils-telnet iperf3 iproute2 iputils net-tools
-          nmap-ncat proxychains-ng rsync socat sshfs sshpass tcpdump
+        brotli bzip2 gzip pigz xxhash xz zstd
+        apache2-utils bmon curl ethtool inetutils-telnet iperf3 iproute2 iputils
+          net-tools nmap-ncat proxychains-ng rsync socat sshfs sshpass tcpdump
         acpica dmidecode libcpuid-tool lm-sensors lshw nvme-cli
           pciutils sgdisk smartmontools testdisk usbutils
         efibootmgr efivar mokutil sbsigntool
