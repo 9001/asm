@@ -1,0 +1,73 @@
+#!/bin/ash
+
+f=/lib/mdev/persistent-storage
+grep -qF asmadd $f && exit 0
+cat >>$f <<'EOF'
+
+findtty() {
+    local p=$(tmux list-panes -t 0:1.0 -F '#{pane_tty}')
+    [ $p ] || p=/dev/tty1
+    printf $p
+}
+thetty=$(findtty)
+toast() {
+    local c=$1; shift
+    printf '%s\n' "$@" >/dev/kmsg
+    printf '\033[0;3'$c'm%s\033[0m\r\n' "$@" >$thetty
+}
+asmrm() {
+    local n= t= u= d=/media/${DEVNAME}_
+    echo $d* | grep -qF '*' && {
+        # not mounted by this script; maybe copyparty onboot?
+        umount /dev/$DEVNAME >/dev/null 2>&1 && u=1 &&
+            toast 1 "usb-rm: UNCLEAN EJECT: $DEVNAME" #cpp
+        rmdir /media/$DEVNAME >/dev/null 2>&1 #cpp
+        [ $u ] ||
+            toast 6 "usb-rm: $DEVNAME (ok,safe)"
+        return 0
+    }
+    for n in $d*; do
+        u=
+        t="$(umount $n)" && u=1 &&
+            toast 1 "usb-rm: UNCLEAN EJECT: $n"
+        umount /dev/$DEVNAME >/dev/null 2>&1 && u=1 &&
+            toast 1 "usb-rm: UNCLEAN EJECT: $DEVNAME" #catchall
+        rmdir $n || { u=1;
+            toast 1 "usb-rm: UNMOUNT FAILED: $n ==> $t"; }
+        rmdir /media/$DEVNAME >/dev/null 2>&1 && u=1 #cpp
+        [ $u ] ||
+            toast 6 "usb-rm: ok; $n"
+    done
+}
+asmadd() {
+    [ $ACTION = add ] && [ $TYPE ] && {
+        local c= d="/media/$(printf '%s_%s_%s' $DEVNAME "$LABEL" $TYPE | tr -sc '[:alnum:]' _)"
+        toast 6 "usb-add: $d"
+        rmdir $d || true  # assert free
+        [ -e $d ] && toast 1 "usb-mnt: $d already in use somehow" && return 0
+        sleep 0.5  # detects ntfs as vfat otherwise; 0.1 is enough
+        case $TYPE in
+            ntfs) c="fsck.$TYPE";;
+            vfat) c="fsck.$TYPE -a -w";;
+            exfat|ext*) c="fsck.$TYPE -p";;
+        esac
+        [ "$c" ] && {
+            local f=$(mktemp)
+            ($c /dev/$DEVNAME 2>&1;echo $?>$f) | grep -E .. | sed "s/^/fsck.$TYPE($DEVNAME): /" | tee $thetty > /dev/kmsg
+            local t= rc=$(cat $f);rm $f
+            case $rc in
+                0) t='2mfs-OK';;
+                1) t='3mfound and repaired fs errors';;
+                *) t='1mERROR, FILESYSTEM FUNKY';;
+            esac
+            toast 7 "fsck.$TYPE($DEVNAME): "$'\033[3'"$t"
+        }
+        t="$( (mkdir $d && {
+            mount /dev/$DEVNAME $d || { rmdir $d; echo "mount-FAIL: $d"; }
+        }) 2>&1)"
+        toast 2 "usb-mnt: $d $t"
+    }
+}
+[ $ACTION = add ] && asmadd
+[ $ACTION = remove ] && asmrm
+EOF
