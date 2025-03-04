@@ -25,12 +25,12 @@ mcat() { printf "\n$CYAN%79s$RST\n\033[A"|tr ' ' -; sed -r 's/$/ /;s/( )([a-zA-Z
 
 
 mainmenu() {
-    while true; do
+	while true; do
 
-        # reapply colorsheme just in case
-        . /etc/profile.d/bifrost.sh
+		# reapply colorsheme just in case
+		. /etc/profile.d/bifrost.sh
 
-        mcat <<EOF
+		mcat <<EOF
 choose next action:
   n) start network + r0c          f) font
   c) copyparty (choose n first)   a) tmux
@@ -38,69 +38,69 @@ choose next action:
   i) collect hardware info        k) shutdown
   x) exit to shell                r) reboot
 EOF
-        t1=$(date +%s)
-        read -u1 -n1 -rp $CYAN'sel> '$RST
-        unlog; echo
-        case $REPLY in
-            N|n) menu_net;;
-            C|c) party;;
-            S|s) start_ssh;;
-            I|i) infograb;;
-            X|x) touch /dev/shm/nobeep; echo '(return by saying "menu")'; /bin/bash -l; exit 0;;
-            G|g) menu_games;;
-            F|f) menu_font;;
-            A|a) tmux a -t 0 || echo 'start r0c or copyparty first';;
-            V|v) verify;;
-            K|k) poweroff; exit 0;;
-            R|r) reboot; exit 0;;
-        esac
-    done
+		t1=$(date +%s)
+		read -u1 -n1 -rp $CYAN'sel> '$RST
+		unlog; echo
+		case $REPLY in
+			N|n) menu_net;;
+			C|c) party;;
+			S|s) start_ssh;;
+			I|i) infograb;;
+			X|x) touch /dev/shm/nobeep; echo '(return by saying "menu")'; /bin/bash -l; exit 0;;
+			G|g) menu_games;;
+			F|f) menu_font;;
+			A|a) tmux a -t 0 || echo 'start r0c or copyparty first';;
+			V|v) verify;;
+			K|k) poweroff; exit 0;;
+			R|r) reboot; exit 0;;
+		esac
+	done
 }
 
 
 setup_tmux() {
-    tmux new -s 0 -d 2>/dev/null || true
-    for n in {1..4}; do tmux neww -t 0:$n 2>/dev/null || true; done
-    tmux killw -t 0:$1 2>/dev/null || true
-    tmux neww -t 0:$1 -n $2
-    tmux selectw -t 0:$1
-    sleep 0.1  # cosmetic: bash init
+	tmux new -s 0 -d 2>/dev/null || true
+	for n in {1..4}; do tmux neww -t 0:$n 2>/dev/null || true; done
+	tmux killw -t 0:$1 2>/dev/null || true
+	tmux neww -t 0:$1 -n $2
+	tmux selectw -t 0:$1
+	sleep 0.1  # cosmetic: bash init
 }
 
 
 showmotd() {
-    printf '\033[s\033[2H'; cat /etc/motd
-    printf '\033[1;999H\033[2D   \033[u\033[?7h'
-    chvt 2; chvt 1
+	printf '\033[s\033[2H'; cat /etc/motd
+	printf '\033[1;999H\033[2D   \033[u\033[?7h'
+	chvt 2; chvt 1
 }
 
 
 get_ip() {
-    ip r | awk '/src /{print$NF;exit}'
+	ip r | awk '/src /{print$NF;exit}'
 }
 
 
 maybe_mkpart() {
-    local bfree=$(
-        lsblk -bnro NAME,SIZE /dev/$AD |
-        awk -v d=$AD '
-            NR==1&&$1==d{a=$2}
-            NR==2&&$1==d"1"{b=$2}
-            a&&b{v=int((a-b)/(1024*1024*1024))}
-            NR>2&&$2{a=0;v=0}
-            END{if(v)print v} ')
-    [ $bfree ] || return 0
+	local bfree=$(
+		lsblk -bnro NAME,SIZE /dev/$AD |
+		awk -v d=$AD '
+			NR==1&&$1==d{a=$2}
+			NR==2&&$1==d"1"{b=$2}
+			a&&b{v=int((a-b)/(1024*1024*1024))}
+			NR>2&&$2{a=0;v=0}
+			END{if(v)print v} ')
+	[ $bfree ] || return 0
 
-    echo "there is $bfree GiB unused space on the flashdrive,"
-    while true; do
-        ask1 'add 2nd partition for data (recommended)? y/n> '
-        case $REPLY in
-            y) break;;
-            n) return 0;;
-        esac
-    done
+	echo "there is $bfree GiB unused space on the flashdrive,"
+	while true; do
+		ask1 'add 2nd partition for data (recommended)? y/n> '
+		case $REPLY in
+			y) break;;
+			n) return 0;;
+		esac
+	done
 
-    cat <<EOF
+	cat <<EOF
 
 choose a filesystem for the 2nd partition;
 $PRPL${B1} ntfs:$RST possible to corrupt by powerloss or unsafe flashdrive removal
@@ -121,188 +121,188 @@ recommendations:
   n (ntfs) for cross-platform
 EOF
 
-    local fs= pkg= ptype=
-    while true; do
-        ask1b '[n]tfs, [f]at32, e[x]fat, ext[4], [b]trfs?  n/f/x/4/b> '
-        case $REPLY in
-            n) ptype=07; fs=ntfs; pkg=ntfs-3g-progs; break;;
-            f) ptype=0c; fs=vfat; pkg=dosfstools; break;;
-            x) ptype=07; fs=xfat; pkg=exfatprogs; break;;
-            4) ptype=83; fs=ext4; pkg=e2fsprogs; break;;
-            b) ptype=83; fs=btrf; pkg=btrfs-progs; break;;
-        esac
-    done
+	local fs= pkg= ptype=
+	while true; do
+		ask1b '[n]tfs, [f]at32, e[x]fat, ext[4], [b]trfs?  n/f/x/4/b> '
+		case $REPLY in
+			n) ptype=07; fs=ntfs; pkg=ntfs-3g-progs; break;;
+			f) ptype=0c; fs=vfat; pkg=dosfstools; break;;
+			x) ptype=07; fs=xfat; pkg=exfatprogs; break;;
+			4) ptype=83; fs=ext4; pkg=e2fsprogs; break;;
+			b) ptype=83; fs=btrf; pkg=btrfs-progs; break;;
+		esac
+	done
 
-    apka -q sfdisk partx $pkg
-    echo ,,$ptype | sfdisk --no-reread --no-tell-kernel -w never -W never -q -a /dev/$AD
-    local d2=/dev/${AD}2
-    while [ ! -e $d2 ]; do
-        echo waiting for $d2 ...
-        partx -a /dev/$AD 2>/dev/null || true
-        sleep 0.5; mdev -s; sleep 0.5
-    done
+	apka -q sfdisk partx $pkg
+	echo ,,$ptype | sfdisk --no-reread --no-tell-kernel -w never -W never -q -a /dev/$AD
+	local d2=/dev/${AD}2
+	while [ ! -e $d2 ]; do
+		echo waiting for $d2 ...
+		partx -a /dev/$AD 2>/dev/null || true
+		sleep 0.5; mdev -s; sleep 0.5
+	done
 
-    local wipe=1 cmd=
-    blkid $d2 | grep TYPE= &&
-        while true; do
-            ask1 'found existing filesystem!  Wipe or Keep?  w/k> '
-            case $REPLY in
-                w) break;;
-                k) wipe=; break;;
-            esac
-        done
+	local wipe=1 cmd=
+	blkid $d2 | grep TYPE= &&
+		while true; do
+			ask1 'found existing filesystem!  Wipe or Keep?  w/k> '
+			case $REPLY in
+				w) break;;
+				k) wipe=; break;;
+			esac
+		done
 
-    [ $wipe ] && {
-        echo "doing a blkdiscard on $d2 ... don't worry if this fails:"
-        blkdiscard -f $d2 &&
-            printf "\033[32mblkdiscard was successful?! nice$RST\n" ||
-            printf "\033[33mblkdiscard failed, okay, yeah, whatever$RST\n"
+	[ $wipe ] && {
+		echo "doing a blkdiscard on $d2 ... don't worry if this fails:"
+		blkdiscard -f $d2 &&
+			printf "\033[32mblkdiscard was successful?! nice$RST\n" ||
+			printf "\033[33mblkdiscard failed, okay, yeah, whatever$RST\n"
 
-        case $fs in
-            ntfs) mkfs.ntfs -fL HUB_DATA $d2;;
-            vfat) mkfs.vfat -F32 -n HUB_DATA $d2;;
-            xfat) mkfs.exfat -L HUB_DATA $d2;;
-            ext4) mkfs.ext4 -FT big -L HUB_DATA $d2;;
-            btrf) mkfs.btrfs -fKL HUB_DATA $d2;;
-        esac
-        return 0
-    }
+		case $fs in
+			ntfs) mkfs.ntfs -fL HUB_DATA $d2;;
+			vfat) mkfs.vfat -F32 -n HUB_DATA $d2;;
+			xfat) mkfs.exfat -L HUB_DATA $d2;;
+			ext4) mkfs.ext4 -FT big -L HUB_DATA $d2;;
+			btrf) mkfs.btrfs -fKL HUB_DATA $d2;;
+		esac
+		return 0
+	}
 
-    case $fs in
-        ntfs) ntfslabel -f $d2 HUB_DATA;;
-        vfat) dosfslabel $d2 HUB_DATA;;
-        xfat) tune.exfat $d2 HUB_DATA;;
-        ext4) e2label $d2 HUB_DATA;;
-        btrf) btrfs fi label $d2 HUB_DATA;;
-    esac
+	case $fs in
+		ntfs) ntfslabel -f $d2 HUB_DATA;;
+		vfat) dosfslabel $d2 HUB_DATA;;
+		xfat) tune.exfat $d2 HUB_DATA;;
+		ext4) e2label $d2 HUB_DATA;;
+		btrf) btrfs fi label $d2 HUB_DATA;;
+	esac
 }
 
 
 menu_net() {
-    read i1 i2 < <(echo $ip | sed -r 's/(.*)\./\1 /')
-    mcat <<EOF
+	read i1 i2 < <(echo $ip | sed -r 's/(.*)\./\1 /')
+	mcat <<EOF
 choose ip address:
   d) dynamic / dhcp
   s) static, starting from $i1.$i2
   i) static, starting from $i1.N
   w) wifi and/or advanced
 EOF
-    ask1 'sel> '
-    echo $REPLY | grep -q i && {
-        ask "$i1.?> " i2
-        REPLY=s
-    }
-    echo
-    case $REPLY in
-        S|s) ip l set lo up
-            (. /lib/libalpine.sh; available_ifaces) | tr ' ' '\n' |
-            while read dev; do
-                [ "$dev" ] || { echo "WARNING: no compatible network hardware found"; break; }
-                [ $dev = lo ] && continue
-                ip=$i1.$i2
-                i2=$((i2+1))
-                ip l set $dev up
-                ip a a $ip/$mask dev $dev
-                echo $dev = $ip /$mask
-            done;;
-        D|d)
-            (sleep 1; rm -f /tmp/setup-interfaces*/w*.noconf) &
-            echo "autoconfiguring network, pls wait..."
-            printf '\033[1;30m'
-            yes '' | setup-interfaces -r 2>&1 | while IFS= read -r x; do
-                [ "${x%%:*}" = udhcpc ] && x="$RST$x"
-                printf '%s\n' "$x"
-            done
-            printf '\033[0m';;
-        W|w) setup-interfaces -r;;
-        *) echo "bad input; aborting"; return;;
-    esac
+	ask1 'sel> '
+	echo $REPLY | grep -q i && {
+		ask "$i1.?> " i2
+		REPLY=s
+	}
+	echo
+	case $REPLY in
+		S|s) ip l set lo up
+			(. /lib/libalpine.sh; available_ifaces) | tr ' ' '\n' |
+			while read dev; do
+				[ "$dev" ] || { echo "WARNING: no compatible network hardware found"; break; }
+				[ $dev = lo ] && continue
+				ip=$i1.$i2
+				i2=$((i2+1))
+				ip l set $dev up
+				ip a a $ip/$mask dev $dev
+				echo $dev = $ip /$mask
+			done;;
+		D|d)
+			(sleep 1; rm -f /tmp/setup-interfaces*/w*.noconf) &
+			echo "autoconfiguring network, pls wait..."
+			printf '\033[1;30m'
+			yes '' | setup-interfaces -r 2>&1 | while IFS= read -r x; do
+				[ "${x%%:*}" = udhcpc ] && x="$RST$x"
+				printf '%s\n' "$x"
+			done
+			printf '\033[0m';;
+		W|w) setup-interfaces -r;;
+		*) echo "bad input; aborting"; return;;
+	esac
 
-    log "ip: $(get_ip)"
+	log "ip: $(get_ip)"
 
-    # start r0c in tmux so ^C wont affect it
-    apka -q !pyc python3 tmux
-    r0c --help 2>/dev/null >/dev/null
-    setup_tmux 2 r0c
-    tmux pipe-pane -t 0:2 -o "exec tee /dev/shm/conlog >>$(tty)"
-    tmux send -t 0:2 "tps1; r0c --ara -pw $(base64 /dev/urandom | tr -dc a-z | head -c9)" ENTER
-    while sleep 0.1; do grep -qF 'r0c is up' /dev/shm/conlog && break; done
-    tmux pipe-pane -t 0:2
-    ask4webr0c
+	# start r0c in tmux so ^C wont affect it
+	apka -q !pyc python3 tmux
+	r0c --help 2>/dev/null >/dev/null
+	setup_tmux 2 r0c
+	tmux pipe-pane -t 0:2 -o "exec tee /dev/shm/conlog >>$(tty)"
+	tmux send -t 0:2 "tps1; r0c --ara -pw $(base64 /dev/urandom | tr -dc a-z | head -c9)" ENTER
+	while sleep 0.1; do grep -qF 'r0c is up' /dev/shm/conlog && break; done
+	tmux pipe-pane -t 0:2
+	ask4webr0c
 }
 
 
 sfnt() { (cd /etc/cfnt; setfont $(ls -1 *.* | awk NR==${1:-1})); }
 bfnt() { (cd /etc/cfnt/big; setfont $(ls -1 *.* | awk NR==${1:-1})); }
 menu_font() {
-    mcat <<EOF
+	mcat <<EOF
 select font:
   1) tiny   2) small   3) large   k) OK
 EOF
-    ask1 'sel>'
-    case $REPLY in
-        1) sfnt 2;;
-        2) sfnt;;
-        3) bfnt;;
-        K|k) return;;
-    esac
-    printf '\n\n\n\n\033[4A'
-    showmotd
-    menu_font
+	ask1 'sel>'
+	case $REPLY in
+		1) sfnt 2;;
+		2) sfnt;;
+		3) bfnt;;
+		K|k) return;;
+	esac
+	printf '\n\n\n\n\033[4A'
+	showmotd
+	menu_font
 }
 
 
 menu_games() {
-    mcat <<EOF
+	mcat <<EOF
 oh hi
   s) solitaire    t) treedude    w) wp    1) one
 EOF
-    ask1 'sel>'
-    case $REPLY in
-        S|s) apka -q tty-solitaire; ttysolitaire --no-background-color;;
-        T|t) apka -q treedude; treedude;;
-        W|w) apka -q cmd:fbi font-droid; fbi -a $AF/kit/wp.*;;
-        1) sl;;
-    esac
+	ask1 'sel>'
+	case $REPLY in
+		S|s) apka -q tty-solitaire; ttysolitaire --no-background-color;;
+		T|t) apka -q treedude; treedude;;
+		W|w) apka -q cmd:fbi font-droid; fbi -a $AF/kit/wp.*;;
+		1) sl;;
+	esac
 }
 
 
 start_ssh() {
-    echo
-    apk add -q openssh-server
-    sed -ri 's/(Subsystem[^/]+sftp).*/\1 internal-sftp/' /etc/ssh/sshd_config
-    keyfile=$AF/sm/authorized_keys
-    if [ -e $keyfile ]; then
-        log allowing $(grep ssh- $keyfile | wc -l) ssh-keys from $keyfile
-        mkdir -p ~/.ssh
-        cp -pv $keyfile ~/.ssh
-    else
-        awk '/^$/&&!o{print"The root password is '\'k\''";o=1}1' /etc/issue>/xx;cat /xx>/etc/issue
-        sed -ri '$aPermitRootLogin yes' /etc/ssh/sshd_config
-        printf '%s\n' "$pw" "$pw" | passwd >/dev/null
-        killall getty || true
-    fi
-    service sshd start
-    ip=$(get_ip)
-    [ $ip ] &&
-        log "ssh root@$ip (password is 'k')" ||
-        log "ssh server up, press n to start networking"
+	echo
+	apk add -q openssh-server
+	sed -ri 's/(Subsystem[^/]+sftp).*/\1 internal-sftp/' /etc/ssh/sshd_config
+	keyfile=$AF/sm/authorized_keys
+	if [ -e $keyfile ]; then
+		log allowing $(grep ssh- $keyfile | wc -l) ssh-keys from $keyfile
+		mkdir -p ~/.ssh
+		cp -pv $keyfile ~/.ssh
+	else
+		awk '/^$/&&!o{print"The root password is '\'k\''";o=1}1' /etc/issue>/xx;cat /xx>/etc/issue
+		sed -ri '$aPermitRootLogin yes' /etc/ssh/sshd_config
+		printf '%s\n' "$pw" "$pw" | passwd >/dev/null
+		killall getty || true
+	fi
+	service sshd start
+	ip=$(get_ip)
+	[ $ip ] &&
+		log "ssh root@$ip (password is 'k')" ||
+		log "ssh server up, press n to start networking"
 }
 
 
 verify() {
-    local nf=$(wc -l <$AF/SHA1SUMS)
-    apka -q coreutils pv || return
-    echo "now checking file integrity..." >&2
-    (cd $AF; sha1sum -c SHA1SUMS 2>/dev/shm/ckng2) |
-    pv -ls$nf | grep -vE ': OK$' | tee /dev/shm/ckng1
-    grep -q ... /dev/shm/ckng1 || {
-        printf '\033[1;30;42m ok good \033[0m\n'
-        return
-    }
-    printf '\033[1;37;41m OH NO VERIFICATION FAILED \033[0;1;33m\n'
-    cat -n /dev/shm/ckng1
-    cat /dev/shm/ckng2
+	local nf=$(wc -l <$AF/SHA1SUMS)
+	apka -q coreutils pv || return
+	echo "now checking file integrity..." >&2
+	(cd $AF; sha1sum -c SHA1SUMS 2>/dev/shm/ckng2) |
+	pv -ls$nf | grep -vE ': OK$' | tee /dev/shm/ckng1
+	grep -q ... /dev/shm/ckng1 || {
+		printf '\033[1;30;42m ok good \033[0m\n'
+		return
+	}
+	printf '\033[1;37;41m OH NO VERIFICATION FAILED \033[0;1;33m\n'
+	cat -n /dev/shm/ckng1
+	cat /dev/shm/ckng2
 }
 
 
@@ -350,74 +350,74 @@ EOF
 
 
 ask4webr0c() {
-    echo
-    while true; do
-        ask1 'start r0c webserver on ports 823+423 (http+https)? y/n> '
-        case $REPLY in
-            y) break;;
-            n) return;;
-        esac
-    done
-    apka -q cmd:telnet socat ttyd
+	echo
+	while true; do
+		ask1 'start r0c webserver on ports 823+423 (http+https)? y/n> '
+		case $REPLY in
+			y) break;;
+			n) return;;
+		esac
+	done
+	apka -q cmd:telnet socat ttyd
 
-    cat >/dev/shm/webr0c <<EOF
+	cat >/dev/shm/webr0c <<EOF
 targs=(
-    -W
-    -t disableReconnect=true
-    -t enableSixel=false
-    -t enableTrzsz=false
-    -t enableZmodem=false
-    -t 'theme={"background":"#222","black":"#404040","red":"#f03669","green":"#b8e346","yellow":"#ffa402","blue":"#02a2ff","magenta":"#f65be3","cyan":"#3da698","white":"#d2d2d2","brightBlack":"#606060","brightRed":"#c75b79","brightGreen":"#c8e37e","brightYellow":"#ffbe4a","brightBlue":"#71cbff","brightMagenta":"#b67fe3","brightCyan":"#9cf0ed","brightWhite":"#fff"}'
-    -p 823
-    -i 0.0.0.0
-    -t titleFixed=r0c
-    -t rendererType=dom
-    -t disableResizeOverlay=true
-    telnet -E -c 127.0.0.1 23
+	-W
+	-t disableReconnect=true
+	-t enableSixel=false
+	-t enableTrzsz=false
+	-t enableZmodem=false
+	-t 'theme={"background":"#222","black":"#404040","red":"#f03669","green":"#b8e346","yellow":"#ffa402","blue":"#02a2ff","magenta":"#f65be3","cyan":"#3da698","white":"#d2d2d2","brightBlack":"#606060","brightRed":"#c75b79","brightGreen":"#c8e37e","brightYellow":"#ffbe4a","brightBlue":"#71cbff","brightMagenta":"#b67fe3","brightCyan":"#9cf0ed","brightWhite":"#fff"}'
+	-p 823
+	-i 0.0.0.0
+	-t titleFixed=r0c
+	-t rendererType=dom
+	-t disableResizeOverlay=true
+	telnet -E -c 127.0.0.1 23
 )
 socat openssl-listen:423,fork,reuseaddr,cert=$AF/sm/tls-cert.pem,verify=0 tcp4:127.0.0.1:823 &
 ttyd "\${targs[@]}"
 EOF
 
-    setup_tmux 3 wr0c
-    tmux pipe-pane -t 0:3 -o "exec tee /dev/shm/conlog >>$(tty)"
-    tmux send -t 0:3 "tps1; bash /dev/shm/webr0c" ENTER
-    while sleep 0.1; do grep -qF 'Listening on port: 823' /dev/shm/conlog && break; done
-    tmux pipe-pane -t 0:3
+	setup_tmux 3 wr0c
+	tmux pipe-pane -t 0:3 -o "exec tee /dev/shm/conlog >>$(tty)"
+	tmux send -t 0:3 "tps1; bash /dev/shm/webr0c" ENTER
+	while sleep 0.1; do grep -qF 'Listening on port: 823' /dev/shm/conlog && break; done
+	tmux pipe-pane -t 0:3
 }
 
 
 party() {
-    local f= n= v= ds= pid= args= uname= acct=
-    if ps aux | grep -q 'rty-sfx\.py'; then
-        tmux selectw -t 0:1
-        tmux a -t 0
-        return
-    fi
+	local f= n= v= ds= pid= args= uname= acct=
+	if ps aux | grep -q 'rty-sfx\.py'; then
+		tmux selectw -t 0:1
+		tmux a -t 0
+		return
+	fi
 
-    mcat <<EOF
+	mcat <<EOF
 configure features:
   1) both FFmpeg and Pillow (good choice)
   2) just enable FFmpeg for music, tags, video thumbs
   3) just enable Pillow for thumbnails
   4) no, just copyparty please
 EOF
-    while true; do
-        ask1 'choose 1~4> '
-        case $REPLY in
-            1) have_ffmpeg=1; v='py3-pillow ffmpeg';;
-            2) have_ffmpeg=1; v='ffmpeg';;
-            3) have_ffmpeg=;  v='py3-pillow';;
-            4) have_ffmpeg=;  v='';;
-            *) continue;
-        esac
-        break
-    done
+	while true; do
+		ask1 'choose 1~4> '
+		case $REPLY in
+			1) have_ffmpeg=1; v='py3-pillow ffmpeg';;
+			2) have_ffmpeg=1; v='ffmpeg';;
+			3) have_ffmpeg=;  v='py3-pillow';;
+			4) have_ffmpeg=;  v='';;
+			*) continue;
+		esac
+		break
+	done
 
-    apka !pyc tmux python3 btrfs-progs e2fsprogs xfsprogs dosfstools exfatprogs ntfs-3g ntfs-3g-progs $v 2>&1 |
-    while IFS= read -r x; do log -b "$x"; done & pid=$!
+	apka !pyc tmux python3 btrfs-progs e2fsprogs xfsprogs dosfstools exfatprogs ntfs-3g ntfs-3g-progs $v 2>&1 |
+	while IFS= read -r x; do log -b "$x"; done & pid=$!
 
-    mcat <<EOF
+	mcat <<EOF
 configure indexing:
   1) uploads only (makes them resumable and searchable)
   2) ...and also scan for tags (make music searchable by title/artist)
@@ -425,182 +425,182 @@ configure indexing:
   4) ...and also scan for tags (make music searchable by title/artist)
   5) no
 EOF
-    while true; do
-        ask1 'choose 1~4> '
-        case $REPLY in
-            1) e2d='-e2d';;
-            2) e2d='-e2t';;
-            3) e2d='-e2dsa -e2t';;
-            4) e2d='-e2dsa -e2ts';;
-            5) e2d='--no-snap --hist /dev/shm';;
-            *) continue;;
-        esac
-        break
-    done
+	while true; do
+		ask1 'choose 1~4> '
+		case $REPLY in
+			1) e2d='-e2d';;
+			2) e2d='-e2t';;
+			3) e2d='-e2dsa -e2t';;
+			4) e2d='-e2dsa -e2ts';;
+			5) e2d='--no-snap --hist /dev/shm';;
+			*) continue;;
+		esac
+		break
+	done
 
-    echo
-    uname=
-    f=$AF/sm/copyparty.conf
-    grep -qE '^[^#]*\[accounts' $f &&
-        echo "password enabled in $f" && uname=,u ||
-        echo "password NOT enabled in $f (anonymous access is allowed)"
+	echo
+	uname=
+	f=$AF/sm/copyparty.conf
+	grep -qE '^[^#]*\[accounts' $f &&
+		echo "password enabled in $f" && uname=,u ||
+		echo "password NOT enabled in $f (anonymous access is allowed)"
 
-    mcat <<EOF
+	mcat <<EOF
 configure permissions:
   1) read-write-move-delete
   2) read-write
   3) read
 EOF
-    while true; do
-        ask1 'choose 1~3> '
-        case $REPLY in
-            1) axs='A';;
-            2) axs='rw';;
-            3) axs='r';;
-            *) continue;;
-        esac
-        break
-    done
+	while true; do
+		ask1 'choose 1~3> '
+		case $REPLY in
+			1) axs='A';;
+			2) axs='rw';;
+			3) axs='r';;
+			*) continue;;
+		esac
+		break
+	done
 
-    echo 'still unpacking deps, pls wait ... watch the top bar'
-    wait $pid 2>/dev/null || true
-    printf '\033[A\033[J'
+	echo 'still unpacking deps, pls wait ... watch the top bar'
+	wait $pid 2>/dev/null || true
+	printf '\033[A\033[J'
 
-    [ -e /usr/bin/fsck.ntfs ] || { f=$(command -v ntfsfix); [ $f ] && ln -s $f /usr/bin/fsck.ntfs; }
+	[ -e /usr/bin/fsck.ntfs ] || { f=$(command -v ntfsfix); [ $f ] && ln -s $f /usr/bin/fsck.ntfs; }
 
-    blkid -ovalue -sTYPE | grep -q LVM && {
-        echo "found LVM disk; unboxing..."
-        apka -q lvm2 && vgchange -ay ||
-            printf '\033[1;33mfailed to read LVM; some partitions will not be available\033[0m\n'
-    }
+	blkid -ovalue -sTYPE | grep -q LVM && {
+		echo "found LVM disk; unboxing..."
+		apka -q lvm2 && vgchange -ay ||
+			printf '\033[1;33mfailed to read LVM; some partitions will not be available\033[0m\n'
+	}
 
-    mcat <<EOF
+	mcat <<EOF
 configure filesystem access:
   1) share all local disks (usb/hdd)
   2) select from a list
   3) only share the boot-disk
 choose 1 or 2 to autoshare hotplugged USB storage
 EOF
-    while true; do
-        ask1 'choose 1~3> '
-        case $REPLY in
-            1) v=y; ds=; break;;
-            2) v=y; ds=y; break;;
-            3) v=; break;;
-        esac
-    done
-    [ $v ] && {
-        echo scanning filesystems...
-        [ $ds ] && hdr=stderr || hdr=null
-        lsblk -o SIZE,KNAME,SUBSYSTEMS,TYPE,FSTYPE,LABEL | awk '
-            NR==1 {print" disk#  "$0>"/dev/'$hdr'";next}
-            $1!="0B" && / (disk|part|lvm) +[^ ]/ && $2!="'$AD'"
-        ' >/dev/shm/harddiskar
+	while true; do
+		ask1 'choose 1~3> '
+		case $REPLY in
+			1) v=y; ds=; break;;
+			2) v=y; ds=y; break;;
+			3) v=; break;;
+		esac
+	done
+	[ $v ] && {
+		echo scanning filesystems...
+		[ $ds ] && hdr=stderr || hdr=null
+		lsblk -o SIZE,KNAME,SUBSYSTEMS,TYPE,FSTYPE,LABEL | awk '
+			NR==1 {print" disk#  "$0>"/dev/'$hdr'";next}
+			$1!="0B" && / (disk|part|lvm) +[^ ]/ && $2!="'$AD'"
+		' >/dev/shm/harddiskar
 
-        grep -qE .. /dev/shm/harddiskar || {
-            echo "no disks detected! will only share files from cdrom"
-            ds=
-        }
-        if [ $ds ]; then
-            cat -n /dev/shm/harddiskar
-            ask 'space-separated list of disk# to share> '
-            rm -f /dev/shm/utvalg
-            for n in $REPLY; do
-                awk NR==$n /dev/shm/harddiskar >>/dev/shm/utvalg
-            done
-        else
-            mv /dev/shm/harddiskar /dev/shm/utvalg
-        fi
-        local d= fs= rc=
-        rmdir /media/* 2>/dev/null || true
-        awk '{print$2,$5,$6}' /dev/shm/utvalg | while read -r d fs label; do
-            grep -qE "^/dev/$d " /proc/mounts && continue
-            echo $fs | grep -qiE '^(swap|lvm)' && continue
-            [ $axs = r ] || {
-                # mounting read/write; do fsck
-                #fs=$(blkid -ovalue -sTYPE /dev/$d)
-                local c=
-                case $fs in
-                    ntfs) c="fsck.$fs";;
-                    vfat) c="fsck.$fs -a -w";;
-                    exfat|ext*) c="fsck.$fs -p";;
-                esac
-                [ "$c" ] && {
-                    printf '\033[36m# %s %s (%s)\033[0m ' "$c" $d $fs &&
-                    $c /dev/$d </dev/null && rc=0 || rc=$?
-                    case $rc in
-                        0) c='2m `--fs-OK';;
-                        1) c='3m `--found and repaired fs errors';;
-                        *) c='1m `--ERROR, FILESYSTEM FUNKY';;
-                    esac
-                    printf '\033[3%s\033[0m\n' "$c"
-                }
-            }
-            # if no fs-label, use lvm name
-            [ "$label" ] || {
-                label="$(lsblk -no NAME /dev/$d)"
-                [ "$label" = $d ] && label=
-            }
-            # /media/{devname}_{label}_{fstype}
-            local mp="$(printf '%s_%s_%s' $d "$label" $fs | tr -sc '[:alnum:]-' _)"
-            echo "$d" | grep -qE "^$AD" && mp=$d  # no label for bootdisk
-            mkdir /media/$mp 2>/dev/null &&
-            mount /dev/$d /media/$mp || true
-        done
+		grep -qE .. /dev/shm/harddiskar || {
+			echo "no disks detected! will only share files from cdrom"
+			ds=
+		}
+		if [ $ds ]; then
+			cat -n /dev/shm/harddiskar
+			ask 'space-separated list of disk# to share> '
+			rm -f /dev/shm/utvalg
+			for n in $REPLY; do
+				awk NR==$n /dev/shm/harddiskar >>/dev/shm/utvalg
+			done
+		else
+			mv /dev/shm/harddiskar /dev/shm/utvalg
+		fi
+		local d= fs= rc=
+		rmdir /media/* 2>/dev/null || true
+		awk '{print$2,$5,$6}' /dev/shm/utvalg | while read -r d fs label; do
+			grep -qE "^/dev/$d " /proc/mounts && continue
+			echo $fs | grep -qiE '^(swap|lvm)' && continue
+			[ $axs = r ] || {
+				# mounting read/write; do fsck
+				#fs=$(blkid -ovalue -sTYPE /dev/$d)
+				local c=
+				case $fs in
+					ntfs) c="fsck.$fs";;
+					vfat) c="fsck.$fs -a -w";;
+					exfat|ext*) c="fsck.$fs -p";;
+				esac
+				[ "$c" ] && {
+					printf '\033[36m# %s %s (%s)\033[0m ' "$c" $d $fs &&
+					$c /dev/$d </dev/null && rc=0 || rc=$?
+					case $rc in
+						0) c='2m `--fs-OK';;
+						1) c='3m `--found and repaired fs errors';;
+						*) c='1m `--ERROR, FILESYSTEM FUNKY';;
+					esac
+					printf '\033[3%s\033[0m\n' "$c"
+				}
+			}
+			# if no fs-label, use lvm name
+			[ "$label" ] || {
+				label="$(lsblk -no NAME /dev/$d)"
+				[ "$label" = $d ] && label=
+			}
+			# /media/{devname}_{label}_{fstype}
+			local mp="$(printf '%s_%s_%s' $d "$label" $fs | tr -sc '[:alnum:]-' _)"
+			echo "$d" | grep -qE "^$AD" && mp=$d  # no label for bootdisk
+			mkdir /media/$mp 2>/dev/null &&
+			mount /dev/$d /media/$mp || true
+		done
 
-        ash $AF/sm/bin/setup-hotplug  # takes effect for hotplugs henceforth, not retroactive
-    }
+		ash $AF/sm/bin/setup-hotplug  # takes effect for hotplugs henceforth, not retroactive
+	}
 
-    rmdir /media/* 2>/dev/null || true
+	rmdir /media/* 2>/dev/null || true
 
-    args=(
-        "--cert $AF/sm/tls-cert.pem"
-        $e2d
-    )
+	args=(
+		"--cert $AF/sm/tls-cert.pem"
+		$e2d
+	)
 
-    # if bootdisk has a 2nd partition (HUB_DATA) then make that
-    # XDG_CONFIG_HOME so it gets all the databases, thumbnails &
-    # statefiles, keeping the other disks/filesystems mostly clean
-    #  (boy i sure hope your flashdrive is of the faster kind)
-    xch=/root/
-    [ -e /media/${AD}2 ] &&
-        xch=/media/${AD}2/copyparty-state &&
-        args+=("--hist $xch/hists")
+	# if bootdisk has a 2nd partition (HUB_DATA) then make that
+	# XDG_CONFIG_HOME so it gets all the databases, thumbnails &
+	# statefiles, keeping the other disks/filesystems mostly clean
+	#  (boy i sure hope your flashdrive is of the faster kind)
+	xch=/root/
+	[ -e /media/${AD}2 ] &&
+		xch=/media/${AD}2/copyparty-state &&
+		args+=("--hist $xch/hists")
 
-    # map /media to /usb so usb-eject works
-    args+=("-v /media:/usb:$axs$uname")
-    for v in /media/*; do
-        local blkdev=${v:7}
-        [ $v = $AF ] && {
-            [ $axs != r ] && mount -o remount,rw $AF &&
-                afaxs=$axs || afaxs=r
+	# map /media to /usb so usb-eject works
+	args+=("-v /media:/usb:$axs$uname")
+	for v in /media/*; do
+		local blkdev=${v:7}
+		[ $v = $AF ] && {
+			[ $axs != r ] && mount -o remount,rw $AF &&
+				afaxs=$axs || afaxs=r
 
-            args+=(
-                "-v $v:/usb/$blkdev:$afaxs$uname:c,fat32"
-                "-v $v/sm:/usb/$blkdev/sm:"  # block access to /sm
-            )
-            continue
-        }
-        [ -e "$v" ] && args+=("-v $v:/usb/$blkdev:$axs$uname")
-    done
+			args+=(
+				"-v $v:/usb/$blkdev:$afaxs$uname:c,fat32"
+				"-v $v/sm:/usb/$blkdev/sm:"  # block access to /sm
+			)
+			continue
+		}
+		[ -e "$v" ] && args+=("-v $v:/usb/$blkdev:$axs$uname")
+	done
 
-    printf '\nwill run copyparty with the following args:\n'
-    printf '  %s\n' "${args[@]}"
-    printf 'press any key to confirm  -or-  press CTRL-C to abort\n'
-    read -n1 -u1
+	printf '\nwill run copyparty with the following args:\n'
+	printf '  %s\n' "${args[@]}"
+	printf 'press any key to confirm  -or-  press CTRL-C to abort\n'
+	read -n1 -u1
 
-    cat >/partycmd <<EOF
+	cat >/partycmd <<EOF
 set -x
 tmux set -g status-right "#(ip r | awk '/src /{print\\\$NF;exit}'), %Y-%m-%d, %H:%M:%S"
 sed -r 's/\{hub\}/$AD/g' <$AF/sm/copyparty.conf >/dev/shm/cpp.cfg
 XDG_CONFIG_HOME=$xch python3 $AF/kit/copyparty-sfx.py \
-    -c /dev/shm/cpp.cfg \
-    ${args[@]} || true
+	-c /dev/shm/cpp.cfg \
+	${args[@]} || true
 EOF
 
-    setup_tmux 1 cpp
-    tmux send -t 0:1 "tps1; /bin/bash /partycmd" ENTER
-    tmux a -t 0
+	setup_tmux 1 cpp
+	tmux send -t 0:1 "tps1; /bin/bash /partycmd" ENTER
+	tmux a -t 0
 }
 
 apka -q --no-progress sl &

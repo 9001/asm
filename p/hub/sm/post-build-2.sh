@@ -4,11 +4,11 @@ set -e
 #fastbuild=1  # skip expensive optional steps during prototyping
 
 PKGS=(
-    7zip alsa-utils aria2 chntpw ddrescue device-mapper dmraid entr ffmpeg
-    gcompat git hexyl irssi lvm2 mtr nmap py3-pillow ranger rpm2cpio rsync
-    sox treedude tty-solitaire ttyd unionfs-fuse w3m xorriso
+	7zip alsa-utils aria2 chntpw ddrescue device-mapper dmraid entr ffmpeg
+	gcompat git hexyl irssi lvm2 mtr nmap py3-pillow ranger rpm2cpio rsync
+	sox treedude tty-solitaire ttyd unionfs-fuse w3m xorriso
 
-    fbida-fbi font-{droid,terminus}
+	fbida-fbi font-{droid,terminus}
 )
 recommended_apks "${PKGS[@]}"
 
@@ -22,17 +22,17 @@ imshrink_zinfo  # compress kernel symbols (makes kernel debugging harder)
 
 # remove large kmods from initramfs, saves 3 MiB
 imshrink_filter_irmods \
-    '/scsi/(lpfc|qla2xxx)/|/firmware/ql2[0-9]{3}_fw'
+	'/scsi/(lpfc|qla2xxx)/|/firmware/ql2[0-9]{3}_fw'
 
 # remove large useless kmods (but keep wifi and GPUs), saves 30 MiB
 imshrink_filter_mods '' '' '
-    /\/(rtl_bt|bluetooth|infiniband|hfi1)/{next}  # bt, infiniband
-    /(raspberry|banana)pi|\.pine64/{next}  # arm sbc (normally covered by removing brcm)
-    /\/firmware\/nvidia\//{next}  # nvidia gpus
-    /\/(netronome)\//{next}  # agilio smartnics
-    /\/(ueagle-atm)\//{next}  # adsl modems
-    /\/(ocfs2)\//{next}  # filesystems
-    /\/(lpfc|qla2xxx)\//{next}  # big fw: fibre channel scsi (qlogic, emulex)
+	/\/(rtl_bt|bluetooth|infiniband|hfi1)/{next}  # bt, infiniband
+	/(raspberry|banana)pi|\.pine64/{next}  # arm sbc (normally covered by removing brcm)
+	/\/firmware\/nvidia\//{next}  # nvidia gpus
+	/\/(netronome)\//{next}  # agilio smartnics
+	/\/(ueagle-atm)\//{next}  # adsl modems
+	/\/(ocfs2)\//{next}  # filesystems
+	/\/(lpfc|qla2xxx)\//{next}  # big fw: fibre channel scsi (qlogic, emulex)
 '
 
 }
