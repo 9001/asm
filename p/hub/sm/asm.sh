@@ -195,7 +195,8 @@ EOF
 	echo
 	case $REPLY in
 		S|s) ip l set lo up
-			(. /lib/libalpine.sh; available_ifaces) | tr ' ' '\n' |
+			( . /usr/lib/libalpine.sh || . /lib/libalpine.sh
+				available_ifaces ) | tr ' ' '\n' |
 			while read dev; do
 				[ "$dev" ] || { echo "WARNING: no compatible network hardware found"; break; }
 				[ $dev = lo ] && continue

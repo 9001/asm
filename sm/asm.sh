@@ -56,7 +56,8 @@ EOF
 	echo
 	case $REPLY in
 		s) ip l set lo up
-			(. /lib/libalpine.sh; available_ifaces) | tr ' ' '\n' |
+			( . /usr/lib/libalpine.sh || . /lib/libalpine.sh
+				available_ifaces ) | tr ' ' '\n' |
 			while read dev; do
 				[ $dev = lo ] && continue
 				ip=$i1.$i2
