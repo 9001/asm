@@ -28,6 +28,14 @@ r0cbox hardware requirements:
 * CPU: yes preferably
 
 
+# [`./hub/`](./hub/)
+
+* impromptu [nas](https://github.com/9001/copyparty/) and [chatserver](https://github.com/9001/r0c) in a pinch
+  * r0cbox but much better/bigger; includes misc. rescue-tools
+* hotplug USB-storage to automatically share it on copyparty, and use the web-UI to unmount/eject
+* download a prebuilt image (or the demo-video) from [my homeserver](https://a.ocv.me/pub/stuff/edcd001/enterprise-edition/) or see the [build instructions](./hub/sm/how2build)
+
+
 # [`./dban/`](./dban/)
 
 * the classic

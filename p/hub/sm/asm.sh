@@ -222,7 +222,7 @@ EOF
 	log "ip: $(get_ip)"
 
 	# start r0c in tmux so ^C wont affect it
-	apka -q !pyc python3 tmux
+	apka -q !pyc python3 tmux iproute2-minimal openssh
 	r0c --help 2>/dev/null >/dev/null
 	setup_tmux 2 r0c
 	tmux pipe-pane -t 0:2 -o "exec tee /dev/shm/conlog >>$(tty)"
