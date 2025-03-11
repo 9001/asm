@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 import os
+import re
 import csv
 import json
 import html
@@ -211,6 +212,38 @@ def parse_smart(ap, r):
     hdderr.append(err)
 
 
+def parse_x64v(ap, r):
+    verbose("reading", ap)
+    with open(ap, "rb") as f:
+        lns = f.read().decode("utf-8", "replace").split("\n")
+
+    vers = [
+        "cmov cx8 fpu fxsr mmx sse2".split(),
+        "cx16 lahf popcnt sse4_1 sse4_2 ssse3".split(),
+        "avx2 bmi1 bmi2 f16c fma abm movbe xsave".split(),
+        "avx512f avx512bw avx512cd avx512dq avx512vl".split(),
+    ]
+    ptn = re.compile(r"^\s*([Ff]lags|features):?\b")
+    ret = 0
+    for ln in lns:
+        if not ptn.search(ln):
+            continue
+        v = 0
+        for chk in vers:
+            ok = True
+            for cf in chk:
+                if cf not in ln:
+                    ok = False
+            if not ok:
+                break
+            v += 1
+        if v:
+            ret = v
+
+    r["x64v"] = ret
+    return r
+
+
 def parse(ap):
     r = {}
     files = list(sorted(os.listdir(ap)))
@@ -220,6 +253,7 @@ def parse(ap):
     r["dir"] = dn
 
     parse_lshw(os.path.join(ap, "lshw-numeric-json"), r)
+    parse_x64v(os.path.join(ap, "lscpu"), r)
 
     for fn in files:
         if fn.startswith("smartctl-x-") and fn.endswith("-json-vu"):
@@ -237,7 +271,7 @@ def main():
     # columns to include in output and in what order;
     # example is all possible fields, up to 8 nics, 4 gpus, 16 hdds, 8 HID
     # "s:foo" adds a spacer with value "foo"
-    cols = "desc vend box box-sn mobo mobo-sn bios-ver bios-date ram rams cpu nic:8 gpu:4 s:▌ hdd:16 s:▌ hdd-sz:16 s:▌ hdd-hrs:16 s:▌ hdd-cyc:16 s:▌ hdd-temp:16 s:▌ hdd-wear:16 s:▌ hdd-err:16 s:▌ hdd-sn:16 s:▌ hid:8"
+    cols = "desc vend box box-sn mobo mobo-sn bios-ver bios-date ram rams x64v cpu nic:8 gpu:4 s:▌ hdd:16 s:▌ hdd-sz:16 s:▌ hdd-hrs:16 s:▌ hdd-cyc:16 s:▌ hdd-temp:16 s:▌ hdd-wear:16 s:▌ hdd-err:16 s:▌ hdd-sn:16 s:▌ hid:8"
 
     # fmt: off
     ap = argparse.ArgumentParser(description="hardware summarizer", epilog="default columns: " + cols)

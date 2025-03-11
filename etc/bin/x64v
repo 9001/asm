@@ -1,0 +1,14 @@
+#!/usr/bin/awk -f
+
+# example: x64v </proc/cpuinfo
+# example: lscpu | x64v
+# example: cpuid_tool --all | x64v
+#
+# based-on https://unix.stackexchange.com/a/631226
+
+$1!~/^([Ff]lags|features):?$/ {next}
+/cmov/&&/cx8/&&/fpu/&&/fxsr/&&/mmx/&&/sse2/ {v=1}  # &&/syscall/
+v==1&&/cx16/&&/lahf/&&/popcnt/&&/sse4_1/&&/sse4_2/&&/ssse3/ {v=2}
+v==2&&/avx2/&&/bmi1/&&/bmi2/&&/f16c/&&/fma/&&/abm/&&/movbe/&&/xsave/ {v=3}
+v==3&&/avx512f/&&/avx512bw/&&/avx512cd/&&/avx512dq/&&/avx512vl/ {v=4}
+{print "CPU supports x86-64-v" v;exit v+1}
