@@ -89,6 +89,7 @@ mt_extract() {
 eimg="$td"/boot/grub/efi.img
 befi=$(echo "$td"/efi/boot/boot*.efi)
 sz=$(cat "$td"/efi/boot/* | wc -c | awk '{print int($1/1024)+256}')
+ctime=
 
 # files are extracted (safe to tamper with) and not uki?
 [ $ex ] && [ "$td" != "$usb_src" ] && [ $sz -lt 4141 ] && (
@@ -107,6 +108,20 @@ sz=$(cat "$td"/efi/boot/* | wc -c | awk '{print int($1/1024)+256}')
         printf '%s' "$tmod" | dd of=$fn seek=$tofs bs=1 iflag=fullblock conv=sync,notrunc status=none
         rm -f "$eimg"  # make sure efi-image gets rebuilt
     done
+
+    # update volid in kargs/cmdline too
+    ctime=$(date -u +%Y-%m-%d-%H-%M-%S-00)
+    cd "$td"/boot
+    for f in */syslinux.cfg */grub.cfg; do
+        sed -ri 's/(\bvolid=)[^ ]+/\1'$ctime/ $f
+    done
+    ctime=$(echo $ctime | tr -d -)
+
+    # actually nevermind, nlplug-findfs doesn't see sr0
+    for f in */syslinux.cfg */grub.cfg; do
+        sed -ri 's/\bvolid=[^ ]+ ?//' $f
+    done
+    ctime=
 )
 
 [ $sz -gt 4141 ] && [ "$befi" -nt "$eimg" ] &&
@@ -150,6 +165,9 @@ args=(
     -rational-rock
     -sysid LINUX
     -volid $vn
+)
+[ $ctime ] && args+=(
+    --modification-date=$ctime
 )
 [ "$wl" ] && args+=(
     --sort-weight-list "$wl"

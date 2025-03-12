@@ -374,7 +374,7 @@ edit_initramfs() {
     esac
     shift
 
-    bdep_add .msig zstd xz
+    bdep_add .msig zstd xz patch
     cd; mkdir x; cd x
     f=$(echo /mnt/boot/initramfs-*)
     log unpacking initramfs
@@ -396,6 +396,11 @@ edit_initramfs() {
         find -type f | tee /l1 | (set -x; awk "${keep}${base}${drop}1") >/l2
         diff -aU0 /l1 /l2 | awk 'NR>2&&/^-/{print substr($0,2)}' | tr '\n' '\0' | xargs -0 rm --
         rm /l1 /l2
+    }
+
+    grep -q volblk= init || {
+        patch init </etc/patches/init-findfs.patch ||
+        mv init.rej init
     }
 
     log repacking initramfs
@@ -455,6 +460,9 @@ uki_make() {
     patch init </etc/patches/init-cmdline.patch
     patch init </etc/patches/init-no-ml-pgp.patch
     [ $sec ] && patch init </etc/patches/init-passwd.patch
+    grep -q volblk= init ||
+        patch init </etc/patches/init-findfs.patch
+
     cp /dev/shm/cmdline .
     mkdir x; cd x
     tar -xzf /mnt/the.apkovl.tar.gz

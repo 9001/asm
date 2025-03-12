@@ -393,6 +393,7 @@ else
 fi
 [ -e /z ] || mdev -s
 mkfs.vfat -n ASM $vda1
+volid=$(blkid $vda1 | sed 's/.* UUID="//;s/".*//')
 
 iso=/z/src.iso
 [ -e $iso ] || iso=/media/cdrom/
@@ -404,7 +405,7 @@ log disabling modloop verification
 mount -t vfat $vda1 /mnt
 ( cd /mnt/boot;
 for f in */syslinux.cfg */grub.cfg; do sed -ri '
-    s/( quiet)( .*|$)/ modloop_verify=no\1\2/;
+    s/( quiet)( .*|$)/ volid='$volid' modloop_verify=no\1\2/;
     s/(^TIMEOUT )[0-9]{2}$/\110/;
     s/(^set timeout=)[0-9]$/\11/;
     ' $f; 
@@ -423,9 +424,15 @@ MENU TABMSG to edit options, keep tapping [Down] or [Tab] before this appears
 MENU COLOR border 36;44 #40000000 #00000000 std
 MENU COLOR tabmsg 35;40 #90ffff00 #00000000 std
 EOF2
-    cat syslinux.cfg ) >/dev/shm/tf
-    cat /dev/shm/tf >syslinux.cfg
+    cat syslinux.cfg ) >/tf
+    cat /tf >syslinux.cfg
 )
+
+log setting grub searchpath [$volid]
+f=/mnt/boot/grub/grub.cfg
+(echo "search --no-floppy --set=root --fs-uuid $volid"
+  grep -vE '\bsearch\b.*--set=root\b' $f
+)>/tf; cat /tf >$f
 
 log adding ./sm/
 (cd $AF/sm/img && tar --exclude 'sm/post-build*' -c .) |

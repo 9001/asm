@@ -1,0 +1,29 @@
+tell nlplug-findfs exactly what to use as bootmedia,
+in case there's another asm device somewhere
+@@ -471,2 +471,3 @@
+ myopts="BOOTIF
++	volid
+ 	alpine_repo
+@@ -784,2 +785,5 @@
+ # locate boot media and mount it
++volid=$KOPT_volid
++vfind=${volid:+UUID=$volid}
++for a in a a ; do  # find blkdev, then repo+ovl
+ ebegin "Mounting boot media"
+@@ -788,4 +792,14 @@
+ 	${KOPT_uevent_buf_size:+-U $KOPT_uevent_buf_size} \
+-	$repoopts -a "$ROOT"/tmp/apkovls
+-eend $?
++	$repoopts -a "$ROOT"/tmp/apkovls $vfind
++[ $vfind ] && vfind= && eend 0 || { eend $rv; break; }
++done
++[ $volid ] && volblk=$(findfs UUID=$volid)
++[ $volblk ] && volmnt=$(awk -vv=$volblk '$1==v{print$2}' /proc/mounts)
++[ $volid ] && echo -n "volid:$volid blk:$volblk mp:$volmnt" | tee /dev/kmsg
++[ $volmnt ] && {
++  for x in /media/*; do [ $x = $volmnt ] && continue; umount $x 2>/dev/null && rmdir $x; done
++  grep -F $volmnt /tmp/apkovls >/tf; cat /tf >/tmp/apkovls
++  grep -F $volmnt $repofile >/tf; cat /tf >$repofile
++  rm /tf
++}
+ 
