@@ -10,14 +10,20 @@ dlf() { f=${2##*/}; [ -e $1/$f ] || wget -O $1/$f $2; }
 dl /tmp/memtest.zip         https://www.memtest.org/download/v7.20/mt86plus_7.20.binaries.zip
 dlf kit/                    https://github.com/9001/copyparty/releases/latest/download/copyparty-sfx.py
 dlf kit/                    https://github.com/9001/copyparty/releases/latest/download/copyparty.pyz
+dl kit/copyparty-git.zip    https://github.com/9001/copyparty/archive/refs/heads/hovudstraum.zip
 dl kit/copyparty-help.txt   https://ocv.me/copyparty/helptext.txt
 dl kit/copyparty-help.html  https://ocv.me/copyparty/helptext.html
+dl kit/oneliners.html       https://ocv.me/doc/unix/oneliners/
+dl kit/oneliners.sh         https://ocv.me/doc/unix/oneliners/nix.sh
 dl kit/r0c.py               https://github.com/9001/r0c/releases/latest/download/bigr0c.py
+dl kit/r0c-client.sh        https://github.com/9001/r0c/raw/refs/heads/master/clients/bash.sh
+dl kit/r0c-client.ps1       https://github.com/9001/r0c/raw/refs/heads/master/clients/powershell.ps1
 dlf kit/                    https://raw.githubusercontent.com/9001/smf/master/smf.py
 dl kit/python-3.13.2.zip    https://www.python.org/ftp/python/3.13.2/python-3.13.2-embed-amd64.zip
 dlf kit/res/                https://raw.githubusercontent.com/9001/copyparty/refs/heads/hovudstraum/bin/hooks/usb-eject.js
 dl sm/tls-cert.pem          https://raw.githubusercontent.com/9001/copyparty/refs/heads/hovudstraum/copyparty/res/insecure.pem
 dl kit/wp.jpg               https://a.ocv.me/pub/g/wp/bliss-1200p-12-1-255-q90-420.jpg
+dlf kit/                    https://a.ocv.me/pub/stuff/bin/9001-lxc.sfx  # https://github.com/9001/lxc
 dlf kit/                    https://a.ocv.me/pub/ping.html
 dlf sm/bin/                 https://github.com/9001/usr-local-bin/raw/refs/heads/master/allsmart
 dlf sm/bin/                 https://github.com/9001/usr-local-bin/raw/refs/heads/master/bindiff
@@ -30,6 +36,7 @@ dlf efi/boot/               https://ocv.me/stuff/bin/shell.efi  # https://github
 chmod 755 kit/{r0c,smf,copyparty-sfx}.py sm/bin/*
 [ -e boot/memtst32 ] || { (cd /tmp && unzip memtest.zip) && rm -f /tmp/*la64.efi && mv /tmp/memtest*.efi efi/boot/ && mv /tmp/memtest32.bin boot/memtst32 && mv /tmp/memtest64.bin boot/memtst64; }
 [ -e chiptunes ] || { curl https://a.ocv.me/pub/demo/music/chiptunes/compressed/?tar | tar -xv; mv compressed chiptunes; curl https://a.ocv.me/pub/demo/music/chiptunes/README.md > chiptunes/README.md; }
+unzip -l kit/copyparty-git.zip | grep -q docs/changelog.md && zip -d kit/copyparty-git.zip copyparty-hovudstraum/docs/changelog.md
 ```
 
 then see `local apk cache` in /doc/notes.md (or just remove the `-m http://192.168.122.1:2576/am` below) and finally build it:

@@ -22,19 +22,30 @@ core features:
 activate these with `apk add <NAME>` unless listed as `+foo` then the command is `apk add cmd:foo`
 
 * **chat:**      irssi, r0c
-* **coding:**    bash, bc, entr, git, luajit, python3, sqlite, vim
+* **coding:**    bash, bc, entr, git, helix, luajit, python3, sc, sqlite, vim
 * **disks:**     ddrescue, device-mapper, dmraid, lvm2, nbd, nbd-client, partclone, sgdisk, testdisk (undelete)
 * **explore:**   mc, ranger, ncdu
 * **fileinfo:**  diffutils, file, findutils, hexdump, hexyl, smf
 * **filesys:**   btrfs-progs, cryptsetup, dosfstools, exfatprogs, fuse, fuse3, mtools, nbd, nbd-client, unionfs-fuse, ntfs-3g, ntfs-3g-progs, squashfs-tools, sshfs, xfsprogs
 * **hw-diag:**   dmidecode, efibootmgr, efivar, libcpuid-tool, lm-sensors, lshw, mokutil, nvme-cli, pciutils, sbsigntool, smartmontools, usbutils
-* **media:**     +fbi, ffmpeg, py3-pillow, sox
-* **network:**   +ab, bmon, ethtool, iperf3, iproute2, iputils, mtr, nmap, nmap-ncat, proxychains-ng, socat, tcpdump, +telnet, ttyd
-* **packers:**   7zip, brotli, bzip2, gzip, lzo, pigz, xz, zstd
+* **media:**     cdparanoia, +fbi, ffmpeg, py3-pillow, sox
+* **network:**   +ab, bmon, ethtool, ipcalc, iperf3, iproute2, iputils, mtr, nmap, nmap-ncat, pingu, proxychains-ng, socat, tcpdump, +telnet, ttyd
+* **packers:**   7zip, brotli, bzip2, gzip, lzo, pigz, tar, xz, zstd
 * **perf:**      htop, procps-ng
 * **textmod:**   coreutils, grep, jq, less, patch, xxd
 * **xfer:**      aria2, copyparty, curl, rsync, (u2c)
-* **misc:**      chntpw, gcompat, psmisc, pv, sshpass, strace, tar, tmux, util-linux, w3m, xorriso, xxhash
+* **misc:**      chntpw, gcompat, psmisc, pv, sshpass, strace, tmux, util-linux, w3m, xorriso, xxhash
+
+run `kit/9001-lxc.sfx` to extract the following statically-linked tools; runs on any linux without dependencies:
+
+* **ntfs3g:**    lowntfs-3g mkfs.ntfs mkntfs ntfs-3g ntfscat ntfsclone ntfscluster ntfscmp ntfscp ntfsfix ntfsinfo ntfslabel ntfsls ntfsresize ntfsundelete
+* **network:**   iperf3 socat
+* **packers:**   7z bsdcat bsdcpio bsdtar bsdunzip pigz pixz tar xdelta3
+* **pk:lzip:**   clzip lunzip lzcat lzcmp lzd lzdiff lzegrep lzfgrep lzgrep lzip lziprecover lzless lzmore pdlzip plzip tarlz
+* **pk:lzma:**   lzma lzmadec lzmainfo unlzma unxz xz xzcat xzcmp xzdec xzdiff xzegrep xzfgrep xzgrep xzless xzmore
+* **pk:zutil:**  zcat zcmp zdiff zgrep ztest zupdate 
+* **xfer:**      minimodem rsync
+* **misc:**      flite jq ncdu patchelf pv tmux vim
 
 
 ## copyparty
@@ -54,6 +65,8 @@ if you need to run this on windows, run `start-copyparty.bat` which will unzip `
 
 * edit the bat-file and keep adding more `-v` as necessary 
 
+file-uploads can be announced over zeromq; there is an example receiver in `kit/copyparty-git.zip/bin/zmq-recv.py` and its deps are installed with `apka '!pyc' py3-pyzmq` (please excuse the syntax)
+
 
 ## r0c
 
@@ -66,6 +79,11 @@ exec 97<&-; killall cat
 ```
 
 optionally also available on http-port 823, https-port 423 using `sm/tls-cert.pem` (default is the copyparty-insecure cert)
+
+the following clients can also be used to connect without telnet:
+
+* on windows, [kit/r0c-client.ps1](kit/r0c-client.ps1)
+* on linux/macos, [kit/r0c-client.sh](kit/r0c-client.sh)
 
 
 # configuring

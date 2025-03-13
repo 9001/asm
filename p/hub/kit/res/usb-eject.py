@@ -51,7 +51,13 @@ def main():
                 pass
             ret = sp.run([b"umount", mp], capture_output=True)
             if ret.returncode:
-                return print("unmount failed:\n%s\n%s" % (ret.stdout, ret.stderr))
+                try:
+                    zb = b"\n".join([ret.stdout, ret.stderr])
+                    zs = zb.decode("utf-8", "replace")
+                except:
+                    zs = "%s\n%s" % (ret.stdout, ret.stderr)
+
+                return print("unmount failed:\n%s" % (zs.strip()))
             os.rmdir(mp)
 
         print(label + " can be safely unplugged")

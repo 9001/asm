@@ -575,9 +575,19 @@ EOF
 	# statefiles, keeping the other disks/filesystems mostly clean
 	#  (boy i sure hope your flashdrive is of the faster kind)
 	xch=/root/
-	[ -e /media/${AD}2 ] &&
-		xch=/media/${AD}2/copyparty-state &&
+	local md2=/media/${AD}2
+	[ -e $md2 ] && {
+		xch=$md2/copyparty-state &&
 		args+=("--hist $xch/hists")
+
+		# also use this as the persistent r0c-logs location
+		grep -qF /root/.r0c /proc/mounts || {
+			local pr0c=$md2/r0c-state
+			mkdir -p $pr0c
+			tar -cC/root/.r0c . | tar -xC $pr0c
+			mount --bind $pr0c /root/.r0c
+		}
+	}
 
 	# map /media to /usb so usb-eject works
 	args+=("-v /media:/usb:$axs$uname")

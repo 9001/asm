@@ -5,9 +5,10 @@ set -e
 
 PKGS=(
 	7zip alsa-utils aria2 cdparanoia chntpw ddrescue device-mapper
-	dmraid entr ffmpeg gcompat git helix hexyl ipcalc irssi lvm2
-	mtr nmap nyancat py3-pillow ranger rpm2cpio rsync sox tmatrix
-	treedude tty-solitaire ttyd unionfs-fuse w3m xorriso
+	dmraid entr ffmpeg gcompat git helix hexyl ipcalc irssi lvm2 mtr
+	nmap nyancat pingu py3-pillow py3-pyzmq ranger rpm2cpio rsync sc
+	sox tmatrix treedude tty-solitaire ttyd unionfs-fuse w3m xdelta3
+	xorriso
 
 	fbida-fbi font-{droid,terminus}
 )
