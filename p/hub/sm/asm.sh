@@ -212,7 +212,7 @@ EOF
 			while read dev; do
 				[ "$dev" ] || { echo "WARNING: no compatible network hardware found"; break; }
 				[ $dev = lo ] && continue
-				ip=$i1.$i2
+				local ip=$i1.$i2
 				i2=$((i2+1))
 				ip l set $dev up
 				ip a a $ip/$mask dev $dev
@@ -220,13 +220,9 @@ EOF
 			done;;
 		D|d)
 			(sleep 1; rm -f /tmp/setup-interfaces*/w*.noconf) &
-			echo "autoconfiguring network, pls wait..."
-			printf '\033[1;30m'
-			yes '' | setup-interfaces -r 2>&1 | while IFS= read -r x; do
-				[ "${x%%:*}" = udhcpc ] && x="$RST$x"
-				printf '%s\n' "$x"
-			done
-			printf '\033[0m';;
+			printf 'autoconfiguring, pls wait... \033[1;30m'
+			yes '' | setup-interfaces; printf '\033[0m'
+			service -q networking restart;;
 		W|w) setup-interfaces -r;;
 		*) echo "bad input; aborting"; return;;
 	esac
@@ -299,7 +295,7 @@ start_ssh() {
 		killall getty || true
 	fi
 	service sshd start
-	ip=$(get_ip)
+	local ip=$(get_ip)
 	[ $ip ] &&
 		log "ssh root@$ip (password is 'k')" ||
 		log "ssh server up, press n to start networking"

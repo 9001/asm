@@ -60,7 +60,7 @@ EOF
 				available_ifaces ) | tr ' ' '\n' |
 			while read dev; do
 				[ $dev = lo ] && continue
-				ip=$i1.$i2
+				local ip=$i1.$i2
 				i2=$((i2+1))
 				ip l set $dev up
 				ip a a $ip/$mask dev $dev
