@@ -8,6 +8,9 @@ mask=24
 # sshd root password
 pw=k
 
+# screen orientation/rotation (0/1/2/3)
+rot=0
+
 . /etc/profile.d/hub.sh
 
 ESC=$'\033'
@@ -30,14 +33,15 @@ mainmenu() {
 		# reapply colorsheme just in case
 		. /etc/profile.d/bifrost.sh
 
-		mcat <<EOF
-choose next action:
+		[ $nolm ] || mcat <<EOF
+choose next action: $CYAN-------------$RST o) rotate
   n) start network + r0c          f) font
   c) copyparty (choose n first)   a) tmux
   s) start ssh-server (needs n)   v) verify
   i) collect hardware info        k) shutdown
   x) exit to shell                r) reboot
 EOF
+		nolm=
 		t1=$(date +%s)
 		read -u1 -n1 -rp $CYAN'sel> '$RST
 		unlog; echo
@@ -48,6 +52,7 @@ EOF
 			I|i) infograb;;
 			X|x) touch /dev/shm/nobeep; echo '(return by saying "menu")'; /bin/bash -l; exit 0;;
 			G|g) menu_games;;
+			O|o) nolm=1; rotate;;
 			F|f) menu_font;;
 			A|a) tmux a -t 0 || echo 'start r0c or copyparty first';;
 			V|v) verify;;
@@ -77,6 +82,13 @@ showmotd() {
 
 get_ip() {
 	ip r | awk '/src /{print$NF;exit}'
+}
+
+
+rotate() {
+	[ $rot -ge 3 ] && rot=0 || rot=$((rot+1))
+	printf '\033[A'
+	rot $rot
 }
 
 
@@ -256,14 +268,17 @@ EOF
 menu_games() {
 	mcat <<EOF
 oh hi
-  s) solitaire    t) treedude    w) wp    1) one
+  m) matrix    l) ls           t) treedude
+  n) cat       s) solitaire    w) wp
 EOF
 	ask1 'sel>'
 	case $REPLY in
+		M|m) apka -q tmatrix; tmatrix || true;;
+		N|n) apka -q nyancat; nyancat || true;;
+		L|l) sl;;
 		S|s) apka -q tty-solitaire; ttysolitaire --no-background-color;;
 		T|t) apka -q treedude; treedude;;
 		W|w) apka -q cmd:fbi font-droid; fbi -a $AF/kit/wp.*;;
-		1) sl;;
 	esac
 }
 
@@ -278,7 +293,7 @@ start_ssh() {
 		mkdir -p ~/.ssh
 		cp -pv $keyfile ~/.ssh
 	else
-		awk '/^$/&&!o{print"The root password is '\'k\''";o=1}1' /etc/issue>/xx;cat /xx>/etc/issue
+		awk '/^$/&&!o{print"The root password is '\'k\''";o=1}1' /etc/issue>/tf;mv /tf /etc/issue
 		sed -ri '$aPermitRootLogin yes' /etc/ssh/sshd_config
 		printf '%s\n' "$pw" "$pw" | passwd >/dev/null
 		killall getty || true
@@ -612,8 +627,9 @@ apka -q --no-progress sl &
 # force ntfs-3g (less buggy)
 echo blacklist ntfs3 >/etc/modprobe.d/no-ntfs3.conf
 
-# portrait display rotation (requires kms/modeset)
-#rot 3
+# rotate display orientation (requires kms/modeset)
+[ $rot != 0 ] && [ ! -e /dev/shm/rotated ] &&
+	touch /dev/shm/rotated && rot $rot
 
 # if /sm/tty.cfg exists, launch consoles on each tty listed inside
 ttycons

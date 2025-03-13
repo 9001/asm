@@ -18,6 +18,7 @@ dl kit/python-3.13.2.zip    https://www.python.org/ftp/python/3.13.2/python-3.13
 dlf kit/res/                https://raw.githubusercontent.com/9001/copyparty/refs/heads/hovudstraum/bin/hooks/usb-eject.js
 dl sm/tls-cert.pem          https://raw.githubusercontent.com/9001/copyparty/refs/heads/hovudstraum/copyparty/res/insecure.pem
 dl kit/wp.jpg               https://a.ocv.me/pub/g/wp/bliss-1200p-12-1-255-q90-420.jpg
+dlf kit/                    https://a.ocv.me/pub/ping.html
 dlf sm/bin/                 https://github.com/9001/usr-local-bin/raw/refs/heads/master/allsmart
 dlf sm/bin/                 https://github.com/9001/usr-local-bin/raw/refs/heads/master/bindiff
 dlf sm/bin/                 https://github.com/9001/usr-local-bin/raw/refs/heads/master/hashtar
@@ -25,7 +26,7 @@ dlf sm/bin/                 https://github.com/9001/usr-local-bin/raw/refs/heads
 dlf sm/bin/                 https://github.com/9001/usr-local-bin/raw/refs/heads/master/migratory
 dlf sm/bin/                 https://github.com/9001/usr-local-bin/raw/refs/heads/master/revert
 dlf sm/bin/                 https://github.com/9001/usr-local-bin/raw/refs/heads/master/timecmp
-dlf efi/boot/               https://ocv.me/stuff/shell.efi  # https://github.com/9001/lxc/tree/hovudstraum/uefi-shellbin
+dlf efi/boot/               https://ocv.me/stuff/bin/shell.efi  # https://github.com/9001/lxc/tree/hovudstraum/uefi-shellbin
 chmod 755 kit/{r0c,smf,copyparty-sfx}.py sm/bin/*
 [ -e boot/memtst32 ] || { (cd /tmp && unzip memtest.zip) && rm -f /tmp/*la64.efi && mv /tmp/memtest*.efi efi/boot/ && mv /tmp/memtest32.bin boot/memtst32 && mv /tmp/memtest64.bin boot/memtst64; }
 [ -e chiptunes ] || { curl https://a.ocv.me/pub/demo/music/chiptunes/compressed/?tar | tar -xv; mv compressed chiptunes; curl https://a.ocv.me/pub/demo/music/chiptunes/README.md > chiptunes/README.md; }

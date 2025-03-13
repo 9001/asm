@@ -48,6 +48,7 @@ the [portable fileserver](https://github.com/9001/copyparty/)
 * upload from CLI using [/.cpr/a/u2c.py](/.cpr/a/u2c.py)
   * direct-download link: [/.cpr/a/u2c.py](/.cpr/a/u2c.py?mime=application/octet-stream)
 * the `sm` folder is unmapped/inaccessible (it has the tls-cert and `asm.sh` with passwords)
+* [kit/ping.html](kit/ping.html)
 
 if you need to run this on windows, run `start-copyparty.bat` which will unzip `python.zip` and launch the server
 

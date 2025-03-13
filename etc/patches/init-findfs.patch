@@ -15,7 +15,7 @@ in case there's another asm device somewhere
 -	$repoopts -a "$ROOT"/tmp/apkovls
 -eend $?
 +	$repoopts -a "$ROOT"/tmp/apkovls $vfind
-+# the first run tries to find the volid filesystem (2sec timeout);
++# the first run tries to find the volid filesystem (5sec timeout);
 +# ignore retcode and rely on autodetect if usb not found by uuid.
 +# The second run (the original) finds the apkrepo + apkovl. Note:
 +# First run is skipped if no volid is given on kernel cmdline

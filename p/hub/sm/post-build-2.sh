@@ -4,9 +4,10 @@ set -e
 #fastbuild=1  # skip expensive optional steps during prototyping
 
 PKGS=(
-	7zip alsa-utils aria2 chntpw ddrescue device-mapper dmraid entr ffmpeg
-	gcompat git hexyl irssi lvm2 mtr nmap py3-pillow ranger rpm2cpio rsync
-	sox treedude tty-solitaire ttyd unionfs-fuse w3m xorriso
+	7zip alsa-utils aria2 cdparanoia chntpw ddrescue device-mapper
+	dmraid entr ffmpeg gcompat git helix hexyl ipcalc irssi lvm2
+	mtr nmap nyancat py3-pillow ranger rpm2cpio rsync sox tmatrix
+	treedude tty-solitaire ttyd unionfs-fuse w3m xorriso
 
 	fbida-fbi font-{droid,terminus}
 )
