@@ -3,8 +3,8 @@
 * write this to a usb flashdrive and [`./sm/asm.sh`](./sm/asm.sh) will be executed on bootup
 * good for fixing headless boxes or just general hardware wrangling
 * based on [Alpine Linux](https://alpinelinux.org/), runs anywhere
-  * trivial: `i386/x86` // `x64` // `aarch64` // `ppc64le` // `s390x`
-  * possible: `armhf` // `armv7`
+  * definitely supports `i386/x86` // `amd64/x64`
+  * probably supports `armv7` // `aarch64` // `ppc64le` // `s390x` // `loongarch`
 
 
 ## what does it do

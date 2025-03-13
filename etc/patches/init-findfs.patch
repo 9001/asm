@@ -10,17 +10,24 @@ in case there's another asm device somewhere
 +vfind=${volid:+UUID=$volid}
 +for a in a a ; do  # find blkdev, then repo+ovl
  ebegin "Mounting boot media"
-@@ -788,4 +792,14 @@
+@@ -788,4 +792,21 @@
  	${KOPT_uevent_buf_size:+-U $KOPT_uevent_buf_size} \
 -	$repoopts -a "$ROOT"/tmp/apkovls
 -eend $?
 +	$repoopts -a "$ROOT"/tmp/apkovls $vfind
++# the first run tries to find the volid filesystem (2sec timeout);
++# ignore retcode and rely on autodetect if usb not found by uuid.
++# The second run (the original) finds the apkrepo + apkovl. Note:
++# First run is skipped if no volid is given on kernel cmdline
 +[ $vfind ] && vfind= && eend 0 || { eend $rv; break; }
 +done
 +[ $volid ] && volblk=$(findfs UUID=$volid)
 +[ $volblk ] && volmnt=$(awk -vv=$volblk '$1==v{print$2}' /proc/mounts)
-+[ $volid ] && echo -n "volid:$volid blk:$volblk mp:$volmnt" | tee /dev/kmsg
++[ $volid ] && echo -ne "volid:$volid blk:$volblk mp:$volmnt\r" | tee /dev/kmsg
++[ $volid ] && [ -z "$volmnt" ] && echo
 +[ $volmnt ] && {
++  # nlplug-findfs doesn't unmount disks if they contain an apkovl;
++  # only keep bootdisk mounted so AF can be assigned in strap.sh
 +  for x in /media/*; do [ $x = $volmnt ] && continue; umount $x 2>/dev/null && rmdir $x; done
 +  grep -F $volmnt /tmp/apkovls >/tf; cat /tf >/tmp/apkovls
 +  grep -F $volmnt $repofile >/tf; cat /tf >$repofile

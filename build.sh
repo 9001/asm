@@ -259,6 +259,8 @@ iso="$(absreal "$iso")"
     exit 1
 }
 
+profile_ver="$(date -u +%Y-%m%d-%H%M)-$(git rev-parse --short HEAD || echo nogit)"
+
 usb_out="$(absreal "$usb_out")"
 [ "$iso_out" ] &&
     rm -f "$iso_out" &&
@@ -341,6 +343,7 @@ export IVER=$ver
 export IARCH=$arch
 export MIRROR=$mirror
 export AN=$profile
+export ANV=$profile_ver
 EOF
 mv fs/sm/img/{,etc/profile.d/}asm-profile.sh ||
 rm fs/sm/img/asm-profile.sh

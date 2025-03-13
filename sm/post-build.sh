@@ -174,13 +174,75 @@ nomodeset() {
 
 
 ##
-# beep at grub menu
+# grub/syslinux/isolinux: change the boot-entry title;
+# defaults to "profilename datetime-gitrevision" if no args
+
+bootmenu_title() {
+    local t="$1"
+    [ "$t" ] || t="$AN $ANV"
+    t="$(printf '%s\n' "$t" | sed 's/[\/&]/\\&/g')"
+    for f in /mnt/boot/*/{grub,syslinux}.cfg; do sed -ri "s/Linux lts/$t/" $f; done
+}
+
+
+##
+# grub: add some modules
+#  * play: emitting beeps from the menu
+#  * chain+efinet: booting other .efi files
+#  * efifwsetup: reboot into bios settings
+
+grub_efimods() {
+    [ -e /mnt/boot/grub/*-efi/chain.mod ] && return
+
+    bdep_add .gb grub-efi
+    ( cd /usr/lib/grub
+      tar -c ./*-efi/{chain,efifwsetup,efinet,play}.mod
+    ) | tar -xvoC /mnt/boot/grub
+    bdep_del .gb
+}
+
+
+##
+# grub: add an .efi file to the menu
+
+grub_chainload() {
+    grub_efimods
+    [ "$1" ] || return 0
+    cat >> /mnt/boot/grub/grub.cfg <<EOF
+
+menuentry "$1" {
+insmod chain
+chainloader /efi/boot/$1
+}
+EOF
+}
+
+
+##
+# grub: add menu entry for rebooting into bios settings
+
+grub_fwsetup() {
+    grub_efimods
+    cat >> /mnt/boot/grub/grub.cfg <<EOF
+
+menuentry "uefi-firmware-settings" {
+insmod efifwsetup
+fwsetup
+}
+EOF
+}
+
+
+##
+# grub: beep at menu
 
 grub_beep() {
-    bdep_add .gb grub-efi
-    (cd /usr/lib/grub; tar -c ./*-efi/play.mod) | tar -xvoC /mnt/boot/grub
-    printf >> /mnt/boot/grub/grub.cfg '%s\n' '' 'insmod play' 'play 1920 330 1'
-    bdep_del .gb
+    grub_efimods
+    cat >> /mnt/boot/grub/grub.cfg <<EOF
+
+insmod play
+play 1920 330 1
+EOF
 }
 
 

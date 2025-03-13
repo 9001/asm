@@ -57,7 +57,9 @@ motd() {
 
 # load tty color scheme, announce we good
 . /etc/profile.d/bifrost.sh
-printf '\033[36m * %s ready\033[0m\n' "$(cat $AF/.alpine-release 2>/dev/null)"
+printf '\033[36m * %s + %s ready\033[0m\n' \
+  "$(cat $AF/.alpine-release 2>/dev/null)" \
+  "$AN $ANV"
 motd
 
 # switch to bash + add loggers

@@ -39,8 +39,10 @@ imshrink_filter_mods '' '' '
 
 
 
+bootmenu_title
+grub_chainload shell.efi
+grub_fwsetup
 grub_beep
-#grub64
 
 rm -rf /mnt/sm/how2build
 
@@ -50,6 +52,7 @@ rm -rf /mnt/sm/how2build
 ## add memtest86+
 
 cat >>/mnt/boot/*/grub.cfg <<'EOF'
+
 menuentry "memtest64 (x86_64)" {
 linux /boot/memtst64
 }
@@ -83,7 +86,7 @@ MENU LABEL memtest32 (i686) failsafe
 LINUX /boot/memtst32 nosmp nosm nobench
 EOF
 
-sed -ri 's/^(set timeout=).*/\13/' /mnt/boot/grub/grub.cfg 
+sed -ri 's/^(set timeout=).*/\14/' /mnt/boot/grub/grub.cfg 
 
 
 
