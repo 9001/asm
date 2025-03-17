@@ -557,7 +557,7 @@ EOF
 				local c=
 				case $fs in
 					ntfs) c="fsck.$fs";;
-					vfat) c="fsck.$fs -a -w";;
+					vfat) c="fsck.$fs -a";;
 					exfat|ext*) c="fsck.$fs -p";;
 				esac
 				[ "$c" ] && {
@@ -617,7 +617,7 @@ EOF
 	for v in /media/*; do
 		local blkdev=${v:7}
 		[ $v = $AF ] && {
-			[ $axs != r ] && mount -o remount,rw $AF &&
+			[ $axs != r ] && chkbootfs && mount -o remount,rw $AF &&
 				afaxs=$axs || afaxs=r
 
 			args+=(

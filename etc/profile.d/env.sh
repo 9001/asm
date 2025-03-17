@@ -54,6 +54,7 @@ wt() {
 	(cd /root && mount -o remount,rw $AF && tar -czf $AF/the.apkovl.tar.gz etc && sync && (fstrim $AF 2>/dev/null || true) && echo ok)
 }
 rw() {
+	chkbootfs
 	mount -o remount,rw $AF
 	pwd | grep -q $AF || cd $AF/sm
 }

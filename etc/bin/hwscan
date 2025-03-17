@@ -6,6 +6,7 @@ type log &>/dev/null || log() { echo "$*"; }
 pkgs=(
 	coreutils dmidecode lshw nvme-cli
 	pciutils smartmontools usbutils
+	dosfstools
 )
 type apka &>/dev/null && {
 	apka -q "${pkgs[@]}" libcpuid-tool ||
@@ -27,6 +28,9 @@ for _ in a a a; do [ -e "$out_fs" ] || out_fs="${out_fs%/*}"; done
 fs_mp=$(df "$out_fs" | awk '{v=$NF} END{print v}')
 fs_attrs=$(cat /proc/mounts | awk -v mp="$fs_mp" '$2==mp{print","$4","}')
 printf '%s\n' "$fs_attrs" | grep -q ,ro, && fs_ro=1 || fs_ro=
+
+[ $fs_mp = $AF ] && [ $fs_ro ] &&
+	printf '\033[1;30m' && chkbootfs && printf '\033[0m'
 
 alsainfo() {
 	for f in cards devices hwdep modules pcm timers version; do
