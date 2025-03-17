@@ -44,6 +44,8 @@ then see `local apk cache` in /doc/notes.md (or just remove the `-m http://192.1
 ```bash
 ./build.sh -p - -i dl/alpine-standard-3.21.3-x86_64.iso  # just to ensure the iso is cached in dl/
 function b() { ./build.sh -m http://192.168.122.1:2576/am -i dl/alpine-standard-3.21.3-x86_64.iso -p hub; }  # sudo ./mod.sh -cs sha1; }
+# or if you're building for ancient 32bit machines (non-SSE2 such as 1st-gen celeron)...
+function b() { ./build.sh -m http://192.168.122.1:2576/am -i dl/alpine-standard-3.10.9-x86.iso -p hub; }
 # and one of these to test:
 virsh -c qemu:///system destroy live-bios; b && virsh -c qemu:///system start live-bios 
 b && qemu-system-x86_64 -enable-kvm -vga qxl -cpu host -drive format=raw,file=asm.usb,bps=$((1024*1024*8)) -m 512

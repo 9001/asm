@@ -3,18 +3,24 @@ set -e
 
 #fastbuild=1  # skip expensive optional steps during prototyping
 
-PKGS=(
-	7zip alsa-utils aria2 cdparanoia chntpw ddrescue device-mapper
-	dmraid entr ffmpeg gcompat git helix hexyl ipcalc irssi lvm2 mtr
-	nmap nyancat pingu py3-pillow py3-pyzmq ranger rpm2cpio rsync sc
-	sox tmatrix treedude tty-solitaire ttyd unionfs-fuse w3m xdelta3
-	xorriso
+[ $IVER = 3.10 ] && a310=1 && fastbuild=1  # alpine-3.10 can't imshrink
 
+PKGS=(
+	alsa-utils aria2 cdparanoia chntpw ddrescue device-mapper
+	dmraid entr ffmpeg gcompat git ipcalc irssi lvm2 mtr
+	nmap pingu py3-pillow ranger rpm2cpio rsync sc
+	sox ttyd unionfs-fuse w3m xdelta3 xorriso
+)
+[ $a310 ] && PKGS+=(
+	p7zip py3-zmq
+) || PKGS+=(
+	7zip helix hexyl nyancat py3-pyzmq
+	tmatrix treedude tty-solitaire
 	fbida-fbi font-{droid,terminus}
 )
 recommended_apks "${PKGS[@]}"
 
-(cd /mnt/apks/ && rm  */*-pyc-*  */*-pycache-* )
+(cd /mnt/apks/ && rm -f  */*-pyc-*  */*-pycache-* )
 
 
 
@@ -89,6 +95,10 @@ LINUX /boot/memtst32 nosmp nosm nobench
 EOF
 
 sed -ri 's/^(set timeout=).*/\14/' /mnt/boot/grub/grub.cfg 
+
+
+
+[ $a310 ] && rm -rf /mnt/efi /mnt/boot/grub* /mnt/chiptunes
 
 
 

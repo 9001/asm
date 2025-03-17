@@ -13,6 +13,8 @@ rot=0
 
 . /etc/profile.d/hub.sh
 
+[ $IVER = 3.10 ] && a310=1 || a310=
+
 ESC=$'\033'
 CYAN="$ESC[36m"
 PRPL="$ESC[35m"
@@ -145,7 +147,10 @@ EOF
 		esac
 	done
 
-	apka -q sfdisk partx $pkg
+	[ $a310 ] &&
+		pkgs="sfdisk util-linux" ||
+		pkgs="sfdisk partx"
+	apka -q $pkgs $pkg
 	echo ,,$ptype | sfdisk --no-reread --no-tell-kernel -w never -W never -q -a /dev/$AD
 	local d2=/dev/${AD}2
 	while [ ! -e $d2 ]; do
@@ -230,7 +235,11 @@ EOF
 	log "ip: $(get_ip)"
 
 	# start r0c in tmux so ^C wont affect it
-	apka -q !pyc python3 tmux iproute2-minimal openssh
+	pkgs=(python3 tmux openssh)
+	[ $a310 ] &&
+		pkgs+=(iproute2) ||
+		pkgs+=(iproute2-minimal)
+	apka -q !pyc "${pkgs[@]}"
 	r0c --help 2>/dev/null >/dev/null
 	setup_tmux 2 r0c
 	tmux pipe-pane -t 0:2 -o "exec tee /dev/shm/conlog >>$(tty)"
@@ -262,6 +271,7 @@ EOF
 
 
 menu_games() {
+	[ $a310 ] && return
 	mcat <<EOF
 oh hi
   m) matrix    l) ls           t) treedude
@@ -370,7 +380,14 @@ ask4webr0c() {
 			n) return;;
 		esac
 	done
-	apka -q cmd:telnet socat ttyd
+	pkgs="socat ttyd"
+	if [ $a310 ]; then
+		cmd='$AF/kit/r0c-client.sh 127.0.0.1 531'
+	else
+		cmd='telnet -E -c 127.0.0.1 23'
+		pkgs="$pkgs cmd:telnet"
+	fi
+	apka -q $pkgs
 
 	cat >/dev/shm/webr0c <<EOF
 targs=(
@@ -385,7 +402,7 @@ targs=(
 	-t titleFixed=r0c
 	-t rendererType=dom
 	-t disableResizeOverlay=true
-	telnet -E -c 127.0.0.1 23
+	$cmd
 )
 socat openssl-listen:423,fork,reuseaddr,cert=$AF/sm/tls-cert.pem,verify=0 tcp4:127.0.0.1:823 &
 ttyd "\${targs[@]}"
@@ -394,7 +411,10 @@ EOF
 	setup_tmux 3 wr0c
 	tmux pipe-pane -t 0:3 -o "exec tee /dev/shm/conlog >>$(tty)"
 	tmux send -t 0:3 "tps1; bash /dev/shm/webr0c" ENTER
-	while sleep 0.1; do grep -qF 'Listening on port: 823' /dev/shm/conlog && break; done
+	[ $a310 ] &&
+		expect=' port 823, ' ||
+		expect='Listening on port: 823'
+	while sleep 0.1; do grep -qF "$expect" /dev/shm/conlog && break; done
 	tmux pipe-pane -t 0:3
 }
 
@@ -426,7 +446,10 @@ EOF
 		break
 	done
 
-	apka !pyc tmux python3 btrfs-progs e2fsprogs xfsprogs dosfstools exfatprogs ntfs-3g ntfs-3g-progs $v 2>&1 |
+	pkgs=(tmux python3 btrfs-progs e2fsprogs xfsprogs dosfstools ntfs-3g ntfs-3g-progs)
+	[ $a310 ] || pkgs+=(exfatprogs)
+
+	apka !pyc "${pkgs[@]}" $v 2>&1 |
 	while IFS= read -r x; do log -b "$x"; done & pid=$!
 
 	mcat <<EOF

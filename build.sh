@@ -303,6 +303,12 @@ pdir=.
 }
 rm -f $b/fs/sm/img/etc/README*.md
 
+[ ! "$ASM_SWP_OK" ] && find $b -type f | grep -E '\.(orig|rej)$|/\..*\.sw[pon]$' && {
+    err "found swapfiles/backupfiles; do you really want these in the image?"
+    warn "to allow this, set envvar ASM_SWP_OK=1"
+    exit 1
+}
+
 [ "$asm_key" ] &&  # derive pubkey from privkey
     mkdir -p $b/fs/sm/img/etc &&
     openssl rsa -in "$asm_key" -pubout > $b/fs/sm/img/etc/asm.pub
