@@ -117,14 +117,15 @@ recommended_apks() {
         "$@"
     )
     local excl=()
-    grep -E '^3\.10\.' /etc/alpine-release && excl=(
-        inetutils-telnet
-        libcpuid-tool lm-sensors
-        efibootmgr efivar mokutil sbsigntool
+    grep -E '^3\.1[0-6]\.' /etc/alpine-release && excl=(
+        inetutils-telnet libcpuid-tool mokutil procps-ng
+    )
+    grep -E '^3\.1[0-4]\.' /etc/alpine-release && excl+=(
         partclone
-        exfatprogs
-        hexdump procps-ng
-        ranger
+    )
+    grep -E '^3\.1[0-2]\.' /etc/alpine-release && excl+=(
+        efibootmgr efivar exfatprogs hexdump
+        lm-sensors ranger sbsigntool
     )
     [ $excl ] && {
         printf '%s\n' "${pkgs[@]}" >/dev/shm/plst
@@ -463,8 +464,10 @@ edit_initramfs() {
     }
 
     grep -q volblk= init || {
-        patch init </etc/patches/init-findfs.patch ||
-        mv init.rej init
+        cp init{,a}
+        patch -F0 init </etc/patches/init-findfs.patch &&
+            rm inita || mv init{a,}
+        rm -f init.{rej,orig}
     }
 
     log repacking initramfs
@@ -525,7 +528,7 @@ uki_make() {
     patch init </etc/patches/init-no-ml-pgp.patch
     [ $sec ] && patch init </etc/patches/init-passwd.patch
     grep -q volblk= init ||
-        patch init </etc/patches/init-findfs.patch
+        patch -F0 init </etc/patches/init-findfs.patch
 
     cp /dev/shm/cmdline .
     mkdir x; cd x

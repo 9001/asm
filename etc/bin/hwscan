@@ -8,8 +8,13 @@ pkgs=(
 	pciutils smartmontools usbutils
 	dosfstools
 )
+pkgs2=(
+	libcpuid-tool
+)
 type apka &>/dev/null && {
-	apka -q "${pkgs[@]}" libcpuid-tool ||
+	for x in "${pkgs2[@]}"; do
+		find $AF/apks | grep -qF $x && pkgs+=($x)
+	done
 	apka -q "${pkgs[@]}" || true
 }
 
