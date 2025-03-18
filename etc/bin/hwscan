@@ -4,7 +4,7 @@ set -e
 type log &>/dev/null || log() { echo "$*"; }
 
 pkgs=(
-	coreutils dmidecode lshw nvme-cli
+	acpica coreutils dmidecode lshw nvme-cli
 	pciutils smartmontools usbutils
 	dosfstools
 )
@@ -60,6 +60,12 @@ runcmds() {
 			continue
 		}
 		log "running $cmd"
+
+		[ "$cmd" = acpidump ] && (
+			mkdir $cmd; cd $cmd; $cmd -b; cd ..
+			tar -czvf $cmd.tgz $cmd; rm -rf $cmd
+		) && continue
+
 		fn="$(printf '%s' "$cmd" | tr -cs '[:alnum:]' -)"
 		printf '%s\n' "$fn" | grep -E ^cpuid-tool-save && fn=/dev/null
 		(eval "$cmd") >"$fn" && continue || rc=$?
@@ -79,6 +85,7 @@ cmds=(
 	"lspci -bnnvvv" "lspci -mmnn" "lspci -mmnnvvv"
 	"cpuid_tool --save=cpuid.raw --outfile=cpuid.txt --all --clock --clock-rdtsc --sgx --hypervisor"
 	dmidecode "dmidecode -u" "nvme list"
+	"acpidump -s -z" acpidump
 	alsainfo tinypcminfo "tinymix contents"
 )
 

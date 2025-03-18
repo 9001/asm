@@ -163,14 +163,18 @@ party() {
 
 
 ##
-# boot faster, may destroy graphics
+# kernel-cmdline modding
 
-nomodeset() {
-    ( cd /mnt/boot;
-    for f in */syslinux.cfg */grub.cfg; do sed -ri '
-        s/( quiet)( .*|$)/ nomodeset i915.modeset=0 nouveau.modeset=0 module_blacklist=i915,snd_hda_codec_hdmi\1\2/;
-        ' $f;
+add_kargs() {
+    ( cd /mnt/boot
+    v="$(printf '%s\n' "$1" | sed 's/[\/&]/\\&/g')"
+    for f in */syslinux.cfg */grub.cfg; do sed -ri "s/( quiet)( .*|$)/ $v\1\2/;" $f;
     done )
+}
+
+# boot faster, may destroy graphics
+nomodeset() {
+    add_kargs 'nomodeset i915.modeset=0 nouveau.modeset=0 module_blacklist=i915,snd_hda_codec_hdmi'
 }
 
 

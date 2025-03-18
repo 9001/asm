@@ -15,6 +15,13 @@ example profiles (config overlays) which replace corresponding files inside `sm`
   * [`./obig/`](./obig/) is the same except smaller
 
 
+# [`./hwinfo/`](./hwinfo/)
+
+* produces a 130 MiB usb image for collecting hardware info
+  * see `hw-inv.html` afterwards for a summary of all machines
+  * this functionality is also included in profiles `big` and `hub`
+
+
 # [`./r0cbox/`](./r0cbox/)
 
 * adds a custom [`./sm/post-build.sh`](./sm/post-build.sh) to make [`../build.sh`](../build.sh) download and insert [`r0c.py`](https://github.com/9001/r0c/releases/latest/download/r0c.py) into the image, and
