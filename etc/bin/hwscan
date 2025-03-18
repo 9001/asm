@@ -56,7 +56,7 @@ runcmds() {
 		}
 		log "running $cmd"
 		fn="$(printf '%s' "$cmd" | tr -cs '[:alnum:]' -)"
-		printf '%s\n' "$fn" | grep -E ^cpuid_tool && fn=/dev/null
+		printf '%s\n' "$fn" | grep -E ^cpuid-tool-save && fn=/dev/null
 		(eval "$cmd") >"$fn" && continue || rc=$?
 		printf '%s\n' "$cmd" | grep -q json && continue
 		echo "CMD FAILED: $cmd => $?" | tee -a "$fn"

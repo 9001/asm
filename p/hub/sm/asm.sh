@@ -56,7 +56,7 @@ EOF
 			G|g) menu_games;;
 			O|o) nolm=1; rotate;;
 			F|f) menu_font;;
-			A|a) tmux a -t 0 || echo 'start r0c or copyparty first';;
+			A|a) tmux a -t 0 || echo 'error: start r0c or copyparty first';;
 			V|v) verify;;
 			K|k) poweroff; exit 0;;
 			R|r) reboot; exit 0;;
@@ -420,6 +420,10 @@ EOF
 
 
 party() {
+	[ -e /root/.r0c ] || {
+		echo error: start network first
+		return
+	}
 	local f= n= v= ds= pid= args= uname= acct=
 	if ps aux | grep -q 'rty-sfx\.py'; then
 		tmux selectw -t 0:1
@@ -636,7 +640,7 @@ EOF
 
 	cat >/partycmd <<EOF
 set -x
-tmux set -g status-right "#(ip r | awk '/src /{print\\\$NF;exit}'), %Y-%m-%d, %H:%M:%S"
+tmux set -g status-right "#(ip r | awk '/src /{print\\\$NF;exit}'), #(battery) %Y-%m-%d, %H:%M:%S"
 sed -r 's/\{hub\}/$AD/g' <$AF/sm/copyparty.conf >/dev/shm/cpp.cfg
 XDG_CONFIG_HOME=$xch python3 $AF/kit/copyparty-sfx.py \
 	-c /dev/shm/cpp.cfg \

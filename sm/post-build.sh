@@ -178,10 +178,12 @@ nomodeset() {
 # defaults to "profilename datetime-gitrevision" if no args
 
 bootmenu_title() {
-    local t="$1"
+    local kern= v= t="$1"
     [ "$t" ] || t="$AN $ANV"
     t="$(printf '%s\n' "$t" | sed 's/[\/&]/\\&/g')"
-    for f in /mnt/boot/*/{grub,syslinux}.cfg; do sed -ri "s/Linux lts/$t/" $f; done
+    v=$(uname -r)
+    v=${v##*-}
+    for f in /mnt/boot/*/{grub,syslinux}.cfg; do sed -ri "s/\bLinux $v\b/$t/" $f; done
 }
 
 

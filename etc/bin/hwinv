@@ -307,7 +307,8 @@ def main():
         verbose("loaded", len(cache), "from", al.cache)
 
     except Exception as ex:
-        print("not using cache;", ex)
+        if os.path.exists(al.cache):
+            print("not using cache;", ex)
         cache = {}
 
     dirs = []
