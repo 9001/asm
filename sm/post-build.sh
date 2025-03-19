@@ -94,7 +94,14 @@ fetch_apks() {
     awk '{print$1,$2}' </dev/shm/npis >/dev/shm/nps
     read_apkidx APKINDEX.tar.gz | awk '{print$1,$2}' | LC_ALL=C sort > /dev/shm/ops
     comm -23 /dev/shm/ops /dev/shm/nps > /dev/shm/dps
+    if [ $did_filter_apks ]; then # dont pull them back in
+        while read a b; do
+            rm -- "$a-$b.apk" 2>/dev/null && echo "$a $b"
+        done </dev/shm/dps >/dev/shm/dps2
+        mv /dev/shm/dps{2,}
+    else
     awk '{printf "%s-%s.apk\n",$1,$2}' </dev/shm/dps | xargs rm -f --
+    fi
     cut -d' ' -f1 /dev/shm/dps | xargs -r apk fetch --repositories-file=/etc/apk/w -R || e=1
     for f in APKINDEX.*.tar.gz; do gzip -d <$f | grep -qE "^P:apk-tools$" && cp -pv $f APKINDEX.tar.gz; done
 
@@ -405,6 +412,7 @@ imshrink_filter_mods() {
 imshrink_filter_apks() {
     # shaves ~10 MiB when going from virt to just alpine-base;
     # reduces the on-disk apk selection
+    did_filter_apks=1
     cd; rm -rf x; mkdir x; cd x
     local web=
     [ -e /z ] && web=1
