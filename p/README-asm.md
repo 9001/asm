@@ -17,9 +17,10 @@ example profiles (config overlays) which replace corresponding files inside `sm`
 
 # [`./hwinfo/`](./hwinfo/)
 
-* produces a 130 MiB usb image for collecting hardware info
+* produces a 107 MiB usb image for collecting hardware info
   * see `hw-inv.html` afterwards for a summary of all machines
-  * this functionality is also included in profiles `big` and `hub`
+  * build it: `./build.sh -i dl/alpine-standard-3.21.3-x86_64.iso -p hwinfo -s 0.5 && xz -cz1T0 <asm.usb >hwinfo.usb.xz`
+  * this profile removes kernel modules to reduce image size; if you need all hardware initialized for more accurate infodumps (especially wifi/bluetooth), you'll want profile `big` or `hub` which also have this feature
 
 
 # [`./r0cbox/`](./r0cbox/)

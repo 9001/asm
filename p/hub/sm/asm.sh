@@ -568,9 +568,9 @@ EOF
 					printf '\033[36m# %s %s (%s)\033[0m ' "$c" $d $fs &&
 					$c /dev/$d </dev/null && rc=0 || rc=$?
 					case $rc in
-						0) c='2m `--fs-OK';;
+						0) c='2m `--filesystem-check OK';;
 						1) c='3m `--found and repaired fs errors';;
-						*) c='1m `--ERROR, FILESYSTEM FUNKY';;
+						*) c='1m `--ERROR '$rc', FILESYSTEM CORRUPT? (see text above)';;
 					esac
 					printf '\033[3%s\033[0m\n' "$c"
 				}

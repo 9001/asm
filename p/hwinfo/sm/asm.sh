@@ -10,7 +10,9 @@ B1="$ESC[1m"
 B0="$ESC[22m"
 RST="$ESC[0m"
 
+enbri() { printf '%s\n' "$1" | sed -r "s/\[(.)\]/$B1\1$B0/g"; }
 ask1() { read -u1 -n1 -rp "$CYAN$1$RST" $2 && echo; }
+ask1b() { read -u1 -n1 -rp "$CYAN$(enbri "$1")$RST" $2 && echo; }
 ask_yn() {
 	while true; do
 		ask1 "$1"
@@ -56,6 +58,30 @@ test_apic() {
 
 
 
+ask_hwinfo() {
+	ask_yn "write hardware-info to USB flashdrive? y/n> " || return 0
+	printf "\nyou can include a comment for this infodump, or just hit enter:\n\n"
+	read_hwinfo; echo
+	beeps 20 784 0 0 1047 &
+}
+
+
+
+ask_exit() {
+	while true; do
+		ask1b "end of program.  [p]oweroff, [r]eboot, e[x]it? p/r/x> "
+		case $REPLY in
+			P|p) poweroff; exit 0;;
+			R|r) reboot; exit 0;;
+			X|x) break;;
+		esac
+	done
+	echo "okay, run the command 'poweroff' when you're done"
+	/bin/bash -l || true
+}
+
+
+
 # intel-uhd-graphics <700 doesn't render past 3840x2117
 (fbset 2>&1) | awk '$1=="geometry" && $4>2560 && $5>1920 {r=1} END {exit r-1}' && fbset -xres 2560 -yres 1920
 
@@ -63,10 +89,5 @@ test_apic() {
 ttycons
 
 test_apic
-
-ask_yn "write hardware-info to USB flashdrive? y/n> " && read_hwinfo && echo
-
-ask_yn "shutdown? y/n> " && poweroff && exit 0
-
-echo "okay, just run the command 'poweroff' when you're done"
-/bin/bash -l || true
+ask_hwinfo
+ask_exit

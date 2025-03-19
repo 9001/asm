@@ -5,8 +5,8 @@ grep -qE "^/dev/$AP .*[ ,]rw[ ,]" /proc/mounts && exit 0
 command -v fsck.vfat >/dev/null || apka -q dosfstools
 fsck.vfat -a /dev/$AP && rc=0 || rc=$?
 case $rc in
-    0) c='2m `--fs-OK';;
-    1) c='3m `--found and repaired fs errors';;
-    *) c='1m `--ERROR, FILESYSTEM FUNKY';;
+    0) c='2m `--flashdrive filesystem-check OK';;
+    1) c='3m `--found and fixed some issues in the flashdrive filesystem; this is OK';;
+    *) c='1m `--ERROR '$rc', FLASHDRIVE FILESYSTEM IS CORRUPT';;
 esac
 [ "$1" ] || printf '\033[3%s\033[0m\n' "$c"

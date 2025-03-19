@@ -43,16 +43,22 @@ imshrink_filter_irmods \
 # remove large useless kmods
 imshrink_filter_mods '' '' '
 	/\/(rtl_bt|bluetooth|infiniband|hfi1)/{next}  # bt, infiniband
-    /\/(wireless|mac80211|brcmfmac)/{next}  # wifi
-    /\/firmware\/(ath1[01]k|mediatek)/{next}  # wifi
+    /\/(wireless|mac80211|brcmfmac|ti-connectivity)/{next}  # wifi
+    /\/firmware\/(ath1[01]k|mediatek|iwlwifi|rtlwifi)/{next}  # wifi
     /\/(drivers\/multimedia|kernel\/drivers\/media)\//{next}  # capturecards, webcams
 	/(raspberry|banana)pi|\.pine64/{next}  # arm sbc (normally covered by removing brcm)
 	/\/firmware\/nvidia\//{next}  # nvidia gpus
 	/\/amdgpu/{next}  # amd gpus
 	/\/(netronome)\//{next}  # agilio smartnics
 	/\/(ueagle-atm)\//{next}  # adsl modems
-	/\/fs\/(ocfs2|xfs|btrfs|smb|nfsd?|f2fs|ceph|gfs2|ubifs|reiserfs)\//{next}  # filesystems
-	/\/(lpfc|qla2xxx)\//{next}  # big fw: fibre channel scsi (qlogic, emulex)
+    /\/fs\/(ocfs2|xfs|btrfs|smb|nfsd?|f2fs|ceph|gfs2|ubifs|reiserfs|nilfs2|ntfs3|jfs)\//{next}  # filesystems
+    /\/fs\/(fuse|netfs|overlayfs|jffs2|orangefs|hfsplus)\//{next}  # more filesystems (smaller)
+    /\/nls_cp(932|936|949|950)/{next}  # cjk fat32
+    /\/(lpfc|qla[24]xxx)\//{next}  # big fw: fibre channel scsi (qlogic, emulex)
+    /\/net\/(netfilter|bridge|bonding|team|wireguard|sunrpc|sched|ceph)\//{next}  # fancy networking
+    /\/net\/(sctp|tipc|ipv6|rxrpc|openvswitch|ieee802154)\//{next}  # more networking
+    /\/(kernel\/drivers\/md)\//{next}  # raid etc
+    /\/(x86\/kvm|drbd|rnbd|iscsi)\//{next}
 '
 
 }
@@ -63,7 +69,7 @@ bootmenu_title
 
 #add_kargs nox2apic  # force xAPIC / x1APIC for hardware debugging
 
-sed -ri 's/^(set timeout=).*/\12/' /mnt/boot/grub/grub.cfg 
+sed -ri 's/^(set timeout=).*/\14/' /mnt/boot/grub/grub.cfg 
 
 [ $IARCH = x86 ] && rm -rf /mnt/efi /mnt/boot/grub*
 
