@@ -299,6 +299,11 @@ pdir=.
         rm -rf $b/fs/sm/img/etc
     (cd $pdir && tar -c .) |
     tar -xC $b/fs/sm/img/
+
+    rm $b/fs/sm/img/symlinks-to-deref.txt 2>/dev/null &&
+        (cd $pdir && tar -chT symlinks-to-deref.txt) |
+        tar -xC $b/fs/sm/img/
+
     rm -f $b/fs/sm/img/etc/.standalone
 }
 rm -f $b/fs/sm/img/etc/README*.md

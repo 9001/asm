@@ -1,0 +1,1 @@
+../../../min/etc/profile.d/env.sh

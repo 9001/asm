@@ -69,3 +69,10 @@ r0cbox hardware requirements:
   ./build.sh -i dl/alpine-virt-3.19.1-x86.iso -oi asm.iso -p min -s 0.06
   ```
   * (non-virt i386 is 33 MiB due to hw drivers)
+
+
+----
+
+# notes
+
+* symlinks in profiles are kept as-is, unless listed in a profile-toplevel file named `symlinks-to-deref.txt` (see the hwinfo profile)
