@@ -452,6 +452,9 @@ EOF
 
 	pkgs=(tmux python3 btrfs-progs e2fsprogs xfsprogs dosfstools ntfs-3g ntfs-3g-progs)
 	[ $a310 ] || pkgs+=(exfatprogs)
+	
+	# 2x faster download-as-zip, 2x more ram usage in general
+	#echo $IVER | grep -E '^3\.1[0-6]' || pkgs+=(mimalloc2)
 
 	apka !pyc "${pkgs[@]}" $v 2>&1 |
 	while IFS= read -r x; do log -b "$x"; done & pid=$!
@@ -642,6 +645,7 @@ EOF
 set -x
 tmux set -g status-right "#(ip r | awk '/src /{print\\\$NF;exit}'), #(battery) %Y-%m-%d, %H:%M:%S"
 sed -r 's/\{hub\}/$AD/g' <$AF/sm/copyparty.conf >/dev/shm/cpp.cfg
+LD_PRELOAD=/usr/lib/libmimalloc-secure.so.2 \
 XDG_CONFIG_HOME=$xch python3 $AF/kit/copyparty-sfx.py \
 	-c /dev/shm/cpp.cfg \
 	${args[@]} || true

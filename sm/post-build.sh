@@ -117,6 +117,7 @@ recommended_apks() {
         acpica dmidecode libcpuid-tool lm-sensors lshw nvme-cli
           pciutils sgdisk smartmontools testdisk usbutils
         efibootmgr efivar mokutil sbsigntool
+        mimalloc2 mimalloc2-insecure
         cryptsetup fuse fuse3 nbd nbd-client partclone sfdisk
         btrfs-progs dosfstools exfatprogs mtools ntfs-3g ntfs-3g-progs squashfs-tools xfsprogs
         bc diffutils file findutils grep hexdump htop jq less lsof mc
@@ -126,6 +127,7 @@ recommended_apks() {
     local excl=()
     grep -E '^3\.1[0-6]\.' /etc/alpine-release && excl=(
         inetutils-telnet libcpuid-tool mokutil procps-ng
+        mimalloc2 mimalloc2-insecure
     )
     grep -E '^3\.1[0-4]\.' /etc/alpine-release && excl+=(
         partclone
