@@ -9,6 +9,12 @@ set -e
     exit 0
 }
 
+case "$1" in
+    ack) exec beeps 20 660 0 880;;  # 1047 0 784
+    ok)  exec beeps 60 523 784 1047;;
+    sad) exec beeps 80 349 0 349;;
+esac
+
 [ $# -gt 1 ] || {
     echo need arg 1: note duration in ms
     echo need arg 2: frequency of note 1

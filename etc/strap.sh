@@ -170,6 +170,8 @@ else
 fi
 unlog
 
+sleep 0.5; [ $(rc-status -r) = default ] || exit 0  # halting
+
 # success? exit
 [ $err ] || {
   nohup beeps 70 523 784 1046 2>/dev/null &

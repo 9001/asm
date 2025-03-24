@@ -28,6 +28,9 @@ ask1() { read -u1 -n1 -rp "$CYAN$1$RST" $2 && echo; }
 ask1b() { read -u1 -n1 -rp "$CYAN$(enbri "$1")$RST" $2 && echo; }
 mcat() { printf "\n$CYAN%79s$RST\n\033[A"|tr ' ' -; sed -r 's/$/ /;s/( )([a-zA-Z0-9])(\) )/\1'$CYAN'\2'$RST'\3/g'; }
 
+quiet() { touch /dev/shm/nobeep; }
+fbeep() { rm -f /dev/shm/nobeep; beeps $*; }
+
 
 mainmenu() {
 	while true; do
@@ -52,15 +55,16 @@ EOF
 			C|c) party;;
 			S|s) start_ssh;;
 			I|i) infograb;;
-			X|x) touch /dev/shm/nobeep; echo '(return by saying "menu")'; /bin/bash -l; exit 0;;
+			X|x) quiet; echo '(return by saying "menu")'; /bin/bash -l; exit 0;;
 			G|g) menu_games;;
 			O|o) nolm=1; rotate;;
 			F|f) menu_font;;
 			A|a) tmux a -t 0 || echo 'error: start r0c or copyparty first';;
 			V|v) verify;;
-			K|k) poweroff; exit 0;;
-			R|r) reboot; exit 0;;
+			K|k) fbeep ok; poweroff; exit 0;;
+			R|r) fbeep ok; reboot; exit 0;;
 		esac
+		fbeep ack
 	done
 }
 
@@ -325,6 +329,7 @@ verify() {
 	printf '\033[1;37;41m OH NO VERIFICATION FAILED \033[0;1;33m\n'
 	cat -n /dev/shm/ckng1
 	cat /dev/shm/ckng2
+	fbeep sad; sleep 0.5
 }
 
 

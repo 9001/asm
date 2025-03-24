@@ -31,8 +31,8 @@ EOF
 		n) menu_net;;
 		z) exit 0;;
 		x) exit 1;;
-		k) poweroff; exit 0;;
-		r) reboot; exit 0;;
+		k) beeps ok; poweroff; exit 0;;
+		r) beeps ok; reboot; exit 0;;
 		*) menu;;
 	esac
 }
@@ -156,6 +156,9 @@ EOF
 	[ $fs_ro ] && mount -o remount,ro $AF
 	menu
 }
+
+# clear bootloader status message ("plain exec")
+printf '\033[K'
 
 # intel-uhd-graphics <700 doesn't render past 3840x2117
 (fbset 2>&1) | awk '$1=="geometry" && $4>2560 && $5>1920 {r=1} END {exit r-1}' && fbset -xres 2560 -yres 1920
