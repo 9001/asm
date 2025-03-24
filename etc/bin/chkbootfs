@@ -3,7 +3,7 @@ set -e
 
 grep -qE "^/dev/$AP .*[ ,]rw[ ,]" /proc/mounts && exit 0
 command -v fsck.vfat >/dev/null || apka -q dosfstools
-fsck.vfat -a /dev/$AP && rc=0 || rc=$?
+fsck.vfat -a /dev/$AP </dev/null && rc=0 || rc=$?
 case $rc in
     0) c='2m `--flashdrive filesystem-check OK';;
     1) c='3m `--found and fixed some issues in the flashdrive filesystem; this is OK';;
