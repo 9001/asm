@@ -1,5 +1,5 @@
 menu() {
-	printf '\n\n'; bash $AF/sm/asm.sh
+	. $AF/sm/asm.sh
 }
 
 edware() {

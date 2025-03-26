@@ -55,7 +55,7 @@ EOF
 			C|c) party;;
 			S|s) start_ssh;;
 			I|i) infograb;;
-			X|x) quiet; echo '(return by saying "menu")'; /bin/bash -l; exit 0;;
+			X|x) quiet; echo '(return by saying "menu")'; exec /bin/bash -l;;
 			G|g) menu_games;;
 			O|o) nolm=1; rotate;;
 			F|f) menu_font;;
@@ -661,22 +661,27 @@ EOF
 	tmux a -t 0
 }
 
-apka -q --no-progress sl &
-
 # intel-uhd-graphics <700 doesn't render past 3840x2117
 (fbset 2>&1) | awk '$1=="geometry" && $4>2560 && $5>1920 {r=1} END {exit r-1}' && fbset -xres 2560 -yres 1920
+
+f=/dev/shm/.hub.init
+[ -e $f ] || {
+	touch $f
+
+apka -q --no-progress sl &
 
 # force ntfs-3g (less buggy)
 echo blacklist ntfs3 >/etc/modprobe.d/no-ntfs3.conf
 
 # rotate display orientation (requires kms/modeset)
-[ $rot != 0 ] && [ ! -e /dev/shm/rotated ] &&
-	touch /dev/shm/rotated && rot $rot
+[ $rot = 0 ] || rot $rot
 
 # if /sm/tty.cfg exists, launch consoles on each tty listed inside
 ttycons
 
 # create a 2nd partition to fill free space
 maybe_mkpart
+
+}
 
 mainmenu

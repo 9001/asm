@@ -69,7 +69,7 @@ ask_hwinfo() {
 
 ask_exit() {
 	while true; do
-		ask1b "end of program.  [p]oweroff, [r]eboot, e[x]it? p/r/x> "
+		ask1b "end of program.  [p]oweroff, [r]eboot, e[x]it?  p/r/x> "
 		case $REPLY in
 			P|p) poweroff; exit 0;;
 			R|r) reboot; exit 0;;
@@ -77,7 +77,7 @@ ask_exit() {
 		esac
 	done
 	echo "okay, run the command 'poweroff' when you're done"
-	/bin/bash -l || true
+	exec /bin/bash -l
 }
 
 
