@@ -44,6 +44,13 @@ r0cbox hardware requirements:
 * download a prebuilt image (or the demo-video) from [my homeserver](https://a.ocv.me/pub/stuff/edcd001/enterprise-edition/) or see the [build instructions](./hub/sm/how2build)
 
 
+# [`./miniparty/`](./miniparty/)
+
+* tiny version of [`hub`](./hub/) which boots straight to copyparty and r0c with dhcp, no questions asked
+* no thumbnails because it doesn't install pillow
+* iso size is 117 MiB
+
+
 # [`./dban/`](./dban/)
 
 * the classic
