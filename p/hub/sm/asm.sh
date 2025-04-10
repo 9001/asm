@@ -200,21 +200,31 @@ EOF
 
 
 menu_net() {
+	rm -f /etc/network/interfaces
 	read i1 i2 < <(echo $ip | sed -r 's/(.*)\./\1 /')
-	mcat <<EOF
+	[ $1 ] && r=$1 || {
+		mcat <<EOF
 choose ip address:
   d) dynamic / dhcp
+  l) link-local
   s) static, starting from $i1.$i2
   i) static, starting from $i1.N
   w) wifi and/or advanced
 EOF
-	ask1 'sel> '
-	echo $REPLY | grep -q i && {
+		ask1 'sel> ' r
+	}
+	echo $r | grep -q i && {
 		ask "$i1.?> " i2
-		REPLY=s
+		r=s
+	}
+	echo $r | grep -q l && {
+		i1=169.254.$((1+RANDOM%254))
+		i2=$((1+RANDOM%240))
+		mask=16
+		r=s
 	}
 	echo
-	case $REPLY in
+	case $r in
 		S|s) ip l set lo up
 			( . /usr/lib/libalpine.sh || . /lib/libalpine.sh
 				available_ifaces ) | tr ' ' '\n' |
@@ -227,7 +237,7 @@ EOF
 				ip a a $ip/$mask dev $dev
 				echo $dev = $ip /$mask
 			done;;
-		D|d)
+		D|d) r=d
 			(sleep 1; rm -f /tmp/setup-interfaces*/w*.noconf) &
 			printf 'autoconfiguring, pls wait... \033[1;30m'
 			yes '' | setup-interfaces; printf '\033[0m'
@@ -236,7 +246,13 @@ EOF
 		*) echo "bad input; aborting"; return;;
 	esac
 
-	log "ip: $(get_ip)"
+	x="$(get_ip)"
+	[ -z $x ] && [ $r = d ] && {
+		# dhcp failed; use linklocal
+		menu_net l
+		return
+	}
+	log "ip: $x"
 
 	# start r0c in tmux so ^C wont affect it
 	pkgs=(python3 tmux openssh)

@@ -152,6 +152,7 @@ EOF
 
 
 menu_net() {
+	rm -f /etc/network/interfaces
 	read i1 i2 < <(echo $ip | sed -r 's/(.*)\./\1 /')
 	case $ip in
 		*.*) ip l set lo up
@@ -173,8 +174,23 @@ menu_net() {
 			service -q networking restart;;
 	esac
 
-	log "ip: $(get_ip)"
+	x="$(get_ip)"
+	[ $x ] && {
+		log "ip: $x"
+		start_r0c
+		return
+	}
+	echo
+	echo "failed to obtain ip from dhcp; do you want to specify ip manually?"
+	echo "hint: just press Enter to autoselect a linklocal ip to use instead"
+	read -u1 -rp "ip> " ip
+	[ -z $ip ] && mask=16 && ip=169.254.$((1+RANDOM%254)).$((1+RANDOM%240))
+	ip=$(echo $ip | sed -r 's/[^0-9.].*//')
+	menu_net
+}
 
+
+start_r0c() {
 	# start r0c in tmux so ^C wont affect it
 	pkgs=(python3 tmux openssh)
 	[ $a310 ] &&
