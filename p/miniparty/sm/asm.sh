@@ -245,8 +245,8 @@ party() {
 	# 2x faster download-as-zip, 2x more ram usage in general
 	#echo $IVER | grep -E '^3\.1[0-6]' || pkgs+=(mimalloc2)
 
-	apka !pyc "${pkgs[@]}" $v
-	apka !pyc py3-pillow
+	apka -q !pyc "${pkgs[@]}"
+	apka -q !pyc py3-pillow
 
 	# choose one of these to uncomment:
 	e2d='-e2d'  # index uploads only (makes them resumable and searchable)

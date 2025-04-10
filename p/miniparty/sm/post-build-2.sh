@@ -33,6 +33,9 @@ imshrink_filter_mods '' '' '
     /\/(wireless|mac80211|brcmfmac|ti-connectivity)/{next}  # wifi
     /\/firmware\/(ath1[01]k|mediatek|iwlwifi|rtlwifi)/{next}  # wifi
     /\/(drivers\/multimedia|kernel\/drivers\/media)\//{next}  # capturecards, webcams
+	/\/input\/(touchscreen|mouse)\//{next}
+	/\/wacom|hid-(wiimote|playstation|nintendo)/{next}
+	/\/kernel\/sound\//{next}
 	/(raspberry|banana)pi|\.pine64/{next}  # arm sbc (normally covered by removing brcm)
 	/\/firmware\/nvidia\//{next}  # nvidia gpus
 	/\/amdgpu/{next}  # amd gpus
@@ -44,6 +47,7 @@ imshrink_filter_mods '' '' '
     /\/(lpfc|qla[24]xxx)\//{next}  # big fw: fibre channel scsi (qlogic, emulex)
     /\/net\/(netfilter|bridge|bonding|team|wireguard|sunrpc|sched|ceph)\//{next}  # fancy networking
     /\/net\/(sctp|tipc|rxrpc|openvswitch|ieee802154)\//{next}  # more networking
+	/\/updates(\/ACCOUNT|\/pknock)?\/xt_|\/netfilter\//{next}  # more netfilter
     /\/(x86\/kvm|drbd|rnbd|iscsi)\//{next}
 '
 
