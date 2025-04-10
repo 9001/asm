@@ -338,13 +338,12 @@ party() {
 	for v in /media/*; do
 		local blkdev=${v:7}
 		[ $v = $AF ] && {
-			[ $axs != r ] && chkbootfs && mount -o remount,rw $AF &&
-				afaxs=$axs || afaxs=r
+			[ $axs != r ] && [ $AD != sr0 ] &&
+				chkbootfs && mount -o remount,rw $AF &&
+					args+=("-v $v:/usb/$blkdev:$axs$uname:c,fat32") ||  # r/w ok
+					args+=("-v $v:/usb/$blkdev:r$uname::c,hist=/.h.$AD")  # iso?
 
-			args+=(
-				"-v $v:/usb/$blkdev:$afaxs$uname:c,fat32"
-				"-v $v/sm:/usb/$blkdev/sm:"  # block access to /sm
-			)
+			args+=("-v $v/sm:/usb/$blkdev/sm:c,d2d")  # block access to /sm
 			continue
 		}
 		[ -e "$v" ] && args+=("-v $v:/usb/$blkdev:$axs$uname")
@@ -352,8 +351,9 @@ party() {
 
 	printf '\nwill run copyparty with the following args:\n'
 	printf '  %s\n' "${args[@]}"
-	printf 'press any key to confirm  -or-  press CTRL-C to abort\n'
+	#printf 'press any key to confirm  -or-  press CTRL-C to abort\n'
 	#read -n1 -u1
+	sleep 1
 
 	cat >/partycmd <<EOF
 set -x
@@ -390,6 +390,10 @@ ttycons
 maybe_mkpart
 
 }
+
+echo "will now autostart copyparty and r0c;"
+echo "press CTRL-C within 1sec to abort ..."
+sleep 1
 
 menu_net
 start_ssh

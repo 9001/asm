@@ -629,13 +629,12 @@ EOF
 	for v in /media/*; do
 		local blkdev=${v:7}
 		[ $v = $AF ] && {
-			[ $axs != r ] && chkbootfs && mount -o remount,rw $AF &&
-				afaxs=$axs || afaxs=r
+			[ $axs != r ] && [ $AD != sr0 ] &&
+				chkbootfs && mount -o remount,rw $AF &&
+					args+=("-v $v:/usb/$blkdev:$axs$uname:c,fat32") ||  # r/w ok
+					args+=("-v $v:/usb/$blkdev:r$uname::c,hist=/.h.$AD")  # iso?
 
-			args+=(
-				"-v $v:/usb/$blkdev:$afaxs$uname:c,fat32"
-				"-v $v/sm:/usb/$blkdev/sm:"  # block access to /sm
-			)
+			args+=("-v $v/sm:/usb/$blkdev/sm:c,d2d")  # block access to /sm
 			continue
 		}
 		[ -e "$v" ] && args+=("-v $v:/usb/$blkdev:$axs$uname")
