@@ -200,7 +200,7 @@ start_r0c() {
 	r0c --help 2>/dev/null >/dev/null
 	setup_tmux 2 r0c
 	tmux pipe-pane -t 0:2 -o "exec tee /dev/shm/conlog >>$(tty)"
-	tmux send -t 0:2 "tps1; r0c --ara -pw $(base64 /dev/urandom | tr -dc a-z | head -c9)" ENTER
+	tmux send -t 0:2 "r0c --ara -pw $(base64 /dev/urandom | tr -dc a-z | head -c9)" ENTER
 	while sleep 0.1; do grep -qF 'r0c is up' /dev/shm/conlog && break; done
 	tmux pipe-pane -t 0:2
 }
@@ -382,7 +382,7 @@ XDG_CONFIG_HOME=$xch python3 $AF/kit/copyparty-sfx.py \
 EOF
 
 	setup_tmux 1 cpp
-	tmux send -t 0:1 "tps1; /bin/bash /partycmd" ENTER
+	tmux send -t 0:1 "/bin/bash /partycmd" ENTER
 	tmux a -t 0
 }
 

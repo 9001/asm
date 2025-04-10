@@ -15,8 +15,3 @@ u2c() {
 	}
 	python3 $f "$@"
 }
-
-tps1() {
-	printf '%s\n' "$PS1" | grep -q CTRL-B ||
-	export PS1="to leave this tmux and return to menu: press CTRL-B, release CTRL, press d\n$PS1"
-}
