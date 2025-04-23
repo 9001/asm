@@ -14,10 +14,7 @@ dl kit/r0c-client.sh        https://github.com/9001/r0c/raw/refs/heads/master/cl
 dl kit/r0c-client.ps1       https://github.com/9001/r0c/raw/refs/heads/master/clients/powershell.ps1
 dl sm/tls-cert.pem          https://raw.githubusercontent.com/9001/copyparty/refs/heads/hovudstraum/copyparty/res/insecure.pem
 dlf kit/                    https://a.ocv.me/pub/ping.html
-chmod 755 kit/{r0c,copyparty-sfx}.py sm/bin/*
-[ -e boot/memtst32 ] || { (cd /tmp && unzip memtest.zip) && rm -f /tmp/*la64.efi && mv /tmp/memtest*.efi efi/boot/ && mv /tmp/memtest32.bin boot/memtst32 && mv /tmp/memtest64.bin boot/memtst64; }
-[ -e chiptunes ] || { curl https://a.ocv.me/pub/demo/music/chiptunes/compressed/?tar | tar -xv; mv compressed chiptunes; curl https://a.ocv.me/pub/demo/music/chiptunes/README.md > chiptunes/README.md; }
-unzip -l kit/copyparty-git.zip | grep -q docs/changelog.md && zip -d kit/copyparty-git.zip copyparty-hovudstraum/docs/changelog.md
+chmod 755 kit/{r0c,copyparty-sfx}.py
 ```
 
 then see `local apk cache` in /doc/notes.md (or just remove the `-m http://192.168.122.1:2576/am` below) and finally build it:

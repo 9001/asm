@@ -21,13 +21,13 @@ fetch_apks "${PKGS[@]}"
 
 [ $fastbuild ] || {
 
-imshrink_zinfo  # compress kernel symbols (makes kernel debugging harder)
+imshrink_rmkinfo  # discard kernel symbols (makes kernel debugging harder)
 
 # remove large kmods from initramfs, saves 3 MiB
 imshrink_filter_irmods \
 	'/scsi/(lpfc|qla2xxx)/|/firmware/ql2[0-9]{3}_fw'
 
-# remove large useless kmods (but keep wifi and GPUs), saves 30 MiB
+# remove large useless kmods (but keep wifi and GPUs), saves a lot
 imshrink_filter_mods '' '' '
 	/\/(rtl_bt|bluetooth|infiniband|hfi1)/{next}  # bt, infiniband
     /\/(wireless|mac80211|brcmfmac|ti-connectivity)/{next}  # wifi
@@ -40,15 +40,22 @@ imshrink_filter_mods '' '' '
 	/\/firmware\/nvidia\//{next}  # nvidia gpus
 	/\/amdgpu/{next}  # amd gpus
 	/\/(netronome)\//{next}  # agilio smartnics
+	/\/ethernet\/(dec|sun)\//{next}  # old nics
 	/\/(ueagle-atm)\//{next}  # adsl modems
+	/\/(drivers|usb|net)\/atm\//{next}  # more adsl
+	/\/drivers\/(isdn|nfc)\//{next}  # non-ethernet
     /\/fs\/(ocfs2|smb|nfsd?|f2fs|ceph|gfs2|ubifs|reiserfs|nilfs2|ntfs3|jfs)\//{next}  # filesystems
     /\/fs\/(netfs|overlayfs|jffs2|orangefs|hfsplus)\//{next}  # more filesystems (smaller)
     /\/nls_cp(932|936|949|950)/{next}  # cjk fat32
+	/\/dm-vdo\//{next}  # fancy blockdevs
+	/\/block\/(rbd|nbd|floppy)\.ko/{next}  # more blockdevs
+	/\/(drivers|nvme)\/target\//{next}  # iscsi
     /\/(lpfc|qla[24]xxx)\//{next}  # big fw: fibre channel scsi (qlogic, emulex)
     /\/net\/(netfilter|bridge|bonding|team|wireguard|sunrpc|sched|ceph)\//{next}  # fancy networking
     /\/net\/(sctp|tipc|rxrpc|openvswitch|ieee802154)\//{next}  # more networking
+	/\/net\/(can|ppp|vxlan|arcnet|nfc)\//{next}  # more networking
 	/\/updates(\/ACCOUNT|\/pknock)?\/xt_|\/netfilter\//{next}  # more netfilter
-    /\/(x86\/kvm|drbd|rnbd|iscsi)\//{next}
+	/\/(x86\/kvm|drbd|rnbd|iscsi|firewire|speakup)\//{next}
 '
 
 }
