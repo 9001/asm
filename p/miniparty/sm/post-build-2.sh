@@ -42,7 +42,7 @@ imshrink_filter_mods '' '' '
 	/\/(netronome)\//{next}  # agilio smartnics
 	/\/(ueagle-atm)\//{next}  # adsl modems
     /\/fs\/(ocfs2|smb|nfsd?|f2fs|ceph|gfs2|ubifs|reiserfs|nilfs2|ntfs3|jfs)\//{next}  # filesystems
-    /\/fs\/(fuse|netfs|overlayfs|jffs2|orangefs|hfsplus)\//{next}  # more filesystems (smaller)
+    /\/fs\/(netfs|overlayfs|jffs2|orangefs|hfsplus)\//{next}  # more filesystems (smaller)
     /\/nls_cp(932|936|949|950)/{next}  # cjk fat32
     /\/(lpfc|qla[24]xxx)\//{next}  # big fw: fibre channel scsi (qlogic, emulex)
     /\/net\/(netfilter|bridge|bonding|team|wireguard|sunrpc|sched|ceph)\//{next}  # fancy networking
