@@ -127,7 +127,7 @@ ctime=
 [ $sz -gt 4141 ] && [ "$befi" -nt "$eimg" ] &&
     rm -f "$eimg"  # probably UKI; rebuild
 
-[ -e "$eimg" ] || {
+[ -e "$eimg" ] || [ $geniso ] || {
     [ $sz -gt 16384 ] && fat=16 || fat=12
     msg "rebuilding ${eimg##*/} (${sz} KiB, FAT-$fat)"
     mkdir -p "$td"/boot/grub
@@ -180,10 +180,12 @@ args=(
     -boot-load-size 4
     -boot-info-table
 )
-args+=(
+[ -e "$eimg" ] && args+=(
     -eltorito-alt-boot
     -e boot/grub/efi.img
     -no-emul-boot
+)
+args+=(
     -isohybrid-gpt-basdat
     -follow-links
 )
