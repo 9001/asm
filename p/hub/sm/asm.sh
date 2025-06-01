@@ -683,6 +683,9 @@ f=/dev/shm/.hub.init
 [ -e $f ] || {
 	touch $f
 
+# max screen brightness
+bri 100 &
+
 apka -q --no-progress sl &
 
 # force ntfs-3g (less buggy)

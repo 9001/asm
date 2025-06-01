@@ -85,6 +85,9 @@ ask_exit() {
 # intel-uhd-graphics <700 doesn't render past 3840x2117
 (fbset 2>&1) | awk '$1=="geometry" && $4>2560 && $5>1920 {r=1} END {exit r-1}' && fbset -xres 2560 -yres 1920
 
+# max screen brightness
+bri 100 &
+
 # if /sm/tty.cfg exists, launch consoles on each tty listed inside
 ttycons
 

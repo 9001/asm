@@ -163,6 +163,9 @@ printf '\033[K'
 # intel-uhd-graphics <700 doesn't render past 3840x2117
 (fbset 2>&1) | awk '$1=="geometry" && $4>2560 && $5>1920 {r=1} END {exit r-1}' && fbset -xres 2560 -yres 1920
 
+# max screen brightness
+bri 100 &
+
 # portrait display rotation (requires kms/modeset)
 #rot 3
 

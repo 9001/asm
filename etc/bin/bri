@@ -1,0 +1,16 @@
+#!/bin/ash
+
+# usage:
+# bri     show current and max
+# bri 50  set screen brightness 50%
+
+for d in /sys/class/drm/*/; do find $d -name max_brightness; done |
+xargs -r -- realpath | sort | uniq | while IFS= read -r fm; do
+    fc="${fm%/*}/brightness"
+    case "$1" in
+        "") printf '%s %s %s\n' $(cat "$fc" "$fm") "$fm";;
+        100) cat "$fm" >"$fc";;
+        *) awk <"$fm" >"$fc" "{print int(\$1*($1/100))}";;
+    esac
+done
+true
