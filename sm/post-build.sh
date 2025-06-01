@@ -7,6 +7,8 @@ die() {
     exit 1
 }
 
+pb_fastpack=  # set 1 for prototyping (fast initramfs/modloop compression)
+
 . /etc/profile.d/buildvars.sh
 
 
@@ -333,6 +335,7 @@ imshrink_fake_gz() {
 imshrink_zinfo() {
     # shaves ~3 MiB by compressing symbols (only useful for debugging kernel bugs)
     log compressing kernel info
+    [ $pb_fastpack ] && return
     bdep_add .zki xz
     cd /mnt/boot
     xz -z9 System.map* &
@@ -364,7 +367,7 @@ imshrink_filter_mods() {
     #   imshrink_filter_mods '/(vmwgfx|arcnet|isdn|sound)/'
     #   (note the unescaped directory separators)
     #
-    bdep_add .ml squashfs-tools pigz pv
+    bdep_add .ml squashfs-tools pigz zstd pv
     grow_tmpfs
     cd; rm -rf x x2; mkdir x x2
     local ml=$(echo /mnt/boot/modloop-*)
@@ -403,8 +406,12 @@ imshrink_filter_mods() {
         sz=$(stat -c%s "x2/$x")
         printf '%s %d\n' "$x" $((sz/4096))
     done >/modsort
+    comp="xz"
+    [ $pb_fastpack ] &&
+        comp="zstd -Xcompression-level 3"
+
     (sleep 1; pv -i0.3 -d $(pidof mksquashfs):3) &
-    mksquashfs x2/ x3 -sort /modsort -comp xz -b 1024k -exit-on-error $mksfs
+    mksquashfs x2/ x3 -sort /modsort -comp $comp -b 1024k -exit-on-error $mksfs
     umount x
     mv x3 $ml
     cd; rm -rf x x2 x3
@@ -453,7 +460,7 @@ edit_initramfs() {
     esac
     shift
 
-    bdep_add .msig zstd xz patch
+    bdep_add .msig zstd xz zstd patch
     cd; mkdir x; cd x
     f=$(echo /mnt/boot/initramfs-*)
     log unpacking initramfs
@@ -491,6 +498,7 @@ edit_initramfs() {
     umask 0077
     comp="zstd -19 -T0"     # boots ~.5sec / 10% faster, --long/--ultra can OOM
     comp="xz -C crc32 -T0 -M${m}MiB"  # 320k..3M smaller
+    [ $pb_fastpack ] && comp="zstd -3 -T0"
     # note: xbcj is counterproductive here
     find . | sort | cpio --renumber-inodes -o -H newc | $comp > $f
     cd; rm -rf x
@@ -503,7 +511,7 @@ edit_initramfs() {
 
 uki_make() {
     # must be done after all initramfs / apkovl tweaks
-    pkgs=(cmd:objcopy xz openssl patch)
+    pkgs=(cmd:objcopy xz zstd openssl patch)
 
     local efistub="/usr/lib/gummiboot/linux*.efi.stub"
     [ -e $efistub ] || {
@@ -557,6 +565,7 @@ uki_make() {
     # https://github.com/alpinelinux/mkinitfs/blob/a5f05c98f690d95374b69ae5405052b250305fdf/mkinitfs.in#L177
     umask 0077
     comp="xz -C crc32 -T0 -M${m}MiB"
+    [ $pb_fastpack ] && comp="zstd -3 -T0"
     find . | sort | cpio --renumber-inodes -o -H newc | $comp > $f
     cd; rm -rf x
 
