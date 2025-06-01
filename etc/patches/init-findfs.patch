@@ -29,7 +29,7 @@ in case there's another asm device somewhere
 +  # nlplug-findfs doesn't unmount disks if they contain an apkovl;
 +  # only keep bootdisk mounted so AF can be assigned in strap.sh
 +  for x in /media/*; do [ $x = $volmnt ] && continue; umount $x 2>/dev/null && rmdir $x; done
-+  grep -F $volmnt /tmp/apkovls >/tf; cat /tf >/tmp/apkovls
++  [ -e /tmp/apkovls ] && { grep -F $volmnt /tmp/apkovls >/tf; cat /tf >/tmp/apkovls; }
 +  grep -F $volmnt $repofile >/tf; cat /tf >$repofile
 +  rm /tf
 +}

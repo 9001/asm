@@ -22,7 +22,7 @@ core features:
 activate these with `apk add <NAME>` unless listed as `+foo` then the command is `apk add cmd:foo`
 
 * **chat:**      irssi, r0c
-* **coding:**    bash, bc, entr, git, helix, luajit, python3, sc, sqlite, vim
+* **coding:**    bash, bc, entr, git, helix, luajit, python3, sc-im, sqlite, vim
 * **disks:**     ddrescue, device-mapper, dmraid, lvm2, nbd, nbd-client, partclone, sgdisk, testdisk (undelete)
 * **explore:**   mc, ranger, ncdu
 * **fileinfo:**  diffutils, file, findutils, hexdump, hexyl, smf
@@ -34,7 +34,7 @@ activate these with `apk add <NAME>` unless listed as `+foo` then the command is
 * **perf:**      htop, procps-ng
 * **textmod:**   coreutils, grep, jq, less, patch, xxd
 * **xfer:**      aria2, copyparty, curl, rsync, (u2c)
-* **misc:**      chntpw, gcompat, psmisc, pv, sshpass, strace, tmux, util-linux, w3m, xorriso, xxhash
+* **misc:**      chntpw, gcompat, psmisc, pv, sshpass, strace, time, tmux, util-linux, w3m, xorriso, xxhash
 
 run `kit/9001-lxc.sfx` to extract the following statically-linked tools; runs on any linux without dependencies:
 

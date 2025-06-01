@@ -2,6 +2,8 @@
 
 this profile produces a [unified kernel image](https://uapi-group.org/specifications/specs/boot_loader_specification/#type-2-efi-unified-kernel-images) suitable for secureboot
 
+works on alpine 3.21 and 3.22, possibly future versions too
+
 the call to `uki_make` near the end of the [post-build](sm/post-build-2.sh) does the magic
 
 to make secureboot validate as much as possible for us, this will move the apkovl into the initramfs, which is not officially supported by alpine and causes some funny messages during boot but it's fine

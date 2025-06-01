@@ -1,0 +1,4 @@
+@@ -308,2 +308,3 @@
+ 		fi
++		[ "$dir" = /the.apkovl.tar.gz ] && continue
+ 		local dev=$(df -P "$dir" | tail -1 | awk '{print $1}')

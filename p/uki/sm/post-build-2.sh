@@ -26,7 +26,10 @@ imshrink_filter_mods \
 (cd /mnt/apks/*/ && rm -rf wpa_supp* ppp* iw-*)
 
 # keep these last
+[ $IVER = 3.21 ] && {
 f=gummiboot-efistub-48.1-r8.apk; wget $MIRROR/v3.20/main/$IARCH/$f; apk add $f; rm $f
+}
+
 uki_make $noshell  # secureboot + measured-boot
 uki_only    # remove bios support; saves 30 MiB
 sign_asm    # try to sign asm.sh  (build.sh -ak asm.key)

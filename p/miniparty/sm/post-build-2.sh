@@ -39,6 +39,7 @@ imshrink_filter_mods '' '' '
 	/(raspberry|banana)pi|\.pine64/{next}  # arm sbc (normally covered by removing brcm)
 	/\/firmware\/nvidia\//{next}  # nvidia gpus
 	/\/amdgpu/{next}  # amd gpus
+	/\/(firmware|drm)\/xe\//{next}  # intel igpu (nextgen)
 	/\/(netronome)\//{next}  # agilio smartnics
 	/\/ethernet\/(dec|sun)\//{next}  # old nics
 	/\/(ueagle-atm)\//{next}  # adsl modems

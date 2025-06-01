@@ -511,13 +511,20 @@ edit_initramfs() {
 
 uki_make() {
     # must be done after all initramfs / apkovl tweaks
-    pkgs=(cmd:objcopy xz zstd openssl patch)
+    pkgs=(cmd:objcopy xz zstd openssl patch efi-mkuki)
 
     local efistub="/usr/lib/gummiboot/linux*.efi.stub"
-    [ -e $efistub ] || {
-        printf '\033[1;31m\n  WARNING:\n   the apk `gummiboot-efistub` was not installed before calling `uki_make`; will use the current version from the alpine repos. As of alpine v3.21, this will probably NOT WORK.\n\033[0m\n'
-        pkgs+=(gummiboot-efistub)
-    }
+    [ -e $efistub ] || case $IVER in
+        3.21)
+            printf '\033[1;31m\n  ERROR:\n   on Alpine v3.21, the apk `gummiboot-efistub` must be installed from the v3.20 repos before calling `uki_make`\n\033[0m\n';
+            exit 1;;
+        3.1* | 3.20)
+            pkgs+=(gummiboot-efistub);
+            gummi=1;;
+        *)
+            pkgs+=(systemd-efistub);
+            efistub="/usr/lib/systemd/boot/efi/linux*.efi.stub";;
+    esac
     bdep_add .sbs "${pkgs[@]}"
 
     local sec=
@@ -529,6 +536,7 @@ uki_make() {
         sub(/[^ ]+ /,"");
         print $0 " apkovl=/the.apkovl.tar.gz pkgs=openssl '$sec' "
     }' </mnt/boot/grub/grub.cfg >$cmdline
+    # for qemu -nographic, add console=ttyS0,115200,n8 debug_init=1
 
     # sign modloop
     local rsa=/dev/shm/modloop
@@ -549,6 +557,7 @@ uki_make() {
     patch init </etc/patches/init-cmdline.patch
     patch init </etc/patches/init-no-ml-pgp.patch
     [ $sec ] && patch init </etc/patches/init-passwd.patch
+    patch init </etc/patches/init-uki-cosmetic.patch
     grep -q volblk= init ||
         patch -F0 init </etc/patches/init-findfs.patch
 
@@ -587,16 +596,45 @@ uki_make() {
 
     #rshell 192.168.122.1
 
-    mv /mnt/efi/boot/boot$march.efi /mnt/efi/boot/grub$march.efi
+    local efi_out=/mnt/efi/boot/boot$march.efi
+    mv $efi_out /mnt/efi/boot/grub$march.efi
 
+    #if [ $gummi ]; then _mkuki_gummi; else _mkuki_sysd; fi
+    efi-mkuki -o $efi_out -c $cmdline -r $osrel -S $efistub $linux $initrd
+
+    bdep_del .sbs
+}
+
+_mkuki_gummi() {
+    # unused alternative to efi-mkuki:
+    # 3.21 only (due to init patch)
     objcopy \
         --add-section .osrel="$osrel"     --change-section-vma .osrel=0x20000    \
         --add-section .cmdline="$cmdline" --change-section-vma .cmdline=0x30000  \
         --add-section .linux="$linux"     --change-section-vma .linux=0x40000    \
         --add-section .initrd="$initrd"   --change-section-vma .initrd=0x3000000 \
-        $efistub "/mnt/efi/boot/boot$march.efi"
+        $efistub $efi_out
+}
 
-    bdep_del .sbs
+_mkuki_sysd() {
+    # unused alternative to efi-mkuki:
+    # 3.22 and newer (a third alternative is ukify)
+    local ofs=$(objdump -h -w $efistub | awk 'END{print("0x"$3)+("0x"$4)}')
+    local args=()
+    for section in \
+        ".osrel=$osrel" \
+        ".cmdline=$cmdline" \
+        ".linux=$linux" \
+        ".initrd=$initrd" \
+    ;do
+        local name="${section%%=*}" value="${section#*=}"
+        ofs=0x$(printf '%x\n' $(( ( 1 + $ofs / 0x1000 ) * 0x1000 )) )
+        args+=( --add-section "$section" --change-section-vma $name=$ofs )
+        local sz=$(stat -c%s "$value")
+        ofs=$((ofs+sz))
+    done
+    objcopy "${args[@]}" $efistub $efi_out
+    #objcopy --adjust-vma 0 $efi_out
 }
 
 uki_only() {

@@ -8,14 +8,14 @@ set -e
 PKGS=(
 	alsa-utils aria2 cdparanoia chntpw ddrescue device-mapper
 	dmraid entr ffmpeg gcompat git ipcalc irssi lvm2 mtr
-	nmap pingu py3-pillow ranger rpm2cpio rsync sc
+	nmap pingu py3-pillow ranger rpm2cpio rsync
 	sox ttyd unionfs-fuse w3m xdelta3 xorriso
 )
 [ $a310 ] && PKGS+=(
-	p7zip py3-zmq
+	p7zip py3-zmq sc
 ) || PKGS+=(
-	7zip helix hexyl nyancat py3-pyzmq
-	tmatrix treedude tty-solitaire
+	7zip helix hexyl nyancat py3-pyzmq sc-im
+	time tmatrix treedude tty-solitaire
 	fbida-fbi font-{droid,terminus}
 )
 recommended_apks "${PKGS[@]}"

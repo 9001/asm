@@ -26,6 +26,6 @@ tps1() {
 	export PS1="to leave this tmux and return to menu: press CTRL-B, release CTRL, press d\n$PS1"
 }
 
-for c in aria2c cdparanoia chntpw cryptsetup ddrescue entr ethtool git hexyl hx ipcalc irssi mtr nmap rpm2cpio rsync sc sensors ttyd w3m; do
+for c in aria2c cdparanoia chntpw cryptsetup ddrescue entr ethtool git hexyl hx ipcalc irssi mtr nmap rpm2cpio rsync sc-im sensors ttyd w3m; do
 	alias $c="unalias $c; which $c >/dev/null || apka $c !pyc || apka cmd:$c !pyc; $c"
 done
