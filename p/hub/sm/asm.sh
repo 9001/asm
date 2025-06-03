@@ -638,6 +638,11 @@ EOF
 			tar -cC/root/.r0c . | tar -xC $pr0c
 			mount --bind $pr0c /root/.r0c
 		}
+
+		v=$md2/.metadata_never_index
+		[ -e $v ] || {  # apple bugspray
+			mkdir -p $md2/.fseventsd && touch $md2/.fseventsd/no_log $v || true
+		}
 	}
 
 	# map /media to /usb so usb-eject works

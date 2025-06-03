@@ -54,6 +54,9 @@ grub_beep
 
 rm -rf /mnt/sm/how2build
 
+mkdir /mnt/.fseventsd
+touch /mnt/.fseventsd/no_log /mnt/.metadata_never_index
+
 
 
 ##
