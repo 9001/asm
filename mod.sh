@@ -52,7 +52,7 @@ arguments:
   -u PATH   usb image to modify, default: ${img}
   -s GiB    resize image with mtools
   -di ID    mbr/gpt id (%08x), default: random
-  -vi ID    filesystem id (%08x), default: random
+  -vi ID    filesystem id (%08x), default: Do-Not-Modify
   -vn ID    filesystem name, default: $vn
   -cs TYPE  create checksums; md5, sha1, sha512, b2, b2:256
   -ak PATH  RSA pem-key for asm.sh, default: Do-Not-Modify
@@ -122,6 +122,11 @@ mt_extract() {
     trap "rm -rf '$td'; exit" INT TERM EXIT
     msg "extracting $img to $td"
     mcopy -Qbmsi "$img"@@1M '::*' "$td/"
+    [ "$vi" ] || vi=$(
+        minfo -i "$img"@@1M |
+        grep -iE '^serial number: +[0-9a-f]{8}$' |
+        awk '{print$3;exit}'
+    )
 }
 
 [ -d "$img" ] && td="$img" || {
