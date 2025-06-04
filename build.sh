@@ -10,18 +10,19 @@ err()  { printf '\033[1;91;7mx\033[27m %s\033[0m%s\n' "$*" >&2; }
 absreal() { realpath "$1" || readlink -f "$1"; }
 
 
-# osx support; choose macports or homebrew:
-#   port install qemu coreutils findutils gnutar gsed gawk xorriso e2fsprogs
-#   brew install qemu coreutils findutils gnu-tar gnu-sed gawk xorriso e2fsprogs
+# macosx support; choose macports (ok) or homebrew (probably works too):
+#   port install qemu coreutils findutils gnutar gsed gawk xorriso e2fsprogs mtools dosfstools
+#   brew install qemu coreutils findutils gnu-tar gnu-sed gawk xorriso e2fsprogs mtools dosfstools
 gtar=$(command -v gtar || command -v gnutar) || true
 [ ! -z "$gtar" ] && command -v gfind >/dev/null && {
 	tar()  { $gtar "$@"; }
 	sed()  { gsed  "$@"; }
 	find() { gfind "$@"; }
 	sort() { gsort "$@"; }
-	command -v grealpath >/dev/null &&
+	command -v grealpath >/dev/null && {
 		realpath() { grealpath "$@"; }
-
+        absreal() { grealpath "$@"; }
+    }
     export PATH="/usr/local/opt/e2fsprogs/sbin:/opt/local/sbin:/opt/local/libexec/gnubin:$PATH"
     macos=1
 }

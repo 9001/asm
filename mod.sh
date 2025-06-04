@@ -8,6 +8,22 @@ err()  { printf '\033[1;91;7mx\033[27m %s\033[0m%s\n' "$*" >&2; }
 die()  { err "$*"; exit 1; }
 absreal() { realpath "$1" || readlink -f "$1"; }
 
+# macosx support
+gtar=$(command -v gtar || command -v gnutar) || true
+[ ! -z "$gtar" ] && command -v gfind >/dev/null && {
+	dd()   { gdd   "$@"; }
+	find() { gfind "$@"; }
+	sed()  { gsed  "$@"; }
+	sort() { gsort "$@"; }
+	tar()  { $gtar "$@"; }
+	command -v grealpath >/dev/null && {
+		realpath() { grealpath "$@"; }
+        absreal() { grealpath "$@"; }
+    }
+    export PATH="/usr/local/opt/e2fsprogs/sbin:/opt/local/sbin:/opt/local/libexec/gnubin:$PATH"
+    macos=1
+}
+
 img=asm.usb
 td=
 sm=

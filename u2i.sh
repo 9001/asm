@@ -6,6 +6,18 @@ inf()  { printf '\033[1;92;7m+\033[27m %s\033[0m%s\n' "$*" >&2; }
 warn() { printf '\033[0;33;7m!\033[27m %s\033[0m%s\n' "$*" >&2; }
 err()  { printf '\033[1;91;7mx\033[27m %s\033[0m%s\n' "$*" >&2; }
 
+# macosx support
+gtar=$(command -v gtar || command -v gnutar) || true
+[ ! -z "$gtar" ] && command -v gfind >/dev/null && {
+	dd()   { gdd   "$@"; }
+	find() { gfind "$@"; }
+	sed()  { gsed  "$@"; }
+	sort() { gsort "$@"; }
+	tar()  { $gtar "$@"; }
+    export PATH="/usr/local/opt/e2fsprogs/sbin:/opt/local/sbin:/opt/local/libexec/gnubin:$PATH"
+    macos=1
+}
+
 usb_src="$1"
 iso_out="$2"
 td=
