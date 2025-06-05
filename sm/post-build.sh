@@ -490,6 +490,12 @@ edit_initramfs() {
             rm inita || mv init{a,}
         rm -f init.{rej,orig}
     }
+    grep -qF '/strap.sh$/d' init || {
+        cp init{,a}
+        patch -F0 init </etc/patches/init-strap-s0.patch &&
+            rm inita || mv init{a,}
+        rm -f init.{rej,orig}
+    }
 
     log repacking initramfs
     free -m
