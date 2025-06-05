@@ -118,6 +118,11 @@ maybe_mkpart() {
 		esac
 	done
 
+	yes_mkpart
+}
+
+
+yes_mkpart() {
 	cat <<EOF
 
 choose a filesystem for the 2nd partition;
@@ -137,25 +142,35 @@ these filesystems can detect data-corruption:$ESC[32m btrfs, zfs, bcachefs $RST
 recommendations:
   4 (ext4) for linux
   n (ntfs) for cross-platform
+
+choose L to create filesystem with encryption (only readable by Linux)
 EOF
 
-	local fs= pkg= ptype=
+	local fs= pkg= ptype= crypt=
 	while true; do
-		ask1b '[n]tfs, [f]at32, e[x]fat, ext[4], [b]trfs?  n/f/x/4/b> '
+		ask1b '[n]tfs, [f]at32, e[x]fat, ext[4], [b]trfs, [L]uks?  n/f/x/4/b/L> '
 		case $REPLY in
 			n) ptype=07; fs=ntfs; pkg=ntfs-3g-progs; break;;
 			f) ptype=0c; fs=vfat; pkg=dosfstools; break;;
 			x) ptype=07; fs=xfat; pkg=exfatprogs; break;;
 			4) ptype=83; fs=ext4; pkg=e2fsprogs; break;;
 			b) ptype=83; fs=btrf; pkg=btrfs-progs; break;;
+			l|L) crypt=1; echo "okay, encryption will be enabled; now select filesystem:";;
 		esac
 	done
 
 	[ $a310 ] &&
 		pkgs="sfdisk util-linux" ||
 		pkgs="sfdisk partx"
+	[ $crypt ] && {
+		ptype=83
+		pkgs="$pkgs cryptsetup"
+	}
 	apka -q $pkgs $pkg
-	echo ,,$ptype | sfdisk --no-reread --no-tell-kernel -w never -W never -q -a /dev/$AD
+
+	[ "$1" = re ] ||
+		echo ,,$ptype | sfdisk --no-reread --no-tell-kernel -w never -W never -q -a /dev/$AD
+
 	local d2=/dev/${AD}2
 	while [ ! -e $d2 ]; do
 		echo waiting for $d2 ...
@@ -179,6 +194,29 @@ EOF
 			printf "\033[32mblkdiscard was successful?! nice$RST\n" ||
 			printf "\033[33mblkdiscard failed, okay, yeah, whatever$RST\n"
 
+		[ $crypt ] && {
+			local mem=$(awk </proc/meminfo '
+				/^MemAvailable:/{print(int(($2-524288)/32768)*8192)}
+			')
+			echo "will require $((mem/256)) MiB RAM to decrypt this flashdrive."
+			echo "choose an encryption password; there will be no input feedback:"
+			[ $mem -gt 1048576 ] && mem=1048576
+			cryptsetup \
+				--type=luks2 -c aes-xts-essiv:sha256 -h sha512 -s 512 \
+				--pbkdf=argon2id \
+				--pbkdf-force-iterations=50 \
+				--pbkdf-memory=$mem \
+				--pbkdf-parallel=4 \
+				luksFormat -q $d2 &&
+			echo "successfully created the encrypted container; now opening it..." &&
+			cryptsetup open $d2 ep2 || {
+				echo 'creating the encrypted partition failed!'
+				yes_mkpart re
+				return 0
+			}
+			d2=/dev/mapper/ep2
+		}
+
 		case $fs in
 			ntfs) mkfs.ntfs -fL HUB_DATA $d2;;
 			vfat) mkfs.vfat -F32 -n HUB_DATA $d2;;
@@ -186,6 +224,10 @@ EOF
 			ext4) mkfs.ext4 -FT big -L HUB_DATA $d2;;
 			btrf) mkfs.btrfs -fKL HUB_DATA $d2;;
 		esac
+
+		[ $crypt ] &&
+			cryptsetup close ep2
+
 		return 0
 	}
 
@@ -452,6 +494,14 @@ party() {
 		return
 	fi
 
+	blkid -ovalue -sTYPE | grep -q crypto_LUKS && {
+		echo "found encrypted disk; unlocking..."
+		for f in $(blkid | awk -F: '/crypto_LUKS/{print$1}'); do
+			echo "now unlocking $f, $(lsblk -noSIZE $f)iB large..."
+			cryptsetup open $f ${f##*/} || true
+		done
+	}
+
 	mcat <<EOF
 configure features:
   1) both FFmpeg and Pillow (good choice)
@@ -557,7 +607,8 @@ EOF
 		[ $ds ] && hdr=stderr || hdr=null
 		lsblk -o SIZE,KNAME,SUBSYSTEMS,TYPE,FSTYPE,LABEL | awk '
 			NR==1 {print" disk#  "$0>"/dev/'$hdr'";next}
-			$1!="0B" && / (disk|part|lvm) +[^ ]/ && $2!="'$AD'"
+			/crypto_LUKS/{next}
+			$1!="0B" && / (disk|part|lvm|crypt) +[^ ]/ && $2!="'$AD'"
 		' >/dev/shm/harddiskar
 
 		grep -qE .. /dev/shm/harddiskar || {
@@ -599,14 +650,17 @@ EOF
 					printf '\033[3%s\033[0m\n' "$c"
 				}
 			}
+			local dn=$d
+			[ "${d::3}" = dm- ] &&
+				dn=$(lsblk -no NAME /dev/$d)
 			# if no fs-label, use lvm name
 			[ "$label" ] || {
 				label="$(lsblk -no NAME /dev/$d)"
 				[ "$label" = $d ] && label=
 			}
 			# /media/{devname}_{label}_{fstype}
-			local mp="$(printf '%s_%s_%s' $d "$label" $fs | tr -sc '[:alnum:]-' _)"
-			echo "$d" | grep -qE "^$AD" && mp=$d  # no label for bootdisk
+			local mp="$(printf '%s_%s_%s' $dn "$label" $fs | tr -sc '[:alnum:]-' _)"
+			echo "$dn" | grep -qE "^$AD" && mp=$dn  # no label for bootdisk
 			mkdir /media/$mp 2>/dev/null &&
 			mount /dev/$d /media/$mp || true
 		done
