@@ -5,24 +5,23 @@ import re
 import stat
 import subprocess as sp
 import sys
+from urllib.parse import unquote_to_bytes as unquote
 
 
 def main():
     try:
         with open("/etc/profile.d/asm-paths.sh", "rb") as f:
-            zs = f.read().decode("utf-8", "replace")
+            zb = f.read()
 
-        bootdisk = zs.split("xport AF=")[1].split("\n")[0].strip().rstrip("1")
+        bootdisk = zb.split(b"xport AF=")[1].split(b"\n")[0].strip().rstrip(b"1")
 
         label = sys.argv[1].split(":usb-eject:")[1].split(":")[0].split("/")[-1]
-        smp = os.path.abspath(os.path.realpath("/media/" + label))
-        if smp.startswith(bootdisk):
+        mp = os.path.abspath(os.path.realpath(b"/media/" + unquote(label)))
+        if mp.startswith(bootdisk):
             return print("cannot eject bootdisk")
 
-        # print("ejecting [%s]... " % (smp,), end="")
-        mp = smp.encode("utf-8")
         st = os.lstat(mp)
-        if not stat.S_ISDIR(st.st_mode):
+        if not mp.startswith(b"/media/") or not stat.S_ISDIR(st.st_mode):
             return print("not a regular directory")
 
         # /media/sdc

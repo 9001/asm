@@ -19,7 +19,7 @@ dl kit/r0c.py               https://github.com/9001/r0c/releases/latest/download
 dl kit/r0c-client.sh        https://github.com/9001/r0c/raw/refs/heads/master/clients/bash.sh
 dl kit/r0c-client.ps1       https://github.com/9001/r0c/raw/refs/heads/master/clients/powershell.ps1
 dlf kit/                    https://raw.githubusercontent.com/9001/smf/master/smf.py
-dl kit/python-3.13.3.zip    https://www.python.org/ftp/python/3.13.3/python-3.13.3-embed-amd64.zip
+dl kit/python-3.13.5.zip    https://www.python.org/ftp/python/3.13.5/python-3.13.5-embed-amd64.zip
 dlf kit/res/                https://raw.githubusercontent.com/9001/copyparty/refs/heads/hovudstraum/bin/hooks/usb-eject.js
 dl sm/tls-cert.pem          https://raw.githubusercontent.com/9001/copyparty/refs/heads/hovudstraum/copyparty/res/insecure.pem
 dl kit/wp.jpg               https://a.ocv.me/pub/g/wp/bliss-1200p-12-1-255-q90-420.jpg
@@ -35,7 +35,7 @@ dlf sm/bin/                 https://github.com/9001/usr-local-bin/raw/refs/heads
 dlf efi/boot/               https://ocv.me/stuff/bin/shell.efi  # https://github.com/9001/lxc/tree/hovudstraum/uefi-shellbin
 chmod 755 kit/{r0c,smf,copyparty-sfx}.py sm/bin/*
 [ -e boot/memtst32 ] || { (cd /tmp && unzip memtest.zip) && rm -f /tmp/*la64.efi && mv /tmp/memtest*.efi efi/boot/ && mv /tmp/memtest32.bin boot/memtst32 && mv /tmp/memtest64.bin boot/memtst64; }
-[ -e chiptunes ] || { curl https://a.ocv.me/pub/demo/music/chiptunes/compressed/?tar | tar -xv; mv compressed chiptunes; curl https://a.ocv.me/pub/demo/music/chiptunes/README.md > chiptunes/README.md; }
+[ -e chiptunes ] || { curl https://a.ocv.me/pub/demo/music/chiptunes/?tar | tar -xv; }
 unzip -l kit/copyparty-git.zip | grep -q docs/changelog.md && zip -d kit/copyparty-git.zip copyparty-hovudstraum/docs/changelog.md
 ```
 

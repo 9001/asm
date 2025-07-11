@@ -101,6 +101,6 @@ all of these are optional, and all of them can be done after building the image 
 * https://www.memtest.org/
 * https://github.com/9001/copyparty
 * https://github.com/9001/r0c
-* https://a.ocv.me/pub/demo/music/chiptunes/compressed/
+* https://a.ocv.me/pub/demo/music/chiptunes/
 * plus all the packages included from the alpine repos
 
