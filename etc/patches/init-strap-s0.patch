@@ -1,8 +1,10 @@
 move strap.sh to ttyS0/comport if specified in kargs
-@@ -135,4 +135,4 @@
+@@ -135,5 +135,5 @@
  				>> $sysroot/etc/inittab
 -			# Baudrate of 0 keeps settings from kernel
 -			echo "$tty::respawn:/sbin/getty -L 0 $tty $term" \
-+			sed -ri '/strap.sh$/d' $sysroot/etc/inittab
-+			echo "$tty::respawn:/bin/ash /etc/strap.sh" \
- 				>> $sysroot/etc/inittab
+-				>> $sysroot/etc/inittab
++			if [ $tty = "${KOPT_consoles%% *}" ]
++			then sed -ri '/strap.sh$/d' $sysroot/etc/inittab; echo "$tty::respawn:/bin/ash /etc/strap.sh" >> $sysroot/etc/inittab
++			else echo "$tty::respawn:/sbin/getty -L 0 $tty $term" >> $sysroot/etc/inittab ; fi
+ 		fi
