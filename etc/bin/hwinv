@@ -307,7 +307,7 @@ def main():
         verbose("loaded", len(cache), "from", al.cache)
 
     except Exception as ex:
-        if os.path.exists(al.cache):
+        if al.cache and os.path.exists(al.cache):
             print("not using cache;", ex)
         cache = {}
 
