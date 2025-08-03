@@ -42,7 +42,7 @@ unzip -l kit/copyparty-git.zip | grep -q docs/changelog.md && zip -d kit/copypar
 then see `local apk cache` in /doc/notes.md (or just remove the `-m http://192.168.122.1:2576/am` below) and finally build it:
 
 ```bash
-av=3.22.0
+av=3.22.1
 ./build.sh -p - -i dl/alpine-standard-$av-x86_64.iso  # just to ensure the iso is cached in dl/
 function b() { ./build.sh -m http://192.168.122.1:2576/am -i dl/alpine-standard-$av-x86_64.iso -p hub; }  # sudo ./mod.sh -cs sha1; }
 # or if you're building for ancient 32bit machines (non-SSE2 such as 1st-gen celeron)...

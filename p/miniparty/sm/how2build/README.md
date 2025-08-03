@@ -20,7 +20,7 @@ chmod 755 kit/{r0c,copyparty-sfx}.py
 then see `local apk cache` in /doc/notes.md (or just remove the `-m http://192.168.122.1:2576/am` below) and finally build it:
 
 ```bash
-av=3.22.0
+av=3.22.1
 ./build.sh -p - -i dl/alpine-standard-$av-x86_64.iso  # just to ensure the iso is cached in dl/
 function b() { ./build.sh -m http://192.168.122.1:2576/am -i dl/alpine-standard-$av-x86_64.iso -oi miniparty.iso -p miniparty; }  # sudo ./mod.sh -cs sha1; }
 # and test it:
