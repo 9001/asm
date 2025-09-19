@@ -4,7 +4,7 @@
 # bri     show current and max
 # bri 50  set screen brightness 50%
 
-for d in /sys/class/drm/*/; do find $d -name max_brightness; done |
+for d in /sys/class/drm/*/; do find $d -name max_brightness 2>/dev/null; done |
 xargs -r -- realpath | sort | uniq | while IFS= read -r fm; do
     fc="${fm%/*}/brightness"
     case "$1" in

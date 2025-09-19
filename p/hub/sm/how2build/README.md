@@ -19,7 +19,7 @@ dl kit/r0c.py               https://github.com/9001/r0c/releases/latest/download
 dl kit/r0c-client.sh        https://github.com/9001/r0c/raw/refs/heads/master/clients/bash.sh
 dl kit/r0c-client.ps1       https://github.com/9001/r0c/raw/refs/heads/master/clients/powershell.ps1
 dlf kit/                    https://raw.githubusercontent.com/9001/smf/master/smf.py
-dl kit/python-3.13.5.zip    https://www.python.org/ftp/python/3.13.5/python-3.13.5-embed-amd64.zip
+dl kit/python-3.13.7.zip    https://www.python.org/ftp/python/3.13.7/python-3.13.7-embed-amd64.zip
 dlf kit/res/                https://raw.githubusercontent.com/9001/copyparty/refs/heads/hovudstraum/bin/hooks/usb-eject.js
 dl sm/tls-cert.pem          https://raw.githubusercontent.com/9001/copyparty/refs/heads/hovudstraum/copyparty/res/insecure.pem
 dl kit/wp.jpg               https://a.ocv.me/pub/g/wp/bliss-1200p-12-1-255-q90-420.jpg

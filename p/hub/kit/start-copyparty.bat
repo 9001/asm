@@ -1,6 +1,6 @@
-if not exist python-3.13.2\python.exe ( mkdir python-3.13.2 & tar -xC python-3.13.2 -f python-3.13.2.zip )
+if not exist python3\python.exe ( mkdir python3 & tar -xC python3 -f python-3.*.zip )
 
-python-3.13.2\python.exe copyparty-sfx.py -e2d -c ..\sm\copyparty.conf -v C:\Users\Harald:myhome:A
+python3\python.exe copyparty-sfx.py -e2d -c ..\sm\copyparty.conf   -v ..\:thehub:A   -v C:\Users\Harald:myhome:A
 
 pause
 
