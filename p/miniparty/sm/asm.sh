@@ -100,7 +100,7 @@ EOF
 		case $REPLY in
 			n) ptype=07; fs=ntfs; pkg=ntfs-3g-progs; break;;
 			f) ptype=0c; fs=vfat; pkg=dosfstools; break;;
-			4) ptype=83; fs=ext4; pkg=e2fsprogs; break;;
+			4) ptype=83; fs=ext4; pkg=e2fsprogs-extra; break;;
 			b) ptype=83; fs=btrf; pkg=btrfs-progs; break;;
 		esac
 	done

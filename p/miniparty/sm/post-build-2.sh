@@ -9,7 +9,7 @@ PKGS=(
 	device-mapper dmraid lvm2  # support LVM2
 	bash coreutils util-linux iproute2-minimal
 	openssh openssh-server python3 tmux
-	btrfs-progs dosfstools e2fsprogs ntfs-3g ntfs-3g-progs xfsprogs  # filesystems
+	btrfs-progs dosfstools e2fsprogs-extra ntfs-3g ntfs-3g-progs xfsprogs  # filesystems
 	mimalloc2 mimalloc2-insecure  # optional speed hack
 	py3-pillow  # to create thumbnails
 )

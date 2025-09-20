@@ -121,7 +121,8 @@ recommended_apks() {
         efibootmgr efivar mokutil sbsigntool
         mimalloc2 mimalloc2-insecure
         cryptsetup fuse fuse3 nbd nbd-client partclone sfdisk
-        btrfs-progs dosfstools exfatprogs mtools ntfs-3g ntfs-3g-progs squashfs-tools xfsprogs
+        btrfs-progs dosfstools e2fsprogs-extra exfatprogs
+          mtools ntfs-3g ntfs-3g-progs squashfs-tools xfsprogs
         bc diffutils file findutils grep hexdump htop jq less lsof mc
           ncdu patch procps-ng psmisc pv sl sqlite strace tar tmux vim
         "$@"
