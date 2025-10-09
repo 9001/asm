@@ -19,7 +19,7 @@ dl kit/r0c.py               https://github.com/9001/r0c/releases/latest/download
 dl kit/r0c-client.sh        https://github.com/9001/r0c/raw/refs/heads/master/clients/bash.sh
 dl kit/r0c-client.ps1       https://github.com/9001/r0c/raw/refs/heads/master/clients/powershell.ps1
 dlf kit/                    https://raw.githubusercontent.com/9001/smf/master/smf.py
-dl kit/python-3.13.7.zip    https://www.python.org/ftp/python/3.13.7/python-3.13.7-embed-amd64.zip
+dl kit/python-3.13.8.zip    https://www.python.org/ftp/python/3.13.8/python-3.13.8-embed-amd64.zip
 dlf kit/res/                https://raw.githubusercontent.com/9001/copyparty/refs/heads/hovudstraum/bin/hooks/usb-eject.js
 dlf kit/res/                https://raw.githubusercontent.com/9001/copyparty/refs/heads/hovudstraum/bin/hooks/reject-ramdisk.py
 dl sm/tls-cert.pem          https://raw.githubusercontent.com/9001/copyparty/refs/heads/hovudstraum/copyparty/res/insecure.pem
@@ -43,7 +43,7 @@ unzip -l kit/copyparty-git.zip | grep -q docs/changelog.md && zip -d kit/copypar
 then see `local apk cache` in /doc/notes.md (or just remove the `-m http://192.168.122.1:2576/am` below) and finally build it:
 
 ```bash
-av=3.22.1
+av=3.22.2
 ./build.sh -p - -i dl/alpine-standard-$av-x86_64.iso  # just to ensure the iso is cached in dl/
 function b() { ./build.sh -m http://192.168.122.1:2576/am -i dl/alpine-standard-$av-x86_64.iso -p hub; }  # sudo ./mod.sh -cs sha1; }
 # or if you're building for ancient 32bit machines (non-SSE2 such as 1st-gen celeron)...
