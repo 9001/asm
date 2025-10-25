@@ -8,7 +8,7 @@ mkdir -p kit
 dl() { [ -e $1 ] || wget -O $1 $2; }
 dlf() { f=${2##*/}; [ -e $1/$f ] || wget -O $1/$f $2; }
 dlf kit/                    https://github.com/9001/copyparty/releases/latest/download/copyparty-sfx.py
-dl kit/copyparty-help.html  https://ocv.me/copyparty/helptext.html
+dl kit/copyparty-help.html  https://github.com/9001/copyparty/releases/latest/download/helptext.html
 dl kit/r0c.py               https://github.com/9001/r0c/releases/latest/download/bigr0c.py
 dl kit/r0c-client.sh        https://github.com/9001/r0c/raw/refs/heads/master/clients/bash.sh
 dl kit/r0c-client.ps1       https://github.com/9001/r0c/raw/refs/heads/master/clients/powershell.ps1

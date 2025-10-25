@@ -9,17 +9,17 @@ dl() { [ -e $1 ] || wget -O $1 $2; }
 dlf() { f=${2##*/}; [ -e $1/$f ] || wget -O $1/$f $2; }
 dl /tmp/memtest.zip         https://www.memtest.org/download/v7.20/mt86plus_7.20.binaries.zip
 dlf kit/                    https://github.com/9001/copyparty/releases/latest/download/copyparty-sfx.py
-dlf kit/                    https://github.com/9001/copyparty/releases/latest/download/copyparty.pyz
+dlf kit/                    https://github.com/9001/copyparty/releases/latest/download/copyparty-en.pyz
 dl kit/copyparty-git.zip    https://github.com/9001/copyparty/archive/refs/heads/hovudstraum.zip
-dl kit/copyparty-help.txt   https://ocv.me/copyparty/helptext.txt
-dl kit/copyparty-help.html  https://ocv.me/copyparty/helptext.html
+dl kit/copyparty-help.html  https://github.com/9001/copyparty/releases/latest/download/helptext.html
+dl kit/copyparty-help.txt   https://copyparty.eu/helptext.txt
 dl kit/oneliners.html       https://ocv.me/doc/unix/oneliners/
 dl kit/oneliners.sh         https://ocv.me/doc/unix/oneliners/nix.sh
 dl kit/r0c.py               https://github.com/9001/r0c/releases/latest/download/bigr0c.py
 dl kit/r0c-client.sh        https://github.com/9001/r0c/raw/refs/heads/master/clients/bash.sh
 dl kit/r0c-client.ps1       https://github.com/9001/r0c/raw/refs/heads/master/clients/powershell.ps1
 dlf kit/                    https://raw.githubusercontent.com/9001/smf/master/smf.py
-dl kit/python-3.13.8.zip    https://www.python.org/ftp/python/3.13.8/python-3.13.8-embed-amd64.zip
+dl kit/python-3.13.9.zip    https://www.python.org/ftp/python/3.13.9/python-3.13.9-embed-amd64.zip
 dlf kit/res/                https://raw.githubusercontent.com/9001/copyparty/refs/heads/hovudstraum/bin/hooks/usb-eject.js
 dlf kit/res/                https://raw.githubusercontent.com/9001/copyparty/refs/heads/hovudstraum/bin/hooks/reject-ramdisk.py
 dl sm/tls-cert.pem          https://raw.githubusercontent.com/9001/copyparty/refs/heads/hovudstraum/copyparty/res/insecure.pem

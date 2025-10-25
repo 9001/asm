@@ -1,6 +1,6 @@
 ## copyparty stuff
 * `copyparty-sfx.py` runs *almost* anywere
-* `copyparty.pyz` primitive alternative if sfx doesn't work
+* `copyparty-en.pyz` primitive alternative if sfx doesn't work
 * `copyparty-help.html` all of the config options
 * `../sm/copyparty.conf` an appropriate config file
 * `res/` plugins

@@ -231,6 +231,8 @@ EOF
 		return 0
 	}
 
+	[ $crypt ] && [ -z $wipe ] && return
+
 	case $fs in
 		ntfs) ntfslabel -f $d2 HUB_DATA;;
 		vfat) dosfslabel $d2 HUB_DATA;;
@@ -496,6 +498,7 @@ party() {
 
 	blkid -ovalue -sTYPE | grep -q crypto_LUKS && {
 		echo "found encrypted disk; unlocking..."
+		apka -q cryptsetup
 		for f in $(blkid | awk -F: '/crypto_LUKS/{print$1}'); do
 			echo "now unlocking $f, $(lsblk -noSIZE $f)iB large..."
 			cryptsetup open $f ${f##*/} || true

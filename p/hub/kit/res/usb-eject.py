@@ -15,7 +15,10 @@ def main():
 
         bootdisk = zb.split(b"xport AF=")[1].split(b"\n")[0].strip().rstrip(b"1")
 
-        label = sys.argv[1].split(":usb-eject:")[1].split(":")[0].split("/")[-1]
+        zsl = sys.argv[1].split(":usb-eject:")
+        if len(zsl) != 2:
+            return
+        label = zsl[1].split(":")[0].split("/")[-1]
         mp = os.path.abspath(os.path.realpath(b"/media/" + unquote(label)))
         if mp.startswith(bootdisk):
             return print("cannot eject bootdisk")
