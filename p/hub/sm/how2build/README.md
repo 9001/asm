@@ -7,7 +7,8 @@ first ensure you have all the necessary files by copypasting the following into 
 mkdir -p kit/res boot efi/boot
 dl() { [ -e $1 ] || wget -O $1 $2; }
 dlf() { f=${2##*/}; [ -e $1/$f ] || wget -O $1/$f $2; }
-dl /tmp/memtest.zip         https://www.memtest.org/download/v7.20/mt86plus_7.20.binaries.zip
+dl /tmp/memtestu.zip        https://www.memtest.org/download/v7.20/mt86plus_7.20.binaries.zip
+dl /tmp/memtestb.zip        https://www.memtest.org/download/v8.00/mt86plus_8.00.binaries.zip
 dlf kit/                    https://github.com/9001/copyparty/releases/latest/download/copyparty-sfx.py
 dlf kit/                    https://github.com/9001/copyparty/releases/latest/download/copyparty-en.pyz
 dl kit/copyparty-git.zip    https://github.com/9001/copyparty/archive/refs/heads/hovudstraum.zip
@@ -35,7 +36,8 @@ dlf sm/bin/                 https://github.com/9001/usr-local-bin/raw/refs/heads
 dlf sm/bin/                 https://github.com/9001/usr-local-bin/raw/refs/heads/master/timecmp
 dlf efi/boot/               https://ocv.me/stuff/bin/shell.efi  # https://github.com/9001/lxc/tree/hovudstraum/uefi-shellbin
 chmod 755 kit/{r0c,smf,copyparty-sfx}.py sm/bin/*
-[ -e boot/memtst32 ] || { (cd /tmp && unzip memtest.zip) && rm -f /tmp/*la64.efi && mv /tmp/memtest*.efi efi/boot/ && mv /tmp/memtest32.bin boot/memtst32 && mv /tmp/memtest64.bin boot/memtst64; }
+[ -e boot/memtst32 ] || { (cd /tmp && unzip memtestb.zip) && mv /tmp/mt86p_*_i586 boot/memtst32 && mv /tmp/mt86p_*_x86_64 boot/memtst64; }
+[ -e efi/boot/memtest64.efi ] || { (cd /tmp && unzip memtestu.zip) && rm -f /tmp/*la64.efi && mv /tmp/memtest*.efi efi/boot/; }
 [ -e chiptunes ] || { curl https://a.ocv.me/pub/demo/music/chiptunes/?tar | tar -xv; }
 unzip -l kit/copyparty-git.zip | grep -q docs/changelog.md && zip -d kit/copyparty-git.zip copyparty-hovudstraum/docs/changelog.md
 ```

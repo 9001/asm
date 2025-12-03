@@ -7,7 +7,7 @@ set -e
 
 PKGS=(
 	alsa-utils aria2 cdparanoia chntpw ddrescue device-mapper
-	dmraid entr ffmpeg gcompat git ipcalc irssi lvm2 mtr
+	dmraid entr ffmpeg ffplay gcompat git ipcalc irssi lvm2 mtr
 	nmap pingu py3-pillow ranger rpm2cpio rsync
 	sox ttyd unionfs-fuse w3m xdelta3 xorriso
 )
