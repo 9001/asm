@@ -308,14 +308,13 @@ gensums() {
 #
 # imshrink_filter_apks is the least hacky / least likely thing to fail in the future
 
-imshrink_fake_gz() {
+imshrink_unpack_gz_kmods() {
     # shaves ~9 MiB
     # uncompress kernel modules so squashfs can compress better,
-    # assumes the current version of alpine still does .ko.gz,
-    # harmless if that's not the case
+    # will only affect ancient alpine versions (*.ko.gz)
     cd ~/x2
     printf '\033[?7h'
-    log uncompressing kmods using $CORES cores
+    log uncompressing gz kmods using $CORES cores
     find -iname '*.gz' > ~/l
     [ -s ~/l ] || return 0
     local nc=0
@@ -325,6 +324,28 @@ imshrink_fake_gz() {
             printf .
             gzip -d "$x"
             pigz -0 "${x%.*}"
+        done &
+        nc=$((nc+1))
+        [ $nc -ge $CORES ] && break
+    done
+    wait
+    echo
+}
+
+imshrink_unpack_zst_kmods() {
+    # shaves ~13 MiB
+    # uncompress kmods/firmwares so squashfs can compress better
+    cd ~/x2
+    printf '\033[?7h'
+    log uncompressing zst kmods/FWs using $CORES cores
+    find -iname '*.zst' > ~/l
+    [ -s ~/l ] || return 0
+    local nc=0
+    while true; do
+        awk \$NR%$CORES==$nc ~/l |
+        while IFS= read -r x; do
+            printf .
+            zstd -dq --rm "$x"
         done &
         nc=$((nc+1))
         [ $nc -ge $CORES ] && break
@@ -353,7 +374,7 @@ imshrink_rmkinfo() {
 
 imshrink_filter_mods() {
     # shaves ~79 MiB
-    # shrink modloop by removing rarely-useful stuff + invokes imshrink_fake_gz
+    # shrink modloop by removing rarely-useful stuff + doing imshrink_unpack_*_kmods
     # (recommendation: combine with imshrink_filter_irmods to do initramfs too)
     #
     # accepts one, two, or three optional args:
@@ -393,7 +414,8 @@ imshrink_filter_mods() {
 
     log unpacking modloop
     find -type f | (set -x; awk "${keep}${base}${drop}1") | tar -cT- | tar -xC ../x2
-    imshrink_fake_gz
+    imshrink_unpack_gz_kmods
+    imshrink_unpack_zst_kmods
     cd
     # https://github.com/alpinelinux/alpine-conf/blob/b511518795b03520248d9a64ff488716e3f01c38/update-kernel.in#L326
     case $ARCH in
@@ -411,6 +433,7 @@ imshrink_filter_mods() {
     [ $pb_fastpack ] &&
         comp="zstd -Xcompression-level 3"
 
+    free -m; df -h /
     (sleep 1; pv -i0.3 -d $(pidof mksquashfs):3) &
     mksquashfs x2/ x3 -sort /modsort -comp $comp -b 1024k -exit-on-error $mksfs
     umount x
@@ -476,7 +499,8 @@ edit_initramfs() {
         [ "$drop" ] && drop="/$drop/{next}"
         [ "$keep" ] && keep="/$keep/{print;next}"
         base='
-            /\/drivers\/infiniband\//{next}  # enterprise networking
+        	/\/(drivers|nvme)\/target\//{next}  # iscsi
+            /\/infiniband\//{next}  # enterprise networking
         '
         [ $# -ge 3 ] && base="$3"
 
@@ -535,13 +559,13 @@ uki_make() {
     bdep_add .sbs "${pkgs[@]}"
 
     local sec=
-    [ $# -gt 0 ] && sec=secure
+    [ $# -gt 0 ] && sec=" panic secure"
 
     local cmdline=/dev/shm/cmdline
     awk '/boot\/vmlinuz-/ {
         sub(/[^-]+/,"");
         sub(/[^ ]+ /,"");
-        print $0 " apkovl=/the.apkovl.tar.gz pkgs=openssl '$sec' "
+        print $0 " apkovl=/the.apkovl.tar.gz pkgs=openssl'"$sec"' "
     }' </mnt/boot/grub/grub.cfg >$cmdline
     # for qemu -nographic, add console=ttyS0,115200,n8 debug_init=1
 
@@ -563,7 +587,7 @@ uki_make() {
     patch init </etc/patches/init-uki.patch
     patch init </etc/patches/init-cmdline.patch
     patch init </etc/patches/init-no-ml-pgp.patch
-    [ $sec ] && patch init </etc/patches/init-passwd.patch
+    [ "$sec" ] && patch init </etc/patches/init-passwd.patch
     patch init </etc/patches/init-uki-cosmetic.patch
     grep -q volblk= init ||
         patch -F0 init </etc/patches/init-findfs.patch

@@ -29,8 +29,16 @@ recommended_apks "${PKGS[@]}"
 imshrink_zinfo  # compress kernel symbols (makes kernel debugging harder)
 
 # remove large kmods from initramfs, saves 3 MiB
-imshrink_filter_irmods \
-	'/scsi/(lpfc|qla2xxx)/|/firmware/ql2[0-9]{3}_fw'
+imshrink_filter_irmods '' '' '
+	/\/scsi\/(lpfc|qla[24]xxx|elx|fnic)\//{next}  # big fw: fibre channel scsi (qlogic, emulex)
+	/\/firmware\/ql2[0-9]{3}_fw/{next}
+	/\/(drivers|nvme)\/target\//{next}  # iscsi
+    /\/nls_cp(932|936|949|950)/{next}  # cjk fat32
+	/\/infiniband\//{next}
+	/\/kernel\/sound\//{next}
+	/\/(de4x5|dmfe|irdma|evbug|eth1394|i8xx-tco|via-ircc|snd-atiixp-modem|snd-intel8x0m|snd-via82xx-modem|snd-pcsp|hostap|hostap_cs|aty128fb|atyfb|radeonfb|i810fb|cirrusfb|intelfb|kyrofb|i2c-matroxfb|hgafb|nvidiafb|rivafb|savagefb|sstfb|neofb|tridentfb|tdfxfb|viafb|virgefb|vga16fb|matroxfb_base|vt8623fb|ohci1394|video1394|dv1394|hfcmulti|hfcpci|hfcsusb|e_powersaver|microcode|tiny_power_button)\.ko/{next}
+'
+# `-awk <i/etc/modprobe.d/blacklist.conf '/^blacklist /{printf"%s|",$2}'
 
 # remove large useless kmods (but keep wifi and GPUs), saves 30 MiB
 imshrink_filter_mods '' '' '
@@ -40,7 +48,9 @@ imshrink_filter_mods '' '' '
 	/\/(netronome)\//{next}  # agilio smartnics
 	/\/(ueagle-atm)\//{next}  # adsl modems
 	/\/(ocfs2)\//{next}  # filesystems
-	/\/(lpfc|qla2xxx)\//{next}  # big fw: fibre channel scsi (qlogic, emulex)
+    /\/nls_cp(932|936|949|950)/{next}  # cjk fat32
+    /\/scsi\/(lpfc|qla[24]xxx|elx|fnic)\//{next}  # big fw: fibre channel scsi (qlogic, emulex)
+	/\/(de4x5|dmfe|irdma|evbug|eth1394|i8xx-tco|via-ircc|snd-atiixp-modem|snd-intel8x0m|snd-via82xx-modem|snd-pcsp|hostap|hostap_cs|aty128fb|atyfb|radeonfb|i810fb|cirrusfb|intelfb|kyrofb|i2c-matroxfb|hgafb|nvidiafb|rivafb|savagefb|sstfb|neofb|tridentfb|tdfxfb|viafb|virgefb|vga16fb|matroxfb_base|vt8623fb|ohci1394|video1394|dv1394|hfcmulti|hfcpci|hfcsusb|e_powersaver|microcode|tiny_power_button)\.ko/{next}
 '
 
 }

@@ -14,7 +14,7 @@ apk add -q \
     xorg-server xf86-video-{fbdev,vesa,vmware} \
     mesa-dri-gallium mesa-{egl,gl} \
     pciutils-libs \
-    ttf-dejavu xdotool xinit eudev firefox-esr
+    font-droid xdotool xinit eudev firefox-esr
 setup-devd udev
 wait
 

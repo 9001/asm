@@ -19,7 +19,7 @@ nomodeset  # faster boot
 # optional -- shaves 3 MiB (zinfo) + 110 MiB (filtermods; arg1=drop, arg2=keep)
 imshrink_zinfo
 imshrink_filter_mods \
-    '/(modules/firmware|net/(ethernet|usb|dsa|can|ppp|fddi|arcnet|fjes)|infiniband|drivers/gpu|echoaudio|staging|mei|thunderbolt|firewire|f2fs|btrfs|nfsd?|sunrpc|cifs|ceph|gfs2|ksmbd|reiserfs|mac80211)/|/xt_|/scsi/(lpfc|qla|elx|mpt|aic|pm|mpi|aac|be2|fco)' \
+    '/(modules/firmware|net/(ethernet|usb|dsa|can|ppp|fddi|arcnet|fjes)|infiniband|drivers/gpu|echoaudio|staging|mei|thunderbolt|firewire|f2fs|btrfs|nfsd?|sunrpc|cifs|ceph|gfs2|ksmbd|reiserfs|mac80211)/|/xt_|/scsi/(lpfc|qla|elx|fnic|mpt|aic|pm|mpi|aac|be2|fco)' \
     'bnx2|rtl_nic|tigon|intel/(i40e|ix?gb|e1000)|ethernet/(broadcom|realtek|amd)'
 
 # optional -- unbundle some APKs

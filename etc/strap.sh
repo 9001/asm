@@ -78,11 +78,13 @@ yes abort | setup-keymap us us-altgr-intl 2>/dev/null >&2
 (m=$(cat /etc/apk/arch)
   (cd $AF/apks/$m 2>/dev/null && ls -1 | grep -E 'APKINDEX.+.tar.gz') |
   while read r; do
-    d=/var/ar/$r/$m
+    v=${r#*.}
+    v=${v%%.*}
+    d=/var/ar/$v/$m
     mkdir -p $d
     find $AF/apks/$m/ | xargs -I{} ln -s {} $d/
     mv $d/$r $d/APKINDEX.tar.gz
-    echo /var/ar/$r >> /etc/apk/repositories
+    echo /var/ar/$v >> /etc/apk/repositories
   done
 )
 

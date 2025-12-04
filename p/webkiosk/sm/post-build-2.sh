@@ -7,6 +7,6 @@ fetch_apks \
     eudev-openrc udev-init-scripts-openrc \
     xf86-video-{fbdev,vesa,vmware} mesa-dri-gallium mesa-egl \
     pciutils-libs \
-    ttf-dejavu xeyes xrandr xdotool xinit socat
+    font-droid xeyes xrandr xdotool xinit socat
 
 # acpi dbus mesa-{egl,gl,gles}

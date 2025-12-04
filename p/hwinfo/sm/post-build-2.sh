@@ -37,8 +37,15 @@ fetch_apks "${pkgs[@]}"
 imshrink_rmkinfo
 
 # remove large kmods from initramfs
-imshrink_filter_irmods \
-	'/scsi/(lpfc|qla2xxx)/|/firmware/ql2[0-9]{3}_fw'
+imshrink_filter_irmods '' '' '
+	/\/scsi\/(lpfc|qla[24]xxx|elx|fnic)\//{next}  # big fw: fibre channel scsi (qlogic, emulex)
+	/\/firmware\/ql2[0-9]{3}_fw/{next}
+	/\/(drivers|nvme)\/target\//{next}  # iscsi
+    /\/nls_cp(932|936|949|950)/{next}  # cjk fat32
+	/\/infiniband\//{next}
+	/\/(de4x5|dmfe|irdma|evbug|eth1394|i8xx-tco|via-ircc|snd-atiixp-modem|snd-intel8x0m|snd-via82xx-modem|snd-pcsp|hostap|hostap_cs|aty128fb|atyfb|radeonfb|i810fb|cirrusfb|intelfb|kyrofb|i2c-matroxfb|hgafb|nvidiafb|rivafb|savagefb|sstfb|neofb|tridentfb|tdfxfb|viafb|virgefb|vga16fb|matroxfb_base|vt8623fb|ohci1394|video1394|dv1394|hfcmulti|hfcpci|hfcsusb|e_powersaver|microcode|tiny_power_button)\.ko/{next}
+'
+# `-awk <i/etc/modprobe.d/blacklist.conf '/^blacklist /{printf"%s|",$2}'
 
 # remove large useless kmods
 imshrink_filter_mods '' '' '
@@ -52,9 +59,9 @@ imshrink_filter_mods '' '' '
 	/\/(netronome)\//{next}  # agilio smartnics
 	/\/(ueagle-atm)\//{next}  # adsl modems
     /\/fs\/(ocfs2|xfs|btrfs|smb|nfsd?|f2fs|ceph|gfs2|ubifs|reiserfs|nilfs2|ntfs3|jfs)\//{next}  # filesystems
-    /\/fs\/(fuse|netfs|overlayfs|jffs2|orangefs|hfsplus)\//{next}  # more filesystems (smaller)
+    /\/fs\/(fuse|netfs|jffs2|orangefs|hfsplus)\//{next}  # more filesystems (smaller)
     /\/nls_cp(932|936|949|950)/{next}  # cjk fat32
-    /\/(lpfc|qla[24]xxx)\//{next}  # big fw: fibre channel scsi (qlogic, emulex)
+    /\/scsi\/(lpfc|qla[24]xxx|elx|fnic)\//{next}  # big fw: fibre channel scsi (qlogic, emulex)
     /\/net\/(netfilter|bridge|bonding|team|wireguard|sunrpc|sched|ceph)\//{next}  # fancy networking
     /\/net\/(sctp|tipc|ipv6|rxrpc|openvswitch|ieee802154)\//{next}  # more networking
     /\/(kernel\/drivers\/md)\//{next}  # raid etc
