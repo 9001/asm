@@ -497,11 +497,15 @@ party() {
 	fi
 
 	blkid -ovalue -sTYPE | grep -q crypto_LUKS && {
-		echo "found encrypted disk; unlocking..."
+		echo "found encrypted disk;"
 		apka -q cryptsetup
 		for f in $(blkid | awk -F: '/crypto_LUKS/{print$1}'); do
-			echo "now unlocking $f, $(lsblk -noSIZE $f)iB large..."
-			cryptsetup open $f ${f##*/} || true
+			while true; do
+				[ $f = "/dev/${AD}2" ] && t=" (HUB_DATA)" || t=
+				ask1 "unlock $f$t, $(lsblk -noSIZE $f)iB large?  y/n> "
+				[ $REPLY = y ] && cryptsetup open $f ${f##*/} && break
+				[ $REPLY = n ] && break
+			done
 		done
 	}
 
