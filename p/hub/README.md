@@ -26,7 +26,7 @@ activate these with `apk add <NAME>` unless listed as `+foo` then the command is
 * **disks:**     ddrescue, device-mapper, dmraid, lvm2, nbd, nbd-client, partclone, sgdisk, testdisk (undelete)
 * **explore:**   mc, ranger, ncdu
 * **fileinfo:**  diffutils, file, findutils, hexdump, hexyl, smf
-* **filesys:**   btrfs-progs, cryptsetup, dosfstools, exfatprogs, fuse, fuse3, mtools, nbd, nbd-client, unionfs-fuse, ntfs-3g, ntfs-3g-progs, squashfs-tools, sshfs, xfsprogs
+* **filesys:**   btrfs-progs, cryptsetup, dosfstools, e2fsprogs-extra, exfatprogs, fuse, fuse3, mtools, nbd, nbd-client, unionfs-fuse, ntfs-3g, ntfs-3g-progs, squashfs-tools, sshfs, xfsprogs
 * **hw-diag:**   dmidecode, efibootmgr, efivar, libcpuid-tool, lm-sensors, lshw, mokutil, nvme-cli, pciutils, sbsigntool, smartmontools, usbutils
 * **media:**     cdparanoia, +fbi, ffmpeg, py3-pillow, sox
 * **network:**   +ab, bmon, ethtool, ipcalc, iperf3, iproute2, iputils, mtr, nmap, nmap-ncat, pingu, proxychains-ng, socat, tcpdump, +telnet, ttyd
@@ -34,7 +34,7 @@ activate these with `apk add <NAME>` unless listed as `+foo` then the command is
 * **perf:**      htop, procps-ng
 * **textmod:**   coreutils, grep, jq, less, patch, xxd
 * **xfer:**      aria2, copyparty, curl, rsync, (u2c)
-* **misc:**      chntpw, gcompat, psmisc, pv, sshpass, strace, time, tmux, util-linux, w3m, xorriso, xxhash
+* **misc:**      chntpw, gcompat, picocom, psmisc, pv, sshpass, strace, time, tmux, util-linux, w3m, xorriso, xxhash
 
 run `kit/9001-lxc.sfx` to extract the following statically-linked tools; runs on any linux without dependencies:
 

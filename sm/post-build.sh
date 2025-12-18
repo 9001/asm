@@ -123,8 +123,8 @@ recommended_apks() {
         cryptsetup fuse fuse3 nbd nbd-client partclone sfdisk
         btrfs-progs dosfstools e2fsprogs-extra exfatprogs
           mtools ntfs-3g ntfs-3g-progs squashfs-tools xfsprogs
-        bc diffutils file findutils grep hexdump htop jq less lsof mc
-          ncdu patch procps-ng psmisc pv sl sqlite strace tar tmux vim
+        bc diffutils file findutils grep hexdump htop jq less lsof mc ncdu
+          patch picocom procps-ng psmisc pv sl sqlite strace tar tmux vim
         "$@"
     )
     local excl=()
