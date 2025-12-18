@@ -334,6 +334,9 @@ EOF
 }
 
 
+grun() {
+	command -v $1 || apka -q $1; $1 || true
+}
 menu_games() {
 	[ $a310 ] && return
 	mcat <<EOF
@@ -343,12 +346,12 @@ oh hi
 EOF
 	ask1 'sel>'
 	case $REPLY in
-		M|m) apka -q tmatrix; tmatrix || true;;
-		N|n) apka -q nyancat; nyancat || true;;
+		M|m) grun tmatrix;;
+		N|n) grun nyancat;;
 		L|l) sl;;
 		S|s) apka -q tty-solitaire; ttysolitaire --no-background-color;;
-		T|t) apka -q treedude; treedude;;
-		W|w) apka -q cmd:fbi font-droid; fbi -a $AF/kit/wp.*;;
+		T|t) grun treedude;;
+		W|w) fbi -a $AF/kit/wp.*;;
 	esac
 }
 

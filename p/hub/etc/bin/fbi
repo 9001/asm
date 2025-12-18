@@ -1,0 +1,21 @@
+#!/bin/ash
+# wrapper for:
+p=/usr/bin/fbi
+[ -e $p ] || apka -q fbida-fbi font-droid
+# fbi assumes card0; find correct
+c=
+for x in /dev/dri/card*; do
+	$p -i -d $x | grep -qE '[0-9]x[0-9]' && c=$x && break
+done
+[ $c ] && d=$c || {
+	d=/dev/fb0
+	[ -e $d ] || d=/dev/fb*
+	# fix blank fb0 on some irons: chvt when up
+	a=$(cat /sys/class/tty/tty0/active)
+	a=${a:3}; [ $a = 1 ] && b=2 || b=1
+	for x in $(seq 1 39); do sleep 0.03
+		ls -l $(printf '/proc/%d/fd ' $(pidof fbi)) 2>/dev/null | grep -q "> $d" || continue
+		sleep 0.02; chvt $b; chvt $a; break
+	done &
+}
+exec $p -d $d "$@"
