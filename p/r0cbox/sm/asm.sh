@@ -10,7 +10,7 @@ printf '%s\n' "" 10.1.2.51 24 "" done n | setup-interfaces
 service -q networking restart
 
 log installing deps
-apka -q openssh-server python3 tmux !pyc || true
+apka -q openssh-server python3 tmux || true
 
 log starting sshd
 sed -ri 's/(Subsystem[^/]+sftp).*/\1 internal-sftp/;

@@ -1,5 +1,5 @@
 edware() {
-	[ -e /usr/bin/python3 ] || apka -q !pyc python3
+	[ -e /usr/bin/python3 ] || apka -q python3
 	f=$1; shift; python3 $AF/kit/$f.py "$@"
 }
 

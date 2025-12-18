@@ -72,10 +72,10 @@ if [ -d /etc/apk/ ] ; then
 	alias i='apk add'
 fi
 for c in bmon htop lshw ncdu ranger sl sshfs testdisk vim; do
-	alias $c="unalias $c; which $c >/dev/null || apka $c !pyc; $c"
+	alias $c="unalias $c; which $c >/dev/null || apka $c; $c"
 done
 for c in telnet; do
-	alias $c="unalias $c; which $c >/dev/null || apka cmd:$c !pyc; $c"
+	alias $c="unalias $c; which $c >/dev/null || apka cmd:$c; $c"
 done
 
 alias q='kill -9 $$'

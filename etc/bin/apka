@@ -5,7 +5,7 @@ aa="--force-non-repository --wait 10"
 grep -q tty $AF/sm/log.cfg 2>/dev/null &&
     aa="$aa --no-progress"
 
-/sbin/apk $aa add "$@" && exit 0 || rv=$?
+/sbin/apk $aa add !pyc "$@" && exit 0 || rv=$?
 
 # packages from argv
 pkgs="$(

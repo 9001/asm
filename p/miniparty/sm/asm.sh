@@ -196,7 +196,7 @@ start_r0c() {
 	[ $a310 ] &&
 		pkgs+=(iproute2) ||
 		pkgs+=(iproute2-minimal)
-	apka -q !pyc "${pkgs[@]}"
+	apka -q "${pkgs[@]}"
 	r0c --help 2>/dev/null >/dev/null
 	setup_tmux 2 r0c
 	tmux pipe-pane -t 0:2 -o "exec tee /dev/shm/conlog >>$(tty)"
@@ -245,8 +245,8 @@ party() {
 	# 2x faster download-as-zip, 2x more ram usage in general
 	#echo $IVER | grep -E '^3\.1[0-6]' || pkgs+=(mimalloc2)
 
-	apka -q !pyc "${pkgs[@]}"
-	apka -q !pyc py3-pillow
+	apka -q "${pkgs[@]}"
+	apka -q py3-pillow
 
 	# choose one of these to uncomment:
 	e2d='-e2d'  # index uploads only (makes them resumable and searchable)

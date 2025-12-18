@@ -65,7 +65,7 @@ if you need to run this on windows, run `start-copyparty.bat` which will unzip `
 
 * edit the bat-file and keep adding more `-v` as necessary 
 
-file-uploads can be announced over zeromq; there is an example receiver in `kit/copyparty-git.zip/bin/zmq-recv.py` and its deps are installed with `apka '!pyc' py3-pyzmq` (please excuse the syntax)
+file-uploads can be announced over zeromq; there is an example receiver in `kit/copyparty-git.zip/bin/zmq-recv.py` and its deps are installed with `apka py3-pyzmq`
 
 
 ## r0c

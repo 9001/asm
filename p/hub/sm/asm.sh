@@ -303,7 +303,7 @@ EOF
 	[ $a310 ] &&
 		pkgs+=(iproute2) ||
 		pkgs+=(iproute2-minimal)
-	apka -q !pyc "${pkgs[@]}"
+	apka -q "${pkgs[@]}"
 	r0c --help 2>/dev/null >/dev/null
 	setup_tmux 2 r0c
 	tmux pipe-pane -t 0:2 -o "exec tee /dev/shm/conlog >>$(tty)"
@@ -400,7 +400,7 @@ infograb() {
 
 	touch $AF/infos 2>/dev/null || fs_ro=1
 
-	apka -q python3 !pyc && (
+	apka -q python3 && (
 		cd /dev/shm
 		rm -f hw-inv.*
 
@@ -534,7 +534,7 @@ EOF
 	# 2x faster download-as-zip, 2x more ram usage in general
 	#echo $IVER | grep -E '^3\.1[0-6]' || pkgs+=(mimalloc2)
 
-	apka !pyc "${pkgs[@]}" $v 2>&1 |
+	apka "${pkgs[@]}" $v 2>&1 |
 	while IFS= read -r x; do log -b "$x"; done & pid=$!
 
 	mcat <<EOF

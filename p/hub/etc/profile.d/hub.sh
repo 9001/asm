@@ -3,7 +3,7 @@ menu() {
 }
 
 edware() {
-	[ -e /usr/bin/python3 ] || apka -q !pyc python3
+	[ -e /usr/bin/python3 ] || apka -q python3
 	f=$1; shift; python3 $AF/kit/$f.py "$@"
 }
 
@@ -27,5 +27,5 @@ tps1() {
 }
 
 for c in aria2c cdparanoia chntpw cryptsetup ddrescue entr ethtool git hexyl hx ipcalc irssi mtr nmap rpm2cpio rsync sc-im sensors ttyd w3m; do
-	alias $c="unalias $c; which $c >/dev/null || apka $c !pyc || apka cmd:$c !pyc; $c"
+	alias $c="unalias $c; which $c >/dev/null || apka $c || apka cmd:$c; $c"
 done
