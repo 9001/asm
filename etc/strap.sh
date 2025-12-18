@@ -65,7 +65,7 @@ motd
 # switch to bash + add loggers
 apka -q util-linux bash tar 2>/dev/null >&2 || true
 [ $SHELL = /bin/bash ] &&
-  sed -ri 's^/ash$^/bash^' /etc/passwd
+  sed -ri 's^/a?sh$^/bash^' /etc/passwd
 
 # keymap and font
 yes abort | setup-keymap us us-altgr-intl 2>/dev/null >&2
