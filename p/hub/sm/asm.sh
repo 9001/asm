@@ -12,6 +12,7 @@ pw=k
 rot=0
 
 . /etc/profile.d/hub.sh
+unalias cryptsetup || true  # breaks `[ && cryptsetup`
 
 [ $IVER = 3.10 ] && a310=1 || a310=
 
@@ -499,10 +500,13 @@ party() {
 		return
 	fi
 
-	blkid -ovalue -sTYPE | grep -q crypto_LUKS && {
-		echo "found encrypted disk;"
-		apka -q cryptsetup
+	blkid | grep -q crypto_LUKS && {
+		command -v cryptsetup >/dev/null || {
+			echo "found encrypted disk;"
+			apka -q cryptsetup
+		}
 		for f in $(blkid | awk -F: '/crypto_LUKS/{print$1}'); do
+			lsblk -n $f | wc -l | grep -q 1 || continue  # opened
 			while true; do
 				[ $f = "/dev/${AD}2" ] && t=" (HUB_DATA)" || t=
 				ask1 "unlock $f$t, $(lsblk -noSIZE $f)iB large?  y/n> "
