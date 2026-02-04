@@ -592,4 +592,6 @@ EOF
 
 # sound: -device ich9-intel-hda,id=sound0 -device hda-duplex,id=sound0-codec0,bus=sound0.0,cad=0 -global ICH9-LPC.disable_s3=1 -global ICH9-LPC.disable_s4=1
 # pcspk: --machine q35,pcspk-audiodev=au1 -audiodev pa,id=au1  # -device AC97,audiodev=au1  # see pavucontrol
+# fixed-res: -display sdl -vga none -device virtio-vga,xres=1024,yres=600
+# autoscale: -vga none -device virtio-vga  # maximize asap
 # debug secureboot: -debugcon file:/dev/stdout -global isa-debugcon.iobase=0x402

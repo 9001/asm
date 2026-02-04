@@ -74,7 +74,7 @@ fi
 for c in bmon htop lshw ncdu picocom ranger sl sshfs testdisk vim; do
 	alias $c="unalias $c; which $c >/dev/null || apka $c; $c"
 done
-for c in telnet; do
+for c in telnet vlock; do
 	alias $c="unalias $c; which $c >/dev/null || apka cmd:$c; $c"
 done
 
