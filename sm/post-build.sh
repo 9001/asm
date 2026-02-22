@@ -75,6 +75,19 @@ read_apkidx() {
     ';
 }
 
+lfetch_apks() {
+    cd /mnt/apks/*
+    setup-apkcache /mnt/apks/*
+    wrepo
+    apk policy '*' | awk '/^[^ ]/{p=$1}/\/installed$/{print p}' > /lfa
+    bdep_add .lfa !pyc "$@"
+    apk policy '*' | awk '/^[^ ]/{p=$1}/\/installed$/{print p}' > /lfb
+    bdep_del .lfa
+    comm /lfa /lfb -13 | grep -v '^\.lfa$' | xargs -r apk fetch --repositories-file=/etc/apk/w
+    mv -v "$@" /mnt/apks/*/  # replace fetched with local
+    rm /lfa /lfb
+}
+
 fetch_apks() {
     local e=0  # defer errors until end of function (to build proxy cache)
     cd /mnt/apks/*
@@ -85,7 +98,7 @@ fetch_apks() {
     apk fetch --repositories-file=/etc/apk/w -R "$@" || e=1
 
     log checking conditional deps
-    for f in APKINDEX.*.tar.gz; do read_apkidx $f; done | LC_ALL=C sort > /dev/shm/npis
+    for f in APKINDEX.*.tar.gz; do read_apkidx $f; done | grep -vE '^[^ ]+-pyc ' | LC_ALL=C sort > /dev/shm/npis
     (set +x; for f in *.apk; do gzip -d <"$f" 2>/dev/null | awk '/^pkgname = /{print$3;exit}'; done >/dev/shm/apks)
     # read on-disk apks into array t; if all 'i:' (install-if) of any pkg are in t, download it
     (sed -r 's/^/- /' /dev/shm/apks; cat /dev/shm/npis) |

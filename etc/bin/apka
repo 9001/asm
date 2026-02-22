@@ -1,6 +1,14 @@
 #!/bin/ash
 # undo add if error
 
+printf ' %s ' "$@" | grep -qF ' ffmpeg ' && {
+    av=; for a in "$@"; do case "$a" in
+        ffmpeg) av="$av $AF/apks/*/ffmpeg-[1-9l]*.apk";;
+        *) av="$av '$a'";;
+    esac; done
+    eval "set -- $av"
+}
+
 aa="--force-non-repository --wait 10"
 grep -q tty $AF/sm/log.cfg 2>/dev/null &&
     aa="$aa --no-progress"

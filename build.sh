@@ -532,7 +532,7 @@ else
 
     $qemu $accel -nographic -serial pipe:s \
         $mach -cpu $cpu -smp $cores -m $qm -cdrom "$iso" \
-        -drive format=raw,if=virtio,discard=unmap,file=asm.usb \
+        -drive format=raw,if=virtio,discard=unmap,detect-zeroes=unmap,file=asm.usb \
         -drive format=raw,if=virtio,discard=unmap,file=ovl.img \
         -netdev user,id=n1 -device virtio-net-pci,netdev=n1 \
         $qa

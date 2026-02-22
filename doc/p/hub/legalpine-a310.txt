@@ -1,0 +1,32 @@
+qemu-system-i386 -vga qxl -m 4096 -cdrom dl/alpine-standard-3.10.9-x86.iso -net bridge,br=virbr0 -net nic,model=virtio -cpu pentium3
+
+setup-interfaces
+ifup eth0
+passwd
+apk add openssh-server
+sed -ri 's/^.?(PermitRootLogin ).*/\1yes/' /etc/ssh/sshd_config
+service sshd start
+
+ssh -o IdentitiesOnly=yes root@192.168.122.76
+setup-apkrepos 
+sed -ri 's/.(ht.*v3.10)/\1/' /etc/apk/repositories 
+apk update
+apk upgrade -lai
+apk add bash
+bash
+
+apk add alpine-sdk wget
+sed -ri 's/(^abuild:.*)/\1root/' /etc/group 
+cp -pv .abuild/u-698bbc86.rsa.pub /etc/apk/keys/
+mkdir /ffmpeg
+cd /ffmpeg
+base=https://github.com/alpinelinux/aports/raw/refs/heads/3.10-stable/community/ffmpeg/
+wget ${base}APKBUILD
+awk <APKBUILD -vb="$base" '/"/{o=0}/^source=/{o=1;next}o{print b $1}' | wget -i-
+cp -pv APKBUILD /root/
+sed -ri 's/--enable-libx265/--disable-decoder=hevc --disable-decoder=hevc_qsv --disable-decoder=hevc_rkmpp --disable-decoder=hevc_v4l2m2m --disable-encoder=hevc_amf --disable-decoder=hevc_cuvid --disable-decoder=hevc_mediacodec --disable-encoder=hevc_nvenc --disable-encoder=hevc_qsv --disable-encoder=hevc_v4l2m2m --disable-encoder=hevc_vaapi --disable-encoder=hevc_videotoolbox --disable-hwaccel=hevc_d3d11va --disable-hwaccel=hevc_d3d11va2 --disable-hwaccel=hevc_dxva2 --disable-hwaccel=hevc_nvdec --disable-hwaccel=hevc_vaapi --disable-hwaccel=hevc_vdpau --disable-hwaccel=hevc_videotoolbox --disable-bsf=hevc_metadata --disable-bsf=hevc_mp4toannexb --disable-parser=hevc --disable-demuxer=hevc --disable-muxer=hevc /' APKBUILD
+sed -ri 's/\b(x265|sdl2)-dev//; s/\blib(vdpau|xfixes)-dev//; s/--enable-(vdpau)\b/--disable-\1/; s/--enable-libxcb/--disable-libxcb --disable-indev=xcbgrab --disable-ffplay --disable-encoder=opus /' APKBUILD
+abuild -FrcK
+
+>>> ffmpeg: Building /ffmpeg 4.1.6-r0 (using abuild 3.4.0-r0) started Fri, 20 Feb 2026 19:10:59 +0000
+>>> ffmpeg: Build complete at Fri, 20 Feb 2026 20:41:25 +0000 elapsed time 1h 30m 26s

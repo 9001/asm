@@ -45,7 +45,7 @@ alias l='ls -CF'
 
 wt() {
 	printf '\033]0;%s\033\\' "$*"
-	[ "$TMUX" ] && tmux renamew "$*"
+	[ -z "$TMUX" ] || tmux renamew "$*"
 }
 [ $UKI ] || strapmod() {
 	cd /root && tar -xf $AF/the.apkovl.tar.gz && cd etc

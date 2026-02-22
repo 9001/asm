@@ -20,7 +20,7 @@ dl kit/r0c.py               https://github.com/9001/r0c/releases/latest/download
 dl kit/r0c-client.sh        https://github.com/9001/r0c/raw/refs/heads/master/clients/bash.sh
 dl kit/r0c-client.ps1       https://github.com/9001/r0c/raw/refs/heads/master/clients/powershell.ps1
 dlf kit/                    https://raw.githubusercontent.com/9001/smf/master/smf.py
-dl kit/python3.zip          https://www.python.org/ftp/python/3.13.11/python-3.13.11-embed-amd64.zip
+dl kit/python3.zip          https://www.python.org/ftp/python/3.14.3/python-3.14.3-embed-amd64.zip
 dlf kit/res/                https://raw.githubusercontent.com/9001/copyparty/refs/heads/hovudstraum/bin/hooks/usb-eject.js
 dlf kit/res/                https://raw.githubusercontent.com/9001/copyparty/refs/heads/hovudstraum/bin/hooks/reject-ramdisk.py
 dl sm/tls-cert.pem          https://raw.githubusercontent.com/9001/copyparty/refs/heads/hovudstraum/copyparty/res/insecure.pem
@@ -40,6 +40,7 @@ chmod 755 kit/{r0c,smf,copyparty-sfx}.py sm/bin/*
 [ -e efi/boot/memtest64.efi ] || { (cd /tmp && unzip memtestu.zip) && rm -f /tmp/*la64.efi && mv /tmp/memtest*.efi efi/boot/; }
 [ -e chiptunes ] || { curl https://a.ocv.me/pub/demo/music/chiptunes/?tar | tar -xv; }
 unzip -l kit/copyparty-git.zip | grep -q docs/changelog.md && zip -d kit/copyparty-git.zip copyparty-hovudstraum/docs/changelog.md
+d=~/dev/copyparty/scripts/docker/base/b/packages; mkdir -p apk/x86_64 etc/apk/keys; cp -pv $d/x86_64.hub/ffmpeg-*.apk apk/x86_64/; cp -pv $d/*.pub etc/apk/keys/
 ```
 
 then see `local apk cache` in /doc/notes.md (or just remove the `-m http://192.168.122.1:2576/am` below) and finally build it:

@@ -5,16 +5,21 @@ set -e
 
 [ $IVER = 3.10 ] && a310=1 && fastbuild=1  # alpine-3.10 can't imshrink
 
+# no265 ffmpeg
+cp -pv /mnt/apk/*.pub /etc/apk/keys/
+lfetch_apks /mnt/apk/$IARCH/ffmpeg-*.apk
+rm -rf /mnt/apk
+
 PKGS=(
 	alsa-utils aria2 cdparanoia chntpw ddrescue device-mapper
-	dmraid entr ffmpeg gcompat git ipcalc irssi kbd-vlock
+	dmraid entr gcompat git ipcalc irssi kbd-vlock
 	lvm2 mtr nmap pingu py3-pillow ranger rpm2cpio rsync
 	sox ttyd unionfs-fuse w3m xdelta3 xorriso
 )
 [ $a310 ] && PKGS+=(
 	p7zip py3-zmq sc
 ) || PKGS+=(
-	7zip ffplay helix hexyl nyancat par2cmdline
+	7zip helix hexyl nyancat par2cmdline
 	py3-pyzmq sc-im time tmatrix treedude
 	tty-solitaire fbida-fbi font-{droid,terminus}
 )
@@ -111,7 +116,10 @@ sed -ri 's/^(set timeout=).*/\14/' /mnt/boot/grub/grub.cfg
 
 
 
-[ $a310 ] && rm -rf /mnt/efi /mnt/boot/grub* /mnt/chiptunes
+[ $a310 ] && {
+	rm -rf /mnt/efi /mnt/boot/grub* /mnt/chiptunes
+	cat /dev/zero >/mnt/n || true; sync; rm /mnt/n
+}
 
 
 
