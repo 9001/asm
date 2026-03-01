@@ -1,0 +1,40 @@
+#!/bin/ash
+set -e
+
+# pipe command to all serial ports;
+# usage: <command> [tty-opts] [outdevs]
+#
+# example: wallcom 'cat /dev/kmsg'
+#  `- dmesg to every ttyUSB* and ttyS* with baud 115200 8n1
+#
+# example: wallcom date --
+#  `- print single timestamp to tty[US]* with device-defaults
+#
+# example: wallcom 'tail -F a.log' 9600 cs8 -parenb -cstopb /dev/ttyS*
+#  `- baud 9600 "8n1" (8 bits, no parity, 1 stopbit)
+
+src="$1"
+shift
+
+cfg=
+while true; do
+    [ "$1" ] && [ $1 = ${1#/} ] || break
+    cfg="$cfg $1"; shift
+done
+[ "$cfg" ] || cfg="115200 cs8 -parenb -cstopb"
+
+[ "$1" ] && out="$*" || out=/dev/tty[US]*
+
+for dev in $out; do
+    echo -n " ${dev##*/}="
+    case $dev in
+        /dev/tty*) ;;
+        *) echo -n illegal; continue;;
+    esac
+    [ "$cfg" = "--" ] || {
+        stty -F $dev $cfg 2>/dev/null && echo -n OK ||
+            { echo -ne '\033[31mX\033[0m'; continue; }
+    }
+    (echo wallcom:$dev; $src) >$dev &
+done
+echo -e '\033[K'

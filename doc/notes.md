@@ -8,6 +8,13 @@
 * `echo 2 > sm/log.cfg` logs to the 2nd partition instead (must be created manually) and is probably much safer since the primary partition can remain read-only
   * to create a 2nd partition, `truncate -s +64M asm.usb && echo ',,0c' | sfdisk -qa asm.usb && mkfs.vfat -F16 -nLOGS --offset=$(sfdisk asm.usb -l | awk '{v=$2}END{print v}') asm.usb`
 
+log can be broadcast to multiple serial-ports; less realtime but doesn't crash if a port dies; syntax is `1 tty:[config,][portglob]` so for example:
+
+* `echo '1 tty:' > sm/log.cfg` writes to all `ttyS*` and `ttyUSB*` at 115200 8n1
+* `'1 tty:/dev/ttyU*'` all `ttyUSB*` at baud 115200 8n1 (8bit no-parity 1stopbit)
+* `'1 tty:9600,cs8'` all ports at baud 9600, 8bit, device-default parity/stopbit
+* `'1 tty:9600,cs8,-parenb,-cstopb,/dev/ttyS*'` all `ttyS*` ports at 9600 8n1
+
 
 ## serial consoles
 

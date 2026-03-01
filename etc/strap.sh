@@ -131,6 +131,12 @@ if [ "$logcfg" ] && apka -q util-linux; then
   for logcfg in $logcfg; do
     printf ' init logger: %s \033[K\r' "$logcfg"
     case $logcfg in
+      tty:*)
+        logcfg="$(echo "${logcfg:4}" | awk '
+          /^(\/|$)/{printf"115200 cs8 -parenb -cstopb "}{gsub(/,/," ");print}')"
+        printf ' tty: [%s] \033[K\r' "$logcfg"
+        (wallcom "tail -F $logdir/runlog.txt" $logcfg) & sleep 0.5
+        ;;
       *tty*)
         echo $logcfg,115200 >/dev/shm/logc
         IFS=, read logcfg baud x </dev/shm/logc
@@ -143,25 +149,29 @@ if [ "$logcfg" ] && apka -q util-linux; then
         else
           echo "note: skipping fsck.vfat (dosfstools unavailable)"
         fi
-        mount -o remount,rw $AF && logdir=$AF
+        logdir=$AF
+        mount -o remount,rw $logdir &&
+        printf ' poking logdir %s \033[K\r' "$logdir" &&
+        :>|$logdir/runlog.txt || logdir=
         ;;
       *)
         logdir=/media/$AD$logcfg
         mkdir -p $logdir
-        mount /dev/$AD$logcfg $logdir || logdir=
+        mount /dev/$AD$logcfg $logdir &&
+        printf ' poking logdir %s \033[K\r' "$logdir" &&
+        :>|$logdir/runlog.txt || logdir=
         ;;
     esac
   done
-  [ $logdir ] &&
-    printf ' poking logdir %s \r' "$logdir" &&
-    touch $logdir/runlog.txt || logdir=
+  [ $IVER = 3.10 ] ||
   while true; do sleep 5; killall -USR1 script 2>/dev/null; done &
 fi
 t=
 [ $logcom ] && [ $logdir ] && t=$logcom+ && cmd="script -eqc \"$cmd;unlog\" /dev/$logcom"
 if [ $logdir ]; then
   printf " logging to $t$logdir \033[K\r"
-  script -B $logdir/runlog.txt -T $logdir/runlog.pce -eqc "$cmd" && err= || err=$?
+  [ $IVER = 3.10 ] && logcfg="-t$logdir/runlog.pce" || logcfg="-T $logdir/runlog.pce -B"
+  script -eqc "$cmd" $logcfg $logdir/runlog.txt && err= || err=$?
   setterm --dump --file $logdir/runlog.scr 2>/dev/null
 elif [ $logcom ]; then
   printf " logging to comport $logcom \033[K\r"
