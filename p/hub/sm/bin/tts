@@ -1,0 +1,57 @@
+#!/bin/bash
+set -e
+
+pico() {
+	(echo "<speed level='125'><pitch level='100'>"; cat; echo "</pitch></speed>") |
+	(./$bin; head -c 4700 /dev/zero) |
+	ffmpeg -v 24 -f s16le -ar 16000 -i - -af volume=$vol -f alsa default
+}
+flite() {
+	(./$bin -s duration_stretch=0.9 -o stream; head -c 4700 /dev/zero) |
+	ffmpeg -v 24 -f s16le -ar 16000 -i - -af bandreject=f=172:t=q:w=1:m=0.9,volume=$vol -f alsa default
+}
+
+
+(
+k=
+for p in {,/opt/bin/}{pico2wave,flite-kal}; do [ -e $p ] && k=1; done
+[ $k ] || (cd /opt; $AF/kit/9001-lxc.sfx >/dev/null) &
+(command -v alsamixer && command -v ffmpeg) >/dev/null || apka -q alsa-utils ffmpeg
+wait
+
+for ctl in Master PCM; do
+	amixer sget $ctl | grep -qE 'Front.*\[off\]' &&
+		amixer sset $ctl unmute &&
+		amixer sset $ctl 100%
+done >/dev/null
+true
+)</dev/null
+
+
+[ $1 ] && e=$1 || {
+	echo "interactive mode because arg1 [pks] not provided"
+	echo "p = pico2wave; fast and predictable"
+	echo "k = flite-kal; faster, very robotic"
+	echo "s = flite-slt; slow, more natural"
+	read -u1 -n1 -rp 'choose> ' e
+}
+
+case $e in
+	[pP]) bin=pico2wave; fun=pico; vol=1.7;;
+	[kK]) bin=flite-kal; fun=flite; vol=2.2;;
+	[sS]) bin=flite-slt; fun=flite; vol=1.8;;
+	*) echo invalid; exit 1;;
+esac
+[ -e $bin ] || cd /opt/bin/
+
+[ $1 ] && $fun
+[ $1 ] || {
+	echo
+	while true; do
+		echo -n "text> "
+		read -e t
+		[ "$t" ] || exit 0
+		history -s "$t"
+		printf '%s\n' "$t" | $fun &
+	done
+}

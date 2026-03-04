@@ -45,7 +45,7 @@ run `kit/9001-lxc.sfx` to extract the following statically-linked tools; runs on
 * **pk:lzma:**   lzma lzmadec lzmainfo unlzma unxz xz xzcat xzcmp xzdec xzdiff xzegrep xzfgrep xzgrep xzless xzmore
 * **pk:zutil:**  zcat zcmp zdiff zgrep ztest zupdate 
 * **xfer:**      minimodem rsync
-* **misc:**      flite jq ncdu patchelf pv tmux vim
+* **misc:**      flite jq ncdu patchelf pico2wave pv tmux vim
 
 
 ## copyparty

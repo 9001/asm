@@ -342,16 +342,17 @@ menu_games() {
 	[ $a310 ] && return
 	mcat <<EOF
 oh hi
-  m) matrix    l) ls           t) treedude
-  n) cat       s) solitaire    w) wp
+  m) matrix    l) ls           t) tts         w) wp
+  n) cat       s) solitaire    T) treedude
 EOF
-	ask1 'sel>'
+	ask1 'sel> '
 	case $REPLY in
 		M|m) grun tmatrix;;
 		N|n) grun nyancat;;
 		L|l) sl;;
 		S|s) apka -q tty-solitaire; ttysolitaire --no-background-color;;
-		T|t) grun treedude;;
+		t) tts;;
+		T) grun treedude;;
 		W|w) fbi -a $AF/kit/wp.*;;
 	esac
 }
