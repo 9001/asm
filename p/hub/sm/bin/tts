@@ -4,28 +4,37 @@ set -e
 pico() {
 	(echo "<speed level='125'><pitch level='100'>"; cat; echo "</pitch></speed>") |
 	(./$bin; head -c 4700 /dev/zero) |
-	ffmpeg -v 24 -f s16le -ar 16000 -i - -af volume=$vol -f alsa default
+	ffmpeg -v 24 -f s16le -ar 16000 -i - -af volume=$vol -ac 2 -ar 44100 -f alsa $sc
 }
 flite() {
 	(./$bin -s duration_stretch=0.9 -o stream; head -c 4700 /dev/zero) |
-	ffmpeg -v 24 -f s16le -ar 16000 -i - -af bandreject=f=172:t=q:w=1:m=0.9,volume=$vol -f alsa default
+	ffmpeg -v 24 -f s16le -ar 16000 -i - -af bandreject=f=172:t=q:w=1:m=0.9,volume=$vol -ac 2 -ar 44100 -f alsa $sc
 }
 
 
-(
 k=
 for p in {,/opt/bin/}{pico2wave,flite-kal}; do [ -e $p ] && k=1; done
 [ $k ] || (cd /opt; $AF/kit/9001-lxc.sfx >/dev/null) &
 (command -v alsamixer && command -v ffmpeg) >/dev/null || apka -q alsa-utils ffmpeg
 wait
 
+sc=
+for nc in '' -c{0..9}; do
 for ctl in Master PCM; do
-	amixer sget $ctl | grep -qE 'Front.*\[off\]' &&
-		amixer sset $ctl unmute &&
-		amixer sset $ctl 100%
-done >/dev/null
-true
-)</dev/null
+	t="$(amixer $nc sget $ctl | grep -E '(Mono|Left|Right): Playback.*%' || true)"
+	[ "$t" ] || continue
+	[ "$sc" ] || {
+		[ "$nc" ] && sc=hw:${nc:2} || sc=default
+	}
+	printf '%s\n' "$t" | grep -qF '[off]' &&
+		amixer $nc sset $ctl unmute &&
+		amixer $nc sset $ctl 100%
+done;done >/dev/null 2>&1
+[ "$sc" ] || {
+	echo "could not detect soundcard"
+	exit 1
+}
+echo "soundcard: [$sc]"
 
 
 [ $1 ] && e=$1 || {
