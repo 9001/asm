@@ -132,5 +132,5 @@ REPLY="$(printf '%s' "$REPLY" | tr -cs '[:alnum:]' -)"
 cd $td
 runcmds "${cmds[@]}"
 
-rm -rf "$td"
+[ -e "$d" ] && rm -rf "$td" || d="$td"
 log info collected to "$d"

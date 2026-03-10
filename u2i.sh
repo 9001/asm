@@ -103,10 +103,12 @@ befi=$(echo "$td"/efi/boot/boot*.efi)
 sz=$(cat "$td"/efi/boot/* | wc -c | awk '{print int($1/1024)+256}')
 ctime=
 
+[ -e "$eimg" ] || { befi=; sz=0; }
+
 # files are extracted (safe to tamper with) and not uki?
 [ $ex ] && [ "$td" != "$usb_src" ] && [ $sz -lt 4141 ] && (
     # write the correct volume identifier into the .efi
-    cd "$td"/efi/boot
+    cd "$td"/efi/boot &&
     grep -aboRE -- '--label "alpine-(std|ext|virt|xen) 3\.[0-9\.]+ (x86|x86_64|armv7|aarch64)".*' . |
     while IFS=: read fn tofs torig; do
         tmod="$(printf '%s\n' "$torig" | sed -r 's/([^"]+")[^"]+/\1'"$vn/")"
@@ -125,13 +127,13 @@ ctime=
     ctime=$(date -u +%Y-%m-%d-%H-%M-%S-00)
     cd "$td"/boot
     for f in */syslinux.cfg */grub.cfg; do
-        sed -ri 's/(\bvolid=)[^ ]+/\1'$ctime/ $f
+        sed -ri 's/(\bvolid=)[^ ]+/\1'$ctime/ $f || true
     done
     ctime=$(echo $ctime | tr -d -)
 
     # actually nevermind, nlplug-findfs doesn't see sr0
     for f in */syslinux.cfg */grub.cfg; do
-        sed -ri 's/\bvolid=[^ ]+ ?//' $f
+        sed -ri 's/\bvolid=[^ ]+ ?//' $f || true
     done
     ctime=
 )
@@ -139,6 +141,7 @@ ctime=
 [ $sz -gt 4141 ] && [ "$befi" -nt "$eimg" ] &&
     rm -f "$eimg"  # probably UKI; rebuild
 
+[ "$befi" ] && {
 [ -e "$eimg" ] || [ $geniso ] || {
     [ $sz -gt 16384 ] && fat=16 || fat=12
     msg "rebuilding ${eimg##*/} (${sz} KiB, FAT-$fat)"
@@ -147,7 +150,7 @@ ctime=
     truncate -s ${sz}k "$eimg"
     mkfs.vfat -F$fat -nESP "$eimg"
     mcopy -i "$eimg" -s "$td/efi" ::
-}
+};}
 
 [ $cs ] && (
     cd "$td"
