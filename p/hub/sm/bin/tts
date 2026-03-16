@@ -4,11 +4,11 @@ set -e
 pico() {
 	(echo "<speed level='125'><pitch level='100'>"; cat; echo "</pitch></speed>") |
 	(./$bin; head -c 4700 /dev/zero) |
-	ffmpeg -v 24 -f s16le -ar 16000 -i - -af volume=$vol -ac 2 -ar 44100 -f alsa $sc
+	ffmpeg -v 24 -f s16le -ar 16000 -analyzeduration 16 -i - -af volume=$vol -ac 2 -ar 44100 -f alsa $sc
 }
 flite() {
-	(./$bin -s duration_stretch=0.9 -o stream; head -c 4700 /dev/zero) |
-	ffmpeg -v 24 -f s16le -ar 16000 -i - -af bandreject=f=172:t=q:w=1:m=0.9,volume=$vol -ac 2 -ar 44100 -f alsa $sc
+	(./$bin -s duration_stretch=0.7 -o stream; head -c 4700 /dev/zero) |
+	ffmpeg -v 24 -f s16le -ar 16000 -analyzeduration 16 -i - -af bandreject=f=172:t=q:w=1:m=0.9,volume=$vol -ac 2 -ar 44100 -f alsa $sc
 }
 
 
@@ -53,14 +53,18 @@ case $e in
 esac
 [ -e $bin ] || cd /opt/bin/
 
-[ $1 ] && $fun
-[ $1 ] || {
-	echo
-	while true; do
-		echo -n "text> "
-		read -e t
-		[ "$t" ] || exit 0
-		history -s "$t"
-		printf '%s\n' "$t" | $fun &
-	done
+[ $1 ] && {
+	s="$2"
+	[ $fun = pico ] && s=1
+	[ $s ] && $fun
+	[ $s ] || while IFS= read -r x; do printf '%s\n\n.\n' "$x"; done | $fun
+	exit
 }
+echo
+while true; do
+	echo -n "text> "
+	read -e t
+	[ "$t" ] || exit 0
+	history -s "$t"
+	printf '%s\n' "$t" | $fun &
+done
