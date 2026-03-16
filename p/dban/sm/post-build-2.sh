@@ -8,3 +8,5 @@ ls /mnt/apks/*/pv-* ||
 # faster boot
 imshrink_nosig
 nomodeset
+
+bootmenu_title

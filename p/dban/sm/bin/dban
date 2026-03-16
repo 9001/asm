@@ -1,0 +1,63 @@
+#!/bin/ash
+set -e
+
+# optional args:
+# arg 1: num sec delay before shutdown after completion
+# arg 2: num sec delay before starting after the warning
+# arg 3: num overwrite passes
+
+apka -q openssl pv
+
+disks="$(
+    lsblk -bo SIZE,KNAME,SUBSYSTEMS,TYPE |
+    awk 'NR>1 && !/:usb/ && $1 && / disk$/ && $2!="'$AD'" {print"/dev/"$2}'
+)"
+[ "$disks" ] || { echo no disks detected; exit 1; }
+
+lsblk $disks
+printf "\033[0;1;31mWARNING:\033[0m this will DESTROY ALL CONTENTS on these disks!\n"
+nps="$3"
+if [ "$nps" ]; then
+    slp="${2:-5}"
+    echo "PRESS CTRL-C to abort --- starting in $slp sec"
+    sleep $slp
+else
+    read -u1 -rp "type number of overwrite passes, or abort with CTRL-C: " nps
+fi
+echo "$nps" | grep -qE '^[0-9]+$' || exit 1
+
+for disk in x x x $disks; do printf '\n'; done
+for disk in x x x $disks; do printf '\033[A'; done
+
+log shredding disks ...
+n=1
+for disk in $disks; do
+    n=$((n+1))
+    np=$nps
+    while [ $np -gt 0 ]; do
+        np=$((np-1))
+
+        k="$(head -c33 /dev/urandom | base64)"
+        c="blkdiscard -s $disk"
+        $c >/dev/null 2>/dev/null && c="$c succeeded #wow #whoa" || {
+            c="blkdiscard $disk"
+            $c >/dev/null 2>/dev/null && c="$c succeeded #wow #whoa" ||
+                c="$c failed, whatever, doing a full wipe anyways"
+        }
+
+        sz=$(blockdev --getsize64 $disk) || sz=
+        echo $sz | grep -qE '[0-9]{6}' && sz="-Ss $sz" || sz=
+        printf '\033[s\033[%dH\033[0;7mdban: %s (%s)  \033[0m\033[u' $n "$c" "$sz"
+
+        openssl enc -aes-256-ctr -iter 1 -pass pass:"$k" -nosalt </dev/zero 2>/dev/null |
+        pv -cN ${disk:5} $sz >$disk
+    done &
+done
+
+echo waiting for all disks to finish shredding...
+wait
+slp="${1:-5}"
+[ "$slp" = 0 ] && exit 0
+log done -- SHUTDOWN in $slp sec...
+sleep $slp
+echo o>/proc/sysrq-trigger
