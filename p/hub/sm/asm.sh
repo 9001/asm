@@ -742,7 +742,7 @@ sed -r 's/\{hub\}/$AD/g' <$AF/sm/copyparty.conf >/dev/shm/cpp.cfg
 LD_PRELOAD=/usr/lib/libmimalloc-secure.so.2 \
 XDG_CONFIG_HOME=$xch python3 $AF/kit/copyparty-sfx.py \
 	-c /dev/shm/cpp.cfg \
-	${args[@]} || true
+	${args[@]} "\$@" || true
 EOF
 
 	setup_tmux 1 cpp
