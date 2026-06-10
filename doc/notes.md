@@ -77,3 +77,10 @@ the default `asm.sh` runs `ttycons`, which looks for a file named `tty.cfg` and 
   echo h | nc 192.168.122.1 4322
   poweroff
   ```
+
+* smoketest when upgrading to a new alpine ver; `uki` and `min` are the funky ones so they're first:
+  ```
+  ./build.sh -m http://192.168.122.1:2576/am -i dl/alpine-standard-3.24.0-x86_64.iso -p uki -ak ~/keys/asm.priv -ek ~/keys/efi/db.key -ec ~/keys/efi/db.crt && cp /usr/share/OVMF/x64/OVMF_VARS.4m.fd asm.usb.efivars && qemu-system-x86_64 -enable-kvm --machine q35 -vga qxl -cpu host -smp 4 -drive if=pflash,format=raw,unit=0,readonly=on,file=/usr/share/OVMF/x64/OVMF_CODE.4m.fd -drive if=pflash,format=raw,unit=1,file=asm.usb.efivars -device virtio-blk-pci,drive=asm,bootindex=1 -drive id=asm,if=none,format=raw,file=asm.usb -m 2048
+  chk="min big obig hub dban hwinfo miniparty waykiosk webkiosk"
+  for p in $chk; do ./build.sh -m http://192.168.122.1:2576/am -i dl/alpine-standard-3.24.0-x86_64.iso -p $p && du -sk asm.usb && qemu-system-x86_64 -enable-kvm --machine q35 -vga qxl -cpu host -smp 4 -drive format=raw,file=asm.usb -m 2048 -net bridge,br=virbr0 -net nic,model=virtio || break; done
+  ```

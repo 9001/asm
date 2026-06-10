@@ -70,6 +70,13 @@ r0cbox hardware requirements:
 * 1 GiB or more RAM is recommended depending on website contents
 
 
+# [`./waykiosk/`](./waykiosk/)
+
+* opens firefox in kiosk-mode
+* same as `webkiosk` above except this uses wayland, so more modern
+  * and mouse/keyboard works, so pressing ctrl-q will exit to shell
+
+
 # [`./min/`](./min/)
 
 * produces a 24 MiB iso and/or gzipped usb image:

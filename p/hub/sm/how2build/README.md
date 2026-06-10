@@ -7,8 +7,8 @@ first ensure you have all the necessary files by copypasting the following into 
 mkdir -p kit/res boot efi/boot
 dl() { [ -e $1 ] || wget -O $1 $2; }
 dlf() { f=${2##*/}; [ -e $1/$f ] || wget -O $1/$f $2; }
-dl /tmp/memtestu.zip        https://www.memtest.org/download/v7.20/mt86plus_7.20.binaries.zip
-dl /tmp/memtestb.zip        https://www.memtest.org/download/v8.00/mt86plus_8.00.binaries.zip
+dl /tmp/memtestu.zip        https://memtest.org/download/v7.20/mt86plus_7.20.binaries.zip
+dl /tmp/memtestb.zip        https://memtest.org/download/v8.10/mt86plus_8.10.binaries.zip
 dlf kit/                    https://github.com/9001/copyparty/releases/latest/download/copyparty-sfx.py
 dlf kit/                    https://github.com/9001/copyparty/releases/latest/download/copyparty-en.pyz
 dl kit/copyparty-git.zip    https://github.com/9001/copyparty/archive/refs/heads/hovudstraum.zip
@@ -20,7 +20,7 @@ dl kit/r0c.py               https://github.com/9001/r0c/releases/latest/download
 dl kit/r0c-client.sh        https://github.com/9001/r0c/raw/refs/heads/master/clients/bash.sh
 dl kit/r0c-client.ps1       https://github.com/9001/r0c/raw/refs/heads/master/clients/powershell.ps1
 dlf kit/                    https://raw.githubusercontent.com/9001/smf/master/smf.py
-dl kit/python3.zip          https://www.python.org/ftp/python/3.14.3/python-3.14.3-embed-amd64.zip
+dl kit/python3.zip          https://www.python.org/ftp/python/3.14.5/python-3.14.5-embed-amd64.zip
 dlf kit/res/                https://raw.githubusercontent.com/9001/copyparty/refs/heads/hovudstraum/bin/hooks/usb-eject.js
 dlf kit/res/                https://raw.githubusercontent.com/9001/copyparty/refs/heads/hovudstraum/bin/hooks/reject-ramdisk.py
 dl sm/tls-cert.pem          https://raw.githubusercontent.com/9001/copyparty/refs/heads/hovudstraum/copyparty/res/insecure.pem

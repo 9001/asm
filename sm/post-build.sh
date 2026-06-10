@@ -403,7 +403,7 @@ imshrink_filter_mods() {
     #   (note the unescaped directory separators)
     #
     bdep_add .ml squashfs-tools pigz zstd pv
-    grow_tmpfs
+    grow_tmpfs || echo "NOTE: unable to boost tmpfs ramdisk size; compensate with more ram if build fails with ENOSPC"
     cd; rm -rf x x2; mkdir x x2
     local ml=$(echo /mnt/boot/modloop-*)
     [ -f $ml ] || die 'could not find modloop'
