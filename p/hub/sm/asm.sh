@@ -764,6 +764,7 @@ apka -q --no-progress sl &
 
 # force ntfs-3g (less buggy)
 echo blacklist ntfs3 >/etc/modprobe.d/no-ntfs3.conf
+ln -nsf /sbin/mount.ntfs{-3g,3}
 
 # rotate display orientation (requires kms/modeset)
 [ $rot = 0 ] || rot $rot
