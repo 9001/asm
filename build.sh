@@ -79,6 +79,7 @@ backend:
              -cb http://n/fs.tgz  # URL to minirootfs.tgz
   -qa ARGS  qemu: extra args for the builder vm
   -qm MiB   qemu: ram size, default: $qm
+  -qk ARGS  qemu: extra kargs (unreliable); -qk console=ttyS0
   -b PATH   build-dir, default: $b
 
 build-vars:
@@ -94,6 +95,7 @@ secureboot:
 notes:
   -s cannot be smaller than the source iso
   -v can be repeated, -vf cannot
+  -qk can freeze build under nested virtualization
 
 examples:
   $0 -i dl/alpine-extended-$v-x86_64.iso
@@ -118,6 +120,7 @@ while [ "$1" ]; do
         -cb) cb="$v";;
         -qa) qa="$v";;
         -qm) qm="$v";;
+        -qk) qk="$v";;
         -p)  profile="$v";;
         -v)  bvars+=("$v");;
         -vf) bvarf="$v";;
@@ -159,6 +162,12 @@ not_mounted "$usb_out" || {
 isoname="${iso##*/}"
 read flavor fullver arch < <(echo "$isoname" | awk -F- '{sub(/.iso$/,"");print$2,$3,$4}')
 ver=${fullver%.*}
+
+echo "$arch" | grep -E '^(x86|x86_64|aarch64|armv7|riscv64|s390x|ppc64le|loongarch64)$' &&
+echo "$fullver" | grep -E '^[0-9]+\.[0-9]+\.[0-9]+$' || {
+    err "unfamiliar iso filename: $isoname"
+    exit 1
+}
 
 need() {
     command -v $1 >/dev/null || {
@@ -519,10 +528,13 @@ else
         rmdir m
     }
 
-    mkfifo s.{in,out}
-    [ $flavor = virt ] && kern=virt || kern=lts
-    echo $ver | grep -qE '^3\.(10|[3-9])$' && kern=vanilla
-    (awk '1;/^ISOLINUX/{exit}' <s.out; echo "$kern console=ttyS0" >s.in; cat s.out) &
+    [ "$qk" ] && {
+        mkfifo s.{in,out}
+        qa="$qa -serial pipe:s"
+        [ $flavor = virt ] && kern=virt || kern=lts
+        echo $ver | grep -qE '^3\.(10|[3-9])$' && kern=vanilla
+        (awk '1;/^ISOLINUX/{exit}' <s.out; echo "$kern $qk" >s.in; cat s.out) &
+    }
 
     if command -v lscpu >/dev/null; then
         cores=$(lscpu -p | awk -F, '/^[0-9]+,/{t[$2":"$3":"$4]=1} END{n=0;for(v in t)n++;print n}')
@@ -530,7 +542,7 @@ else
         cores=$(sysctl -a | awk '/machdep.cpu.core_count/{n=$2} END{print n+0}')
     fi
 
-    $qemu $accel -nographic -serial pipe:s \
+    $qemu $accel -nographic \
         $mach -cpu $cpu -smp $cores -m $qm -cdrom "$iso" \
         -drive format=raw,if=virtio,discard=unmap,detect-zeroes=unmap,file=asm.usb \
         -drive format=raw,if=virtio,discard=unmap,file=ovl.img \
