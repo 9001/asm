@@ -49,7 +49,12 @@ imshrink_filter_irmods '' '' '
 imshrink_filter_mods '' '' '
 	/\/(rtl_bt|bluetooth|infiniband|hfi1)/{next}  # bt, infiniband
 	/(raspberry|banana)pi|\.pine64/{next}  # arm sbc (normally covered by removing brcm)
+	/\/firmware\/cirrus\/cs35l/{next}  # big fw: sound/dsp
+    /\/snd-soc-wm5102/{next}  # big fw: sound/dsp
 	/\/firmware\/nvidia\//{next}  # nvidia gpus
+	/\/drivers\/accel\//{next}  # ML/LLM junk
+	/\/amdnpu\//{next}  # ML/LLM junk
+	/\/intel\/vpu\//{next}  # ML/LLM junk
 	/\/(netronome)\//{next}  # agilio smartnics
 	/\/(ueagle-atm)\//{next}  # adsl modems
 	/\/(ocfs2)\//{next}  # filesystems

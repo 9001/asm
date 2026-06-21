@@ -44,17 +44,22 @@ imshrink_filter_mods '' '' '
 	/\/input\/(touchscreen|mouse)\//{next}
 	/\/wacom|hid-(wiimote|playstation|nintendo)/{next}
 	/\/kernel\/sound\//{next}
-	/\/firmware\/cirrus\/cs35l41/{next}  # sound/dsp
+	/\/firmware\/cirrus\/cs35l/{next}  # big fw: sound/dsp
+    /\/snd-soc-wm5102/{next}  # big fw: sound/dsp
 	/(raspberry|banana)pi|\.pine64/{next}  # arm sbc (normally covered by removing brcm)
 	/\/firmware\/nvidia\//{next}  # nvidia gpus
 	/\/amdgpu/{next}  # amd gpus
 	/\/(firmware|drm)\/xe\//{next}  # intel igpu (nextgen)
+	/\/drivers\/accel\//{next}  # ML/LLM junk
+	/\/amdnpu\//{next}  # ML/LLM junk
+	/\/intel\/vpu\//{next}  # ML/LLM junk
+	/\/intel\/ish\//{next}  # light-sensors, touch-input, low-power-sleep
 	/\/(netronome)\//{next}  # agilio smartnics
 	/\/ethernet\/(dec|sun)\//{next}  # old nics
 	/\/(ueagle-atm)\//{next}  # adsl modems
 	/\/(drivers|usb|net)\/atm\//{next}  # more adsl
 	/\/drivers\/(isdn|nfc)\//{next}  # non-ethernet
-    /\/fs\/(ocfs2|smb|nfsd?|f2fs|ceph|gfs2|ubifs|reiserfs|nilfs2|ntfs3|jfs)\//{next}  # filesystems
+    /\/fs\/(ceph|f2fs|gfs2|jfs|nfsd?|nilfs2|ntfs3?|ocfs2|reiserfs|smb|ubifs)\//{next}  # filesystems
     /\/fs\/(netfs|jffs2|orangefs|hfsplus)\//{next}  # more filesystems (smaller)
     /\/nls_cp(932|936|949|950)/{next}  # cjk fat32
 	/\/dm-vdo\//{next}  # fancy blockdevs

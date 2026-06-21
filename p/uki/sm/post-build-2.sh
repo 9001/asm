@@ -19,8 +19,8 @@ nomodeset  # faster boot
 # optional -- shaves 3 MiB (zinfo) + 110 MiB (filtermods; arg1=drop, arg2=keep)
 imshrink_zinfo
 imshrink_filter_mods \
-    '/(modules/firmware|net/(ethernet|usb|dsa|can|ppp|fddi|arcnet|fjes)|infiniband|drivers/gpu|echoaudio|staging|mei|thunderbolt|firewire|f2fs|btrfs|nfsd?|sunrpc|cifs|ceph|gfs2|ksmbd|reiserfs|mac80211)/|/xt_|/scsi/(lpfc|qla|elx|fnic|mpt|aic|pm|mpi|aac|be2|fco)' \
-    'bnx2|rtl_nic|tigon|intel/(i40e|ix?gb|e1000)|ethernet/(broadcom|realtek|amd)'
+    '/(modules/firmware|sound|net/(netfilter|bridge|bonding|team|ethernet|usb|dsa|can|ppp|fddi|arcnet|fjes|rxrpc)|infiniband|drivers/(gpu|accel)|echoaudio|/snd-so[fc]-|staging|mei|thunderbolt|firewire|sunrpc|cifs|drbd|ceph|ksmbd|mac80211)/|fs/(btrfs|f2fs|gfs2|jfs|nfsd?|nilfs2|ntfs3?|ocfs2|reiserfs|smb|ubifs|xfs)|/xt_|/nls_cp(932|936|949|950)|/scsi/(lpfc|qla|elx|fnic|mpt|aic|pm|mpi|aac|be2|fco)|/arch/x86(_64)?/kvm/|/(de4x5|dmfe|irdma|evbug|eth1394|i8xx-tco|via-ircc|snd-atiixp-modem|snd-intel8x0m|snd-via82xx-modem|snd-pcsp|hostap|hostap_cs|aty128fb|atyfb|radeonfb|i810fb|cirrusfb|intelfb|kyrofb|i2c-matroxfb|hgafb|nvidiafb|rivafb|savagefb|sstfb|neofb|tridentfb|tdfxfb|viafb|virgefb|vga16fb|matroxfb_base|vt8623fb|ohci1394|video1394|dv1394|hfcmulti|hfcpci|hfcsusb|e_powersaver|microcode|tiny_power_button)\.ko$' \
+    'bnx2|rtl_nic|tigon|intel/(i40e|ix?gb|e1000)|ethernet/(broadcom|realtek|amd/pcnet)'
 
 # optional -- unbundle some APKs
 (cd /mnt/apks/*/ && rm -rf wpa_supp* ppp* iw-*)
