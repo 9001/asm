@@ -328,7 +328,7 @@ imshrink_unpack_gz_kmods() {
     cd ~/x2
     printf '\033[?7h'
     log uncompressing gz kmods using $CORES cores
-    find -iname '*.gz' > ~/l
+    find -type f -iname '*.gz' > ~/l
     [ -s ~/l ] || return 0
     local nc=0
     while true; do
@@ -351,7 +351,7 @@ imshrink_unpack_zst_kmods() {
     cd ~/x2
     printf '\033[?7h'
     log uncompressing zst kmods/FWs using $CORES cores
-    find -iname '*.zst' > ~/l
+    find -type f -iname '*.zst' > ~/l
     [ -s ~/l ] || return 0
     local nc=0
     while true; do
@@ -365,6 +365,19 @@ imshrink_unpack_zst_kmods() {
     done
     wait
     echo
+}
+
+imshrink_resym_kmods() {
+    cd ~/x2
+    find -L -type l | while IFS= read -r a; do
+        b="$(readlink "$a")"
+        a2="$(echo "$a" | sed -r 's/\.(gz|zst)$//')"
+        b2="$(echo "$b" | sed -r 's/\.(gz|zst)$//')"
+        [ "$a" = "$a2" ] && [ "$b" = "$b2" ] && continue
+        rm "$a"
+        [ -e "$a2" ] && continue
+        ln -ns "$b2" "$a2"
+    done 
 }
 
 imshrink_zinfo() {
@@ -426,9 +439,10 @@ imshrink_filter_mods() {
     [ $# -ge 3 ] && base="$3"
 
     log unpacking modloop
-    find -type f | (set -x; awk "${keep}${base}${drop}1") | tar -cT- | tar -xC ../x2
+    find -type f -or -type l | (set -x; awk "${keep}${base}${drop}1") | tar -cT- | tar -xC ../x2
     imshrink_unpack_gz_kmods
     imshrink_unpack_zst_kmods
+    imshrink_resym_kmods
     cd
     # https://github.com/alpinelinux/alpine-conf/blob/b511518795b03520248d9a64ff488716e3f01c38/update-kernel.in#L326
     case $ARCH in
@@ -517,7 +531,7 @@ edit_initramfs() {
         '
         [ $# -ge 3 ] && base="$3"
 
-        find -type f | tee /l1 | (set -x; awk "${keep}${base}${drop}1") >/l2
+        find -type f -or -type l | tee /l1 | (set -x; awk "${keep}${base}${drop}1") >/l2
         diff -aU0 /l1 /l2 | awk 'NR>2&&/^-/{print substr($0,2)}' | tr '\n' '\0' | xargs -0 rm --
         rm /l1 /l2
     }
