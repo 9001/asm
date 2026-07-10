@@ -3,7 +3,7 @@
 
 
 die() {
-    printf '%s\n' "$*"
+    printf '\033[0;1;31;91m\nERROR: %s\n\033[0m\n' "$*"
     exit 1
 }
 
@@ -286,8 +286,7 @@ grub64() {
     [ -e /mnt/efi/boot/bootx64.efi ] || {
         echo
         ls -al /mnt/efi/boot
-        echo "ERROR: 64bit grub not found; image would become unbootable"
-        exit 1
+        die "64bit grub not found; image would become unbootable"
     }
     rm -rf /mnt/efi/boot/bootia32.efi /mnt/boot/grub/i386-efi
 }
@@ -306,7 +305,7 @@ gensums() {
         sha512) cmd=sha512sum; sums=SHA512SUMS;;
         b2) cmd=b2sum; sums=B2SUMS;;
         b2:*) cmd="b2sum -l ${cs:3}"; sums=B2SUMS;;
-        *) err "invalid -cs"; exit 1;;
+        *) die "invalid -cs";;
     esac
     echo "creating $sums with $cmd"
 
@@ -574,8 +573,7 @@ uki_make() {
     local efistub="/usr/lib/gummiboot/linux*.efi.stub"
     [ -e $efistub ] || case $IVER in
         3.21)
-            printf '\033[1;31m\n  ERROR:\n   on Alpine v3.21, the apk `gummiboot-efistub` must be installed from the v3.20 repos before calling `uki_make`\n\033[0m\n';
-            exit 1;;
+            die 'on Alpine v3.21, the apk `gummiboot-efistub` must be installed from the v3.20 repos before calling `uki_make`';;
         3.1* | 3.20)
             pkgs+=(gummiboot-efistub);
             gummi=1;;

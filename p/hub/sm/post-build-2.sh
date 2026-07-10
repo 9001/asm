@@ -6,9 +6,14 @@ set -e
 [ $IVER = 3.10 ] && a310=1 && fastbuild=1  # alpine-3.10 can't imshrink
 
 # no265 ffmpeg
+chk_no265() {
+	gzip -dc < /mnt/apks/*/ffmpeg-libavdev* | grep -q arbeidspakke-20 ||
+		die need ffmpeg from copyparty/scripts/docker/base/b/packages/x86_64.hub/
+}
 cp -pv /mnt/apk/*.pub /etc/apk/keys/
 lfetch_apks /mnt/apk/$IARCH/ffmpeg-*.apk
 rm -rf /mnt/apk
+chk_no265
 
 PKGS=(
 	alsa-utils aria2 cdparanoia chntpw ddrescue device-mapper
@@ -24,6 +29,7 @@ PKGS=(
 	tty-solitaire fbida-fbi font-{droid,terminus}
 )
 recommended_apks "${PKGS[@]}"
+chk_no265
 
 (cd /mnt/apks/ && rm -f  */*-pyc-*  */*-pycache-* )
 
