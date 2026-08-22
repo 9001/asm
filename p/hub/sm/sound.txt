@@ -1,0 +1,8 @@
+75%
+
+
+config file for /etc/bin/beeps (menu sounds):
+the presence of this file switches from pcspkr (piezo) to alsa (soundcard);
+line 1 = volume; default is 75%
+line 2 = name in /proc/asound/cards of soundcard to use; default is 1st
+line 3 = port number; default is 1st

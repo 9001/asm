@@ -7,6 +7,7 @@ set -e
 
 # no265 ffmpeg
 chk_no265() {
+	[ $IVER = 3.10 ] && return
 	gzip -dc < /mnt/apks/*/ffmpeg-libavdev* | grep -q arbeidspakke-20 ||
 		die need ffmpeg from copyparty/scripts/docker/base/b/packages/x86_64.hub/
 }

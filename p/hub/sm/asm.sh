@@ -65,7 +65,7 @@ EOF
 			K|k) fbeep ok; poweroff; exit 0;;
 			R|r) fbeep ok; reboot; exit 0;;
 		esac
-		fbeep ack
+		fbeep ack &
 	done
 }
 
@@ -437,7 +437,6 @@ EOF
 	)
 
 	[ $fs_ro ] && mount -o remount,ro $AF
-	menu
 }
 
 

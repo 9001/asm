@@ -130,7 +130,7 @@ recommended_apks() {
         apache2-utils bmon curl ethtool inetutils-telnet iperf3 iproute2 iputils
           net-tools nmap-ncat proxychains-ng rsync socat sshfs sshpass tcpdump
         acpica dmidecode libcpuid-tool lm-sensors lshw nvme-cli
-          pciutils sgdisk smartmontools testdisk usbutils
+          pciutils sgdisk smartmontools testdisk tinyalsa usbutils
         efibootmgr efivar mokutil sbsigntool
         mimalloc2 mimalloc2-insecure
         cryptsetup fuse fuse3 nbd nbd-client partclone sfdisk
@@ -168,7 +168,6 @@ recommended_apks() {
     #   +1.9M lvm2
     #   +1.5M aria2
     #   +1.5M net-snmp-tools
-    #   +0.03 tinyalsa (only if there is no piezo and you want beeps)
     #
     # py3-requests ranger aria2
 }

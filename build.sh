@@ -301,6 +301,7 @@ done >>$f
 # live-env: add apkovl + asm contents
 msg "copying sources to $b"
 cp -pR etc sm $b/fs/sm/img/
+rm -rf $b/fs/sm/img/etc/patches
 pdir=.
 [ "$profile" ] && {
     pdir=p/$profile

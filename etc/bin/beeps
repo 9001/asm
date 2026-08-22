@@ -1,7 +1,8 @@
 #!/bin/ash
 set -e
 
-# volume is 89% unless specified in /sm/avol.txt;
+# volume is 75% unless 1st line in /sm/sound.txt;
+# 1st soundcard unless 2nd line in /sm/sound.txt;
 # mute by creating an empty file at /sm/quiet
 
 [ -e $AF/sm/quiet ] || [ -e /dev/shm/nobeep ] && {
@@ -35,18 +36,55 @@ nbeep() {
 
 # alsa-beep
 abeep() {
-    killall -q tinyplay || true
-    avol=$(sed s/%// $AF/sm/avol.txt 2>/dev/null || echo 89)
-    for m in 'Master Playback' 'PCM Playback'; do
-        tinymix set "$m Volume" $avol% 2>/dev/null || true
-        tinymix set "$m Volume" $avol% $avol% 2>/dev/null || true
-        tinymix set "$m Switch" 1 2>/dev/null || true
-        tinymix set "$m Switch" 1 1 2>/dev/null || true
-    done
+    command -v aplay >/dev/null &&
+        aplay=1 && prog=aplay && parg= || {
+            prog=tinyplay; parg="-i wav"
+    }
+    killall -q $prog || true
+    avol=75
+    ad=
+    f=$AF/sm/sound.txt
+    [ -s $f ] && {
+        avol=$(awk <$f -F% -vv=$avol 'NR==1&&/^[0-9]/{v=$1}END{print v}')  # line 1 = volume
+        l1="$(awk <$f NR==2)"  # line 2 = card name
+        l2="$(awk <$f NR==3)"  # line 3 = nth port on card
+        [ "$l1" ] && l1="$(awk </proc/asound/cards -vp="$l1" '/^[ 0-9][0-9] \[/{n=$1} $0~p{print n;exit}')"
+        [ "$l1" ] && {
+            ad="-D $l1"
+            [ "$l2" ] && ad="$ad -d $l2"
+            if [ "$aplay" ]; then
+                parg="$parg -D hw:$l1"
+                [ "$l2" ] && parg="$parg,$l2"
+            else
+                parg="$ad $parg"
+            fi
+        }
+    }
+    [ "$ad" ] || {
+        for n in 0 1 2 3 4 ; do
+            tinypcminfo -D $n 2>/dev/null | grep -EA1 '^PCM out:' | grep -q 0x || continue
+            ad="-D $n"
+            if [ "$aplay" ]; then
+                parg="$parg -D hw:$n"
+            else
+                parg="$ad $parg"
+            fi
+            break
+        done
+    }
+    [ -e /dev/shm/volset ] || {
+        touch /dev/shm/volset
+        for m in 'Master Playback' 'PCM Playback' 'Speaker Playback'; do
+            tinymix $ad set "$m Volume" $avol% 2>/dev/null || true
+            tinymix $ad set "$m Volume" $avol% $avol% 2>/dev/null || true
+            tinymix $ad set "$m Switch" 1 2>/dev/null || true
+            tinymix $ad set "$m Switch" 1 1 2>/dev/null || true
+        done
+    }
 
     # b=samplebits c=chans r=samplerate
     b=; c=; r=;
-    eval "$(tinypcminfo 2>/dev/shm/pcmerr | awk '
+    eval "$(tinypcminfo $ad 2>/dev/shm/pcmerr | awk '
         /^PCM /{o=0}
         /^PCM out:/{o=1}
         !o{next}
@@ -55,7 +93,7 @@ abeep() {
         /Channels:/{k="c"}
         /Rate:/{k="r"}
         /=/{sub(/[^=]+=/,"");sub(/[^0-9].*/,"")}
-        {sub(/,.*/,"");gsub(/[^0-9]/,"")}
+        {sub(/,.*/,"");sub(/_3/,"");gsub(/[^0-9]/,"")}
         k{printf "%s=%s\n",k,$0}
     ')"
     [ "$r" ] || return
@@ -63,6 +101,7 @@ abeep() {
     local fl=/dev/shm/beeped
 
     {
+        hgen
         [ -e $fl ] || {
             touch $fl
             fgen 386 0  # metal
@@ -72,7 +111,18 @@ abeep() {
         done
         fgen 333 0  # qemu
     } |
-    tinyplay -b$b -c$c -r$r -i raw - >/dev/null
+    $prog $parg - >/dev/null 2>/dev/null
+}
+
+hgen() {
+    awk -vb=$b -vc=$c -vr=$r '
+function h(n){printf"%c%c",n%256,(n/256)%256}
+function i(n){h(n) h(n/65536)}
+BEGIN{
+    s=c*b/8;
+    printf"RIFFZZZ0WAVEfmt ";
+    i(16) h(1) h(c) i(r) i(r*s) h(r) h(b)
+    printf"data6ZZ0"}'
 }
 
 fgen() {
@@ -86,7 +136,7 @@ fgen() {
         }
         w1=sprint "\x7f";
         w2=sprint "\x81";
-        e=(r*c*(b/8))/f; i=1;
+        e=(r*c*b)/(16*f); i=1;
         while(i<e) {i*=2;w1=w1 w1;w2=w2 w2}
         w=substr(w1,1,e) substr(w2,1,e);
         t=(((r*d)/1000)*c*(b/8))/(e*2);
@@ -94,14 +144,17 @@ fgen() {
     }'
 }
 
-command -v tinyplay >/dev/null && {
-    abeep "$@"
-    exit
-}
-
-echo $AF/apks/*/tinyalsa-* | grep -q apk$ && {
-    apka -q tinyalsa && abeep "$@"
-    exit
+[ -e /proc/asound/cards ] && [ -e $AF/sm/sound.txt ] && {
+    command -v tinyplay >/dev/null && {
+        abeep "$@"
+        exit
+    }
+    echo $AF/apks/*/tinyalsa-* | grep -q apk$ && {
+        p="tinyalsa"
+        echo $AF/apks/*/alsa-utils-* | grep -q apk$ && p="$p alsa-utils"
+        apka -q --progress=no $p && rm -rf /usr/share/alsa/ucm2 && abeep "$@"
+        exit
+    }
 }
 
 nbeep "$@"
