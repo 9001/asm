@@ -33,7 +33,7 @@ sz=
 autosize=
 mi=
 vi=
-vn=ASM
+vn=
 asm_key=
 efi_key=
 efi_crt=
@@ -53,7 +53,7 @@ arguments:
   -s GiB    resize image with mtools
   -di ID    mbr/gpt id (%08x), default: random
   -vi ID    filesystem id (%08x), default: Do-Not-Modify
-  -vn ID    filesystem name, default: $vn
+  -vn ID    filesystem name, default: Do-Not-Modify
   -cs TYPE  create checksums; md5, sha1, sha512, b2, b2:256
   -ak PATH  RSA pem-key for asm.sh, default: Do-Not-Modify
   -ek PATH  SB pem-key for the.efi, default: Do-Not-Modify
@@ -65,7 +65,6 @@ arguments:
   -ex y     extract+rebuild with mtools (default if not root)
 
 notes:
-  UEFI only, MBR only
   -u can be a folder with rootfs instead of an usb image
   "-z f" will force free-space zeroing, even if fstrim is ok
 
@@ -84,7 +83,7 @@ while [ "$1" ]; do
         -s)  sz="$v"; ;;
         -di) di="$v"; ;;
         -vi) vi="$v"; ;;
-        -vn) vn="$v"; ;;
+        -vn) vn="$(printf '%s\n' "$v" | tr '[:lower:]' '[:upper:]' )";;
         -cs) cs="$v"; ;;
         -ak) asm_key="$v"; ;;
         -ek) efi_key="$v"; ;;
@@ -113,13 +112,19 @@ img="$(absreal "$img")"
 #####################################################################
 # mount / extract
 
+usb_open_dtor() {
+    rmdir "$td" 2>/dev/null || umount "$td" || sudo umount "$td" || true
+    rmdir "$td" 2>/dev/null || true
+}
+
 usb_open() {
-    trap "rmdir '$td' 2>/dev/null || umount '$td' || sudo umount '$td' || true; rmdir '$td' 2>/dev/null || true; exit" INT TERM EXIT
+    trap 'usb_open_dtor;exit' INT TERM EXIT
     mount -o offset=1048576 "$img" "$td"
 }
 
 mt_extract() {
     trap "rm -rf '$td'; exit" INT TERM EXIT
+    warn "using -ex; image is now UEFI-only"
     msg "extracting $img to $td"
     mcopy -Qbmsi "$img"@@1M '::*' "$td/"
     [ "$vi" ] || vi=$(
@@ -127,6 +132,10 @@ mt_extract() {
         grep -iE '^serial number: +[0-9a-f]{8}$' |
         awk '{print$3;exit}'
     )
+    [ "$vn" ] || vn="$(minfo -i "$img"@@1M | awk -F\" '
+        tolower($0)~/^disk label="/{v=$2;gsub(/ +$/,"",v);print v;exit}')"
+    [ "$vn" ] || echo failed to preserve volname
+    [ "$vn" ] || vn=ASM
 }
 
 [ -d "$img" ] && td="$img" || {
@@ -219,6 +228,10 @@ usb_close() {
             rm "$td/nil"
         }
     }
+    usb_open_dtor
+    trap - INT TERM EXIT
+    [ "$vn" ] && mlabel -i "$img"@@1M ::"$vn"
+    [ "$vi" ] && mlabel -i "$img"@@1M -N $vi ::
     true
 }
 
@@ -248,14 +261,15 @@ mt_build2() {
     head -c 1048576 "$img" > "$img.mbr"
     truncate -s 0 "$img"
     truncate -s ${sz}K "$img"
-    echo ',,0c,*' | sfdisk -q --no-tell-kernel --label dos "$img" 2>/dev/null || {
+    if echo ',,0c,*' | sfdisk -q --no-tell-kernel --label dos "$img" 2>/dev/null; then
+        [ "$di" ] && sfdisk -q --disk-id "$img" 0x$di
+    else
         sz=$sz0
         msg "sfdisk too old, using fallback (image will be $((sz/1024)) MiB)"
         cat "$img.mbr" > "$img"
         truncate -s ${sz}K "$img"
-    }
+    fi
     rm "$img.mbr"
-    [ "$di" ] && sfdisk -q --disk-id "$img" 0x$di
     local args=
     [ "$vi" ] && args="-i $vi"
 
