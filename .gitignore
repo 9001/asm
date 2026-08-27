@@ -4,3 +4,12 @@ am/
 *.iso
 *.usb
 winpe/t/
+.DS_Store
+/p/hub/boot/
+/p/hub/efi/boot/
+/p/hub/chiptunes/
+/p/hub/kit/
+/p/hub/sm/bin/
+!/p/hub/sm/bin/dban
+!/p/hub/sm/bin/setup-hotplug
+!/p/hub/sm/bin/tts
