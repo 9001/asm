@@ -437,6 +437,7 @@ EOF
 	)
 
 	[ $fs_ro ] && mount -o remount,ro $AF
+	true
 }
 
 

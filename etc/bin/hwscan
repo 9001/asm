@@ -4,9 +4,8 @@ set -e
 type log &>/dev/null || log() { echo "$*"; }
 
 pkgs=(
-	acpica coreutils dmidecode lshw nvme-cli
-	pciutils smartmontools usbutils
-	dosfstools
+	acpica coreutils dmidecode dosfstools ethtool
+	lshw nvme-cli pciutils smartmontools usbutils
 )
 pkgs2=(
 	libcpuid-tool tinyalsa
@@ -58,6 +57,14 @@ alsainfo2() {
 	done
 }
 
+nics() {
+	ip l
+	ls -1 /sys/class/net | grep -vE ^lo | while read c; do
+		printf '\n\033[7m[ ethtool %s ]\033[0m\n' "$c"
+		ethtool "$c"
+	done
+}
+
 runcmds() {
 	for cmd in "$@"; do
 		[ -z "$cmd" ] && {
@@ -91,11 +98,11 @@ runcmds() {
 # note; blank cmd = commit to usb (since lspci -xxxx can crash the box)
 cmds=(
 	dmesg "dmesg --color=always" blkid "free -m" "uname -a"
-	lsblk lscpu lsipc lsirq lsmod fbset
+	lsblk lscpu lsipc lsirq lsmod fbset nics
 	"lshw -numeric" "lshw -numeric -json"
 	"smartctl --scan-open --json=vu"
 	lsusb "lsusb -v" "lsusb -tvvv" "stdbuf -o0 -e0 lsusb -v 2>&1"
-	lspci "lspci -nnP" "lspci -nnPP" "lspci -nnvvv"
+	lspci "lspci -nnPP" "lspci -nnvvv"
 	"lspci -bnnvvv" "lspci -mmnn" "lspci -mmnnvvv"
 	"cpuid_tool --save=cpuid.raw --outfile=cpuid.txt --all --clock --clock-rdtsc --sgx --hypervisor"
 	dmidecode "dmidecode -u" "nvme list"
