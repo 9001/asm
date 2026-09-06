@@ -150,7 +150,7 @@ recommended_apks() {
     )
     grep -E '^3\.1[0-2]\.' /etc/alpine-release && excl+=(
         efibootmgr efivar exfatprogs hexdump
-        lm-sensors ranger sbsigntool
+        lm-sensors ranger sbsigntool tinyalsa
     )
     [ $excl ] && {
         printf '%s\n' "${pkgs[@]}" >/dev/shm/plst
