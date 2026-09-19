@@ -25,8 +25,8 @@ PKGS=(
 [ $a310 ] && PKGS+=(
 	p7zip py3-zmq sc
 ) || PKGS+=(
-	7zip helix hexyl nyancat par2cmdline
-	py3-pyzmq sc-im time tmatrix treedude
+	7zip btrfs-compsize helix hexyl nyancat
+	par2cmdline py3-pyzmq sc-im time tmatrix treedude
 	tty-solitaire fbida-fbi font-{droid,terminus}
 )
 recommended_apks "${PKGS[@]}"
