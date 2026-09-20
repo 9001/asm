@@ -319,18 +319,14 @@ EOF
 }
 
 
-sfnt() { (cd /etc/cfnt; setfont $(ls -1 *.* | awk NR==${1:-1})); }
-bfnt() { (cd /etc/cfnt/big; setfont $(ls -1 *.* | awk NR==${1:-1})); }
 menu_font() {
 	mcat <<EOF
 select font:
-  1) tiny   2) small   3) large   k) OK
+  1) tiny   2) small   3) lagom   4) large   k) OK
 EOF
 	ask1 'sel>'
 	case $REPLY in
-		1) sfnt 2;;
-		2) sfnt;;
-		3) bfnt;;
+		[0-9]) sf $REPLY;;
 		K|k) return;;
 	esac
 	printf '\n\n\n\n\033[4A'

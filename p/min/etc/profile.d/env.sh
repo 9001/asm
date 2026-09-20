@@ -19,12 +19,6 @@ rw() {
 	mount -o remount,rw $AF
 	pwd | grep -q $AF || cd $AF/sm
 }
-sfnt() {
-	(cd /etc/cfnt; setfont $(ls -1 *.* | awk NR==${1:-1}))
-}
-bfnt() {
-	(cd /etc/cfnt/big; setfont $(ls -1 *.* | awk NR==${1:-1}))
-}
 
 if [ -d /etc/apk/ ] ; then
 	[ "x$TERM" == "xrxvt" ] && export TERM=rxvt-256color

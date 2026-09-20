@@ -1,0 +1,15 @@
+#!/bin/ash
+
+cd /etc/cfnt
+printf '\r,l,'
+case "$1" in
+1) setfont miniwi-8.psf.gz;;
+2) setfont lat0-10.psfu.gz;;
+4) setfont ter-i32b.psf.gz;;
+*) setfont lat0-16.psfu.gz;;
+esac
+
+# restore cur.pos:
+s=$(stty size)
+fold -w ${s#* } /dev/vcs | awk '/^,l,/{printf"\033[%dH   \033[3D",NR}'
+true

@@ -13,3 +13,14 @@ remapper:
     for f in *.psfu; do awk -vf=$f '/Character/{c=$3}/Unicode/{gsub(/\];\[/,"|");gsub(/[][]/," ");print c" "$2" "f}' <${f%.*}.txt >${f%.*}.ord; done
     head -n6 <lat0-10.txt >lat0-10-asm.txt; rm -f ord; cat lat0-10.ord | while read n u f; do grep -E "$u" <default8x9.ord >o && head -n1 o >>ord && continue; done; cat lat0-10.ord | while read n u f; do grep -qE "$u" <ord && continue; n2=$(awk "/$u/{print\$1;exit}" lat4-10.ord); [ $n2 ] || n2=$n; [ $n2 ] && grep -qE "^$n2 " <ord && n2=$n; grep -qE "^$n2 " <ord && n2=999 && f=; echo "$n2 $u $f" >>ord; done; cat ord | sort -n | while read n u f; do grep -E "$u" -B12 lat0-10.txt | sed -r 's/( Character ).*/\1'"$n ($f)/"; done >>lat0-10-asm.txt; wc -l lat0-10-asm.txt lat0-10.txt
     txt2psf lat0-10-asm.txt a.psfu && pigz -c11 -I8000 <a.psfu >../../etc/cfnt/lat0-10.psfu.gz 
+
+lat0-16:
+
+    head -n6 <lat0-16.txt >lat0-16-asm.txt; n=0; grep Unicode: lat0-10-asm.txt | while IFS= read -r x; do printf '%%\n// Character %d\n' $n; n=$((n+1)); grep -F "$x" -B16 lat0-16.txt; done >>lat0-16-asm.txt
+    # mariocoin the 0
+    txt2psf lat0-16-asm.txt a.psfu && pigz -c11 -I8000 <a.psfu >../../etc/cfnt/lat0-16.psfu.gz 
+
+ensure all codepoints print (with an appropriate amount of effort):
+
+    grep Unicode: lat0-16-asm.txt | sed -r 's/^/ C(\n/;s/$/)/;s/Unicode: //;s/\[0000/0x/g;s/\];/\n/g' | while IFS= read -r x; do [ ${#x} -gt 4 ] || { printf '%s' "$x"; continue; }; python3 -c "print(chr($x),end='')"; done > ../../p/hub/lat.txt
+    cat $AF/lat.txt | sed -r 's/(C[^C]+ C[^C]+ C[^C]+ C[^C]+ C[^C]+ C[^C]+ C[^C]+ C[^C]+ C[^C]+ C[^C]+ C[^C]+ C[^C]+ C[^C]+ C[^C]+ C[^C]+ C[^C]+)/\1\n/g'
