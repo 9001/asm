@@ -193,10 +193,14 @@ EOF
 		done
 
 	[ $wipe ] && {
+		ask1 'do blkdiscard? (say yes unless flashdrive is bad)  y/n> '
+		echo "$REPLY" | grep -qi n ||
+		{
 		echo "doing a blkdiscard on $d2 ... don't worry if this fails:"
 		blkdiscard -f $d2 &&
 			printf "\033[32mblkdiscard was successful?! nice$RST\n" ||
 			printf "\033[33mblkdiscard failed, okay, yeah, whatever$RST\n"
+		}
 
 		[ $crypt ] && {
 			local mem=$(awk </proc/meminfo '
@@ -224,8 +228,8 @@ EOF
 		case $fs in
 			ntfs) mkfs.ntfs -fL HUB_DATA $d2;;
 			vfat) mkfs.vfat -F32 -n HUB_DATA $d2;;
-			xfat) mkfs.exfat -L HUB_DATA $d2;;
-			xfs)  mkfs.xfs -KL HUB_DATA $d2;;
+			xfat) mkfs.exfat -FL HUB_DATA $d2;;
+			xfs)  mkfs.xfs -fKL HUB_DATA $d2;;
 			ext4) mkfs.ext4 -FT big -L HUB_DATA $d2;;
 			btrf) modprobe btrfs; mkfs.btrfs -fKL HUB_DATA $d2; mount $d2 /mnt; btrfs property set /mnt compression zstd; umount /mnt;;
 		esac
