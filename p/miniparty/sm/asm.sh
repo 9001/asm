@@ -77,29 +77,34 @@ maybe_mkpart() {
 	cat <<EOF
 
 choose a filesystem for the 2nd partition;
-$PRPL${B1} ntfs:$RST possible to corrupt by powerloss or unsafe flashdrive removal
-$PRPL${B1}fat32:$RST even easier to corrupt, and max filesize is 4 GiB
-$PRPL${B1} ext4:$RST almost impossible to corrupt, but only works on linux/mac
-$PRPL${B1}btrfs:$RST also detects data-corruption, but no support on win/mac/rhel
+$PRPL${B1} ntfs:$RST easy to corrupt by powerloss or unsafe disk removal; Linux/Win ok
+$PRPL${B1}exfat:$RST easier to corrupt than ntfs but slightly faster; Linux/Win/Mac ok
+$PRPL${B1}fat32:$RST even easier to corrupt, max filesize 4 GiB, works on every OS
+$PRPL${B1}  xfs:$RST corruption-averse, has reflinks (dedup), can't shrink, Linux-only
+$PRPL${B1} ext4:$RST near-impossible to corrupt, but no reflinks, Linux-only
+$PRPL${B1}btrfs:$RST rock-solid, reflinks, compression, and detects data-corruption,
+	but Linux-only (works on every distro except RHELics)
 
 note that there are two different types of corruption to consider:
 $PRPL${B1}FILESYSTEM-CORRUPTION:$RST loss of entire files, or the entire filesystem,
 $PRPL${B1}                  \`--:$RST or making it impossible to create new files
-$PRPL${B1}DATA-CORRUPTION:$RST bitflips inside files; almost no filesystems care or notice
+$PRPL${B1}DATA-CORRUPTION:$RST the actual file data; almost no filesystems care/notice
 
-these filesystems can detect data-corruption:$ESC[32m btrfs, zfs, bcachefs $RST
+these filesystems can detect data-corruption:$ESC[32m btrfs, zfs $RST
 
 recommendations:
-  4 (ext4) for linux
-  n (ntfs) for cross-platform
+  4 (ext4) for Linux (...because not everything can read btrfs)
+  e (exfat) for cross-platform (...can be corrupted by OS-crash)
 EOF
 
 	local fs= pkg= ptype=
 	while true; do
-		ask1b '[n]tfs, [f]at32, e[x]fat, ext[4], [b]trfs?  n/f/x/4/b> '
+		ask1b '[n]tfs, [e]xfat, [f]at32, [x]fs, ext[4], [b]trfs?  n/e/f/x/4/b> '
 		case $REPLY in
 			n) ptype=07; fs=ntfs; pkg=ntfs-3g-progs; break;;
+			e) ptype=07; fs=xfat; pkg=exfatprogs; break;;
 			f) ptype=0c; fs=vfat; pkg=dosfstools; break;;
+			x) ptype=83; fs=xfs;  pkg=xfsprogs; break;;
 			4) ptype=83; fs=ext4; pkg=e2fsprogs-extra; break;;
 			b) ptype=83; fs=btrf; pkg=btrfs-progs; break;;
 		esac
@@ -128,16 +133,22 @@ EOF
 		done
 
 	[ $wipe ] && {
+		ask1 'do blkdiscard? (say yes unless flashdrive is bad)  y/n> '
+		echo "$REPLY" | grep -qi n ||
+		{
 		echo "doing a blkdiscard on $d2 ... don't worry if this fails:"
 		blkdiscard -f $d2 &&
 			printf "\033[32mblkdiscard was successful?! nice$RST\n" ||
 			printf "\033[33mblkdiscard failed, okay, yeah, whatever$RST\n"
+		}
 
 		case $fs in
 			ntfs) mkfs.ntfs -fL HUB_DATA $d2;;
 			vfat) mkfs.vfat -F32 -n HUB_DATA $d2;;
-			ext4) mkfs.ext4 -FT big -L HUB_DATA $d2;;
-			btrf) mkfs.btrfs -fKL HUB_DATA $d2;;
+			xfat) mkfs.exfat -FL HUB_DATA $d2;;
+			xfs)  mkfs.xfs -fKL HUB_DATA -i nrext64=0,exchange=0 -n parent=0 $d2;;  # EL9
+			ext4) mkfs.ext4 -FL HUB_DATA -T big $d2;;
+			btrf) modprobe btrfs; mkfs.btrfs -fKL HUB_DATA $d2; mount $d2 /mnt; btrfs property set /mnt compression zstd; umount /mnt;;
 		esac
 		return 0
 	}
@@ -145,6 +156,7 @@ EOF
 	case $fs in
 		ntfs) ntfslabel -f $d2 HUB_DATA;;
 		vfat) dosfslabel $d2 HUB_DATA;;
+		xfat) tune.exfat $d2 HUB_DATA;;
 		ext4) e2label $d2 HUB_DATA;;
 		btrf) btrfs fi label $d2 HUB_DATA;;
 	esac
@@ -298,7 +310,7 @@ party() {
 			case $fs in
 				ntfs) c="fsck.$fs";;
 				vfat) c="fsck.$fs -a";;
-				ext*) c="fsck.$fs -p";;
+				exfat|ext*) c="fsck.$fs -p";;
 			esac
 			[ "$c" ] && {
 				printf '\033[36m# %s %s (%s)\033[0m ' "$c" $d $fs &&
@@ -346,6 +358,11 @@ party() {
 			mkdir -p $pr0c
 			tar -cC/root/.r0c . | tar -xC $pr0c
 			mount --bind $pr0c /root/.r0c
+		}
+
+		v=$md2/.metadata_never_index
+		[ -e $v ] || {  # apple bugspray
+			mkdir -p $md2/.fseventsd && touch $md2/.fseventsd/no_log $v || true
 		}
 	}
 
@@ -398,6 +415,7 @@ bri 100 &
 
 # force ntfs-3g (less buggy)
 echo blacklist ntfs3 >/etc/modprobe.d/no-ntfs3.conf
+ln -nsf /sbin/mount.ntfs{-3g,3}
 
 # rotate display orientation (requires kms/modeset)
 [ $rot = 0 ] || rot $rot
