@@ -43,6 +43,7 @@ imshrink_zinfo  # compress kernel symbols (makes kernel debugging harder)
 # remove large kmods from initramfs, saves 3 MiB
 imshrink_filter_irmods '' '' '
 	/\/scsi\/(lpfc|qla[24]xxx|elx|fnic)\//{next}  # big fw: fibre channel scsi (qlogic, emulex)
+    /\/(chelsio|firmware)\/(libcxgb|cxgb[34])\//{next}  # netboot
 	/\/firmware\/ql2[0-9]{3}_fw/{next}
 	/\/(drivers|nvme)\/target\//{next}  # iscsi
     /\/nls_cp(932|936|949|950)/{next}  # cjk fat32
@@ -133,6 +134,10 @@ sed -ri 's/^(set timeout=).*/\14/' /mnt/boot/grub/grub.cfg
 	cat /dev/zero >/mnt/n || true; sync; rm /mnt/n
 }
 
+
+[ $a310 ] || {
+	uki_yolo
+}
 
 
 gensums sha1  # smoketest for corruption, not for security (even crc32 would be fine)

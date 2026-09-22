@@ -8,7 +8,7 @@ wrepo
 imshrink_rmkinfo
 imshrink_filter_irmods '' '' '
     /\/scsi\/(mega|cxgb|bnx|lpfc|qla|elx|fnic|mpt|aic|pm|mpi|aac|be2|fco)/{next}
-    /\/(chelsio|firmware)\/cxgb[34]\//{next}  # big fw: old 10gbit nic
+    /\/(chelsio|firmware)\/(libcxgb|cxgb[34])\//{next}  # netboot
     /\/firmware\/ql2[0-9]{3}_fw\.bin/{next}  # big fw: fibre channel scsi (qlogic)
     /\/infiniband\//{next}  # enterprise networking
 	/\/(drivers|nvme)\/target\//{next}  # iscsi

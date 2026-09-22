@@ -189,6 +189,14 @@ party() {
 ##
 # kernel-cmdline modding
 
+get_kargs() {
+    awk -vv="$*" '/boot\/vmlinuz-/ {
+        sub(/[^-]+/,"");
+        sub(/[^ ]+ /,"");
+        print $0 v
+    }' </mnt/boot/grub/grub.cfg
+}
+
 add_kargs() {
     ( cd /mnt/boot
     v="$(printf '%s\n' "$1" | sed 's/[\/&]/\\&/g')"
@@ -565,6 +573,16 @@ edit_initramfs() {
 ########################################################################
 # uki / secureboot
 
+efi_arch() {
+    case $(uname -m) in
+		x86|i686) echo ia32;;
+		x86_64) echo x64;;
+		arm*) echo arm;;
+		aarch64) echo aa64;;
+		*) die "uki: unknown arch: $(uname -m)";;
+	esac
+}
+
 uki_make() {
     # must be done after all initramfs / apkovl tweaks
     pkgs=(cmd:objcopy xz zstd openssl patch efi-mkuki)
@@ -586,11 +604,7 @@ uki_make() {
     [ $# -gt 0 ] && sec=" panic secure"
 
     local cmdline=/dev/shm/cmdline
-    awk '/boot\/vmlinuz-/ {
-        sub(/[^-]+/,"");
-        sub(/[^ ]+ /,"");
-        print $0 " apkovl=/the.apkovl.tar.gz pkgs=openssl'"$sec"' "
-    }' </mnt/boot/grub/grub.cfg >$cmdline
+    get_kargs " apkovl=/the.apkovl.tar.gz pkgs=openssl$sec" | tee $cmdline
     # for qemu -nographic, add console=ttyS0,115200,n8 debug_init=1
 
     # sign modloop
@@ -635,14 +649,7 @@ uki_make() {
 
     # based on https://github.com/jirutka/efi-mkuki/blob/master/efi-mkuki
     local osrel=/etc/os-release
-    local march=
-    case $(uname -m) in
-		x86 | i686) march=ia32;;
-		x86_64) march=x64;;
-		arm*) march=arm;;
-		aarch64) march=aa64;;
-		*) die "unknown arch: $(uname -m)";;
-	esac
+    local march=$(efi_arch)
     [ -f $efistub ] || die "could not find efistub $efistub"
 
     local linux=$(echo /mnt/boot/vmlinuz-*)
@@ -690,6 +697,27 @@ _mkuki_sysd() {
     done
     objcopy "${args[@]}" $efistub $efi_out
     #objcopy --adjust-vma 0 $efi_out
+}
+
+uki_yolo() {
+    # make simple insecure uki.efi for prototyping;
+    # `uki_make` is the safer and less-buggy alternative
+
+    bdep_add .sbs efi-mkuki
+
+    local ua=$(efi_arch)
+    local linux=$(echo /mnt/boot/vmlinuz-*)
+    local initrd=$(echo /mnt/boot/initramfs-*)
+    local efistub=$(echo /usr/lib/systemd/boot/efi/linux$ua.efi.stub)
+    [ -f $linux ] && [ -f $initrd ] && [ -f $efistub ] ||
+        die "could not find linux $linux or initrd $initrd or efistub $efistub"
+
+    local cmdline=/dev/shm/cmdline
+    get_kargs | tee $cmdline
+
+    efi-mkuki -o /mnt/efi/boot/uki.efi -c $cmdline -r /etc/os-release -S $efistub $linux $initrd
+
+    bdep_del .sbs
 }
 
 uki_only() {

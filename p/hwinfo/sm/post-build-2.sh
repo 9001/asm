@@ -39,6 +39,7 @@ imshrink_rmkinfo
 # remove large kmods from initramfs
 imshrink_filter_irmods '' '' '
 	/\/scsi\/(lpfc|qla[24]xxx|elx|fnic)\//{next}  # big fw: fibre channel scsi (qlogic, emulex)
+    /\/(chelsio|firmware)\/(libcxgb|cxgb[34])\//{next}  # netboot
 	/\/firmware\/ql2[0-9]{3}_fw/{next}
 	/\/(drivers|nvme)\/target\//{next}  # iscsi
     /\/nls_cp(932|936|949|950)/{next}  # cjk fat32
