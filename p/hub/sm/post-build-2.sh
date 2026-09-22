@@ -20,7 +20,7 @@ PKGS=(
 	alsa-utils aria2 cdparanoia chntpw ddrescue device-mapper
 	dmraid entr gcompat git ipcalc irssi kbd-vlock
 	lvm2 mdadm mtr nmap pingu py3-pillow ranger rpm2cpio rsync
-	sox ttyd unionfs-fuse w3m xdelta3 xorriso
+	sox ttyd unionfs-fuse w3m xdelta3 xfsprogs-extra xorriso
 )
 [ $a310 ] && PKGS+=(
 	p7zip py3-zmq sc

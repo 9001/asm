@@ -151,7 +151,7 @@ EOF
 
 	local fs= pkg= ptype= crypt=
 	while true; do
-		ask1b '[N]tfs, [E]xfat, [F]at32, [X]fs, ext[4], [B]trfs, [L]uks?  n/e/f/x/4/b/L> '
+		ask1b '[n]tfs, [e]xfat, [f]at32, [x]fs, ext[4], [b]trfs, [L]uks?  n/e/f/x/4/b/L> '
 		case $REPLY in
 			n) ptype=07; fs=ntfs; pkg=ntfs-3g-progs; break;;
 			f) ptype=0c; fs=vfat; pkg=dosfstools; break;;
@@ -225,12 +225,16 @@ EOF
 			d2=/dev/mapper/ep2
 		}
 
+		a_xfs="-i nrext64=0,exchange=0 -n parent=0"  # EL9
+		[ $a310 ] && {
+			a_xfs=
+		}
 		case $fs in
 			ntfs) mkfs.ntfs -fL HUB_DATA $d2;;
 			vfat) mkfs.vfat -F32 -n HUB_DATA $d2;;
 			xfat) mkfs.exfat -FL HUB_DATA $d2;;
-			xfs)  mkfs.xfs -fKL HUB_DATA $d2;;
-			ext4) mkfs.ext4 -FT big -L HUB_DATA $d2;;
+			xfs)  mkfs.xfs -fKL HUB_DATA $a_xfs $d2;;
+			ext4) mkfs.ext4 -FL HUB_DATA -T big $d2;;
 			btrf) modprobe btrfs; mkfs.btrfs -fKL HUB_DATA $d2; mount $d2 /mnt; btrfs property set /mnt compression zstd; umount /mnt;;
 		esac
 
