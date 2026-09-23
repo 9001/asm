@@ -137,6 +137,7 @@ sed -ri 's/^(set timeout=).*/\14/' /mnt/boot/grub/grub.cfg
 
 [ $a310 ] || {
 	uki_yolo
+	[ -e /media/dv ] && mv -v /mnt/efi/boot/uki.efi /media/dv/
 }
 
 

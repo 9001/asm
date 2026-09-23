@@ -81,6 +81,8 @@ backend:
   -qm MiB   qemu: ram size, default: $qm
   -qk ARGS  qemu: extra kargs (unreliable); -qk console=ttyS0
   -b PATH   build-dir, default: $b
+  -dv PATH  datavol; extra blkdev (qemu) or abspath (podman)
+             made available at /media/dv during build
 
 build-vars:
   -v A,B,C  export A, B and C into build env
@@ -124,6 +126,7 @@ while [ "$1" ]; do
         -p)  profile="$v";;
         -v)  bvars+=("$v");;
         -vf) bvarf="$v";;
+        -dv) dv="$v";;
         -ak) asm_key="$v";;
         -ek) efi_key="$v";;
         -ec) efi_crt="$v";;
@@ -276,6 +279,10 @@ usb_out="$(absreal "$usb_out")"
     rm -f "$iso_out" &&
     iso_out="$(absreal "$iso_out")"
 
+[ "$dv" ] &&
+    bvars+=(b_dv=1) &&
+    dv="$(absreal "$dv")"
+
 # build-env: prepare apkovl
 rm -rf $b
 mkdir -p $b/fs/sm/img
@@ -405,6 +412,11 @@ if [ -e /z ]; then
 else
     vda=/dev/vda
     vda1=${vda}1
+    [ "$b_dv" = 1 ] && {
+        mkdir /media/dv && mount /dev/vdc /media/dv || {
+            echo mounting datavol failed; exit 1
+        }
+    }
 fi
 
 sed -ri 's/for i in \$initrds; do/for i in ${initrds\/\/,\/ }; do/' $(command -v setup-bootable)
@@ -496,6 +508,9 @@ if [ "$cb" ]; then
         $podman import "$url" $cb
     }
 
+    [ "$dv" ] &&
+        qa="-v $dv:/media/dv:z $qa"
+
     rmmod loop 2>/dev/null || true
     modprobe loop max_part=63
     # setup-bootable must be able to losetup inside the container as well,
@@ -505,7 +520,7 @@ if [ "$cb" ]; then
     rm -f /dev/shm/once
     $podman run \
         --privileged -v /dev:/dev \
-        -v .:/z:z -i --rm "$cb" /bin/ash <<'EOF'
+        -v .:/z:z -i --rm $qa "$cb" /bin/ash <<'EOF'
 mkdir -p /media/rd
 echo apkovl...; tar -xf /z/fs/the.apkovl.tar.gz -C/
 echo files...; tar -cC /z/fs sm | tar --no-same-permissions -xC /media/rd
@@ -527,6 +542,10 @@ else
         cp -prT fs m
         umount m
         rmdir m
+    }
+
+    [ "$dv" ] && {
+        qa="-drive format=raw,if=virtio,discard=unmap,file=$dv $qa"
     }
 
     [ "$qk" ] && {
