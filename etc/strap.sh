@@ -10,7 +10,8 @@ hash -r
 [ -e /etc/profile.d/asm-paths.sh ] || { (
 SEC=$(grep -qE ^root:: /etc/shadow || echo 1)
 UKI=$(awk 'NR>1{next} {v=1} /modules=/{v=""} /apkovl=/{v=1} END{print v}' /proc/cmdline)
-export AF=$(dirname /media/*/sm)
+export AF=$(losetup -a | sed 's`.* [^/]*``;s`/boot/.*``')
+[ -e "$AF/sm" ] || export AF=$(dirname /media/*/sm)
 export AP=$(df -h $AF | awk 'NR==2{sub(/.*\//,"",$1);print$1}')
 export AD=$(echo $AP | awk '/^sr/{print;next} /p[0-9]$/{sub(/p[0-9]$/,"");print;next} {sub(/[0-9]$/,"");print}')
 cat <<EOF

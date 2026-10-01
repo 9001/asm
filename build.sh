@@ -62,7 +62,7 @@ mirror=https://mirrors.edge.kernel.org/alpine
 
 
 help() {
-    v=3.24.0
+    v=3.24.2
     sed -r $'s/^( +)(-\w+ +)([A-Z][A-Zi,=]* +)/\\1\\2\e[36m\\3\e[0m/; s/(.*default: )(.*)/\\1\e[35m\\2\e[0m/' <<EOF
 
 arguments:
@@ -446,7 +446,7 @@ log disabling modloop verification
 mount -t vfat $vda1 /mnt
 ( cd /mnt/boot;
 for f in */syslinux.cfg */grub.cfg; do sed -ri '
-    s/( quiet)( .*|$)/ volid='$volid' modloop_verify=no\1\2/;
+    s/( quiet)( .*|$)/ volid=UUID='$volid' modloop_verify=no\1\2/;
     s/(^TIMEOUT )[0-9]{2}$/\110/;
     s/(^set timeout=)[0-9]$/\11/;
     ' $f; 

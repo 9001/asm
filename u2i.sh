@@ -126,7 +126,7 @@ sz=$(cat "$td"/efi/boot/* | wc -c | awk '{print int($1/1024)+256}')
     # even tho nlplug-findfs doesn't see sr0
     cd "$td"/boot
     for f in */syslinux.cfg */grub.cfg; do
-        sed -ri 's/(\bvolid=)[^ ]+/\1'"$vn/" $f || true
+        sed -ri 's/(\bvolid=)[^ ]+/\1LABEL='"$vn/" $f || true
     done
 )
 

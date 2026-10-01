@@ -7,7 +7,7 @@ in case there's another asm device somewhere
 @@ -784,2 +785,5 @@
  # locate boot media and mount it
 +volid=$KOPT_volid
-+vfind=${volid:+UUID=$volid}
++vfind=$volid
 +for a in a a ; do  # find blkdev, then repo+ovl
  ebegin "Mounting boot media"
 @@ -788,4 +792,21 @@
@@ -21,7 +21,7 @@ in case there's another asm device somewhere
 +# First run is skipped if no volid is given on kernel cmdline
 +[ $vfind ] && vfind= && eend 0 || { eend $rv; break; }
 +done
-+[ $volid ] && volblk=$(findfs UUID=$volid)
++[ $volid ] && volblk=$(findfs $volid)
 +[ $volblk ] && volmnt=$(awk -vv=$volblk '$1==v{print$2}' /proc/mounts)
 +[ $volid ] && echo -ne "volid:$volid blk:$volblk mp:$volmnt\r" | tee /dev/kmsg
 +[ $volid ] && [ -z "$volmnt" ] && echo
