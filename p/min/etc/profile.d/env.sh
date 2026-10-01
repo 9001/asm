@@ -10,10 +10,10 @@ wt() {
 	printf '\033]0;%s\033\\' "$*"
 }
 [ $UKI ] || strapmod() {
-	cd /root && tar -xf $AF/the.apkovl.tar.gz && cd etc
+	cd /root && rm -rf x && mkdir x && cd x && tar -xf $AF/the.apkovl.tar.gz && cd etc
 }
 [ $UKI ] || strapsave() {
-	(cd /root && mount -o remount,rw $AF && tar -czf $AF/the.apkovl.tar.gz etc && sync && (fstrim $AF 2>/dev/null || true) && echo ok)
+	(cd /root/x && mount -o remount,rw $AF && tar -czf $AF/the.apkovl.tar.gz --numeric-owner . && sync && (fstrim $AF 2>/dev/null || true) && echo ok)
 }
 rw() {
 	mount -o remount,rw $AF

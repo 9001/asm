@@ -616,7 +616,7 @@ uki_make() {
     openssl dgst -sha512 -sign $rsa.priv -out $ml.sig $ml
 
     # add modloop pubkey into apkovl, then move apkovl into initramfs
-    cd; mkdir x; cd x
+    cd; rm -rf x; mkdir x; cd x
     f=$(echo /mnt/boot/initramfs-*)
     [ -e "$f" ] || die could not find initramfs
 
@@ -631,10 +631,10 @@ uki_make() {
         patch -F0 init </etc/patches/init-findfs.patch
 
     cp /dev/shm/cmdline .
-    mkdir x; cd x
+    rm -rf x; mkdir x; cd x
     tar -xzf /mnt/the.apkovl.tar.gz
     cp -pv /dev/shm/modloop.pub .
-    tar -czf ../the.apkovl.tar.gz .
+    tar -czf ../the.apkovl.tar.gz --numeric-owner .
     cd ..; rm -rf x
 
     log repacking initramfs

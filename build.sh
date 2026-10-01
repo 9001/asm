@@ -379,12 +379,12 @@ rm fs/sm/img/asm-profile.sh
 
 # live-env: finalize apkovl
 ( cd fs/sm/img
-  tar -czf the.apkovl.tar.gz etc
+  tar -czf the.apkovl.tar.gz --numeric-owner --owner=0 --group=0 etc
   rm -rf etc )
 
 # build-env: finalize apkovl (tty1 is ttyS0 due to -nographic)
 sed -ri 's/^tty1/ttyS0/' etc/inittab
-tar -czf fs/the.apkovl.tar.gz etc
+tar -czf fs/the.apkovl.tar.gz --numeric-owner --owner=0 --group=0 etc
 
 cat >>fs/sm/asm.sh <<'EOF'
 set -ex
