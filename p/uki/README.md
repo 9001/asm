@@ -27,6 +27,8 @@ assumes you already have a set of UEFI keys/certs, for example produced by [efi-
 
 provide args `-ak ~/keys/asm.key -ek ~/keys/db.key -ec ~/keys/db.crt` to sign everything automatically during build
 
+* if building with qemu (the default) and not podman/docker, then `-ak ram` will generate an ephemeral one-time key that never hits HDD
+
 or, if you already have an `asm.usb` and just want to sign it, run `mod.sh` with the same args to (re)sign an already built image
 
 * `mod.sh` can also take `-sm ~/some/path` to replace the `sm` folder inside the image; good for patching in new resources or runtime scripts

@@ -42,6 +42,7 @@ trap cln INT TERM EXIT
 
 profile=
 sz=1.8
+asm_ekey=
 asm_key=
 efi_key=
 efi_crt=
@@ -287,6 +288,7 @@ usb_out="$(absreal "$usb_out")"
 rm -rf $b
 mkdir -p $b/fs/sm/img
 cp -pR etc $b/
+[ "$asm_key" = ram ] && asm_key= && asm_ekey=1 && bvars+=(ASM_EKEY=1)
 [ "$asm_key" ] && cp -pv "$asm_key" $b/etc/asm.key
 [ "$efi_key" ] && cp -pv "$efi_key" $b/etc/efi.key
 [ "$efi_crt" ] && cp -pv "$efi_crt" $b/etc/efi.crt
@@ -339,9 +341,11 @@ rm -f $b/fs/sm/img/etc/README*.md
 # quick smoketests if profile mentions UKI
 find $b/fs/sm/img/ -iname 'post-build*sh' -exec cat '{}' + | grep -qE '^export UKI=1|^\s*sign_asm([^(]|$)' && {
     [ -e $pdir/sm/asm.sh ] && sigbase=$pdir || sigbase=.
-    [ -e $b/fs/sm/img/etc/asm.pub ] || [ "$asm_key" ] || {
+    [ -e $b/fs/sm/img/etc/asm.pub ] || [ "$asm_key" ] || [ "$asm_ekey" ] || {
         err "UKI was requested but there is no etc/asm.pub"
-        warn "either provide a privkey with -ak, or create a keypair and add your pubkey into the build:"
+        warn "option 1) provide a privkey with [-ak ~/keys/asm.key]"
+        warn "option 2) specify [-ak ram] to autogenerate an ephemeral single-use keypair"
+        warn "option 3) create a keypair yourself and add your pubkey into the build (example below):"
         cat <<EOF
 ---------------------------------------------------------------------
 mkdir -p ~/keys $sigbase/etc
@@ -352,7 +356,7 @@ cp -pv ~/keys/asm.pub $sigbase/etc/
 EOF
         exit 1
     }
-    [ -e $b/fs/sm/img/sm/asm.sh.sig ] || [ "$asm_key" ] || {
+    [ -e $b/fs/sm/img/sm/asm.sh.sig ] || [ "$asm_key" ] || [ "$asm_ekey" ] || {
         err "UKI was requested but there is no sm/asm.sh.sig"
         warn "either provide a privkey with -ak, or manually sign your asm.sh using your rsa privkey:"
         cat <<EOF
@@ -564,6 +568,7 @@ else
 
     $qemu $accel -nographic \
         $mach -cpu $cpu -smp $cores -m $qm -cdrom "$iso" \
+        -device virtio-rng-pci \
         -drive format=raw,if=virtio,discard=unmap,detect-zeroes=unmap,file=asm.usb \
         -drive format=raw,if=virtio,discard=unmap,file=ovl.img \
         -netdev user,id=n1 -device virtio-net-pci,netdev=n1 \

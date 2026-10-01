@@ -736,13 +736,25 @@ uki_only() {
 sign_asm() {
     local f=/mnt/sm/asm.sh
 
-    [ -e /etc/asm.key ] || {
+    [ -e /etc/asm.key ] || [ "$ASM_EKEY" = 1 ] || {
         log "WARNING: cannot sign $f because asm privkey (-ak) was not provided"
         return 0
     }
 
-    log signing asm.sh with provided privkey
     bdep_add .asig openssl
+    if [ "$ASM_EKEY" != 1 ]; then
+        log signing $f with provided privkey
+    else
+        log signing $f with ephemeral privkey
+        openssl genrsa -out /etc/asm.key 4096
+        openssl rsa -in /etc/asm.key -pubout > /etc/asm.pub
+        (
+            cd; rm -rf x; mkdir x; cd x
+            tar -xzf /mnt/the.apkovl.tar.gz
+            cp /etc/asm.pub etc/
+            tar -czf /mnt/the.apkovl.tar.gz --numeric-owner .
+        )
+    fi
     openssl dgst -sha512 -sign /etc/asm.key -out $f.sig $f
     bdep_del .asig
 }

@@ -30,7 +30,7 @@ imshrink_filter_mods \
 f=gummiboot-efistub-48.1-r8.apk; wget $MIRROR/v3.20/main/$IARCH/$f; apk add $f; rm $f
 }
 
+sign_asm    # try to sign asm.sh  (build.sh -ak asm.key)
 uki_make $noshell  # secureboot + measured-boot
 uki_only    # remove bios support; saves 30 MiB
-sign_asm    # try to sign asm.sh  (build.sh -ak asm.key)
 sign_efi    # try to sign the.efi (build.sh -ek db.key -ec db.crt)
