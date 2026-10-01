@@ -13,7 +13,11 @@ aa="--force-non-repository --wait 10"
 grep -q tty $AF/sm/log.cfg 2>/dev/null &&
     aa="$aa --no-progress"
 
-/sbin/apk $aa add !pyc "$@" && exit 0 || rv=$?
+if [ "$1" = -Q ]; then shift
+    /sbin/apk $aa -q add !pyc "$@" 2>/dev/null >&2 && exit 0 || rv=$?
+else
+    /sbin/apk $aa add !pyc "$@" && exit 0 || rv=$?
+fi
 
 # packages from argv
 pkgs="$(
@@ -36,6 +40,6 @@ rm="$(
 }
 
 echo "skipping unavailable pkgs: $rm" >&2
-apk $aa del -q $rm
+apk $aa del -q --progress=no $rm
 printf '%s\n' "$rm" > /dev/shm/apka.rm
 exit $rv

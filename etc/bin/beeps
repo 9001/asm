@@ -152,7 +152,7 @@ fgen() {
     echo $AF/apks/*/tinyalsa-* | grep -q apk$ && {
         p="tinyalsa"
         echo $AF/apks/*/alsa-utils-* | grep -q apk$ && p="$p alsa-utils"
-        apka -q --progress=no $p && rm -rf /usr/share/alsa/ucm2 && abeep "$@"
+        apka -Q $p && rm -rf /usr/share/alsa/ucm2 && abeep "$@"
         exit
     }
 }

@@ -768,7 +768,7 @@ f=/dev/shm/.hub.init
 # max screen brightness
 bri 100 &
 
-apka -q --no-progress sl &
+apka -Q sl &
 
 # force ntfs-3g (less buggy)
 echo blacklist ntfs3 >/etc/modprobe.d/no-ntfs3.conf

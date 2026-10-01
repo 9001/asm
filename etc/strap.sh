@@ -3,7 +3,7 @@
 
 [ -e /z/asm.usb ] && sed -ri /:/d /etc/apk/repositories  # managed by wrepo
 
-command -v bash >/dev/null || /etc/bin/apka -q bash 2>/dev/null >&2 || true
+command -v bash >/dev/null || /etc/bin/apka -Q bash || true
 hash -r
 . /etc/profile
 
@@ -63,7 +63,7 @@ printf '\033[36m * %s + %s ready\033[0m\n' \
 motd
 
 # switch to bash + add loggers
-apka -q util-linux bash tar 2>/dev/null >&2 || true
+apka -Q util-linux bash tar || true
 [ $SHELL = /bin/bash ] &&
   sed -ri 's^/a?sh$^/bash^' /etc/passwd
 
@@ -146,7 +146,7 @@ if [ "$logcfg" ] && apka -q util-linux; then
           echo "comport unavailable: $logcfg"
         ;;
       1)
-        if apka -q dosfstools 2>/dev/null; then
+        if apka -Q dosfstools; then
           fsck.vfat -a /dev/$AP >/dev/null
         else
           echo "note: skipping fsck.vfat (dosfstools unavailable)"
@@ -195,7 +195,7 @@ sleep 0.5; [ $(rc-status -r) = default ] || exit 0  # halting
 
 # error; give shell
 printf "\n$s: \033[31mERROR $err\033[0m\n"
-apka -q tmux &
+apka -Q tmux &
 (ebeep; rmmod pcspkr 2>/dev/null) &
 [ $SEC ] || exec $SHELL -l
 
