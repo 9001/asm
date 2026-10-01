@@ -101,7 +101,6 @@ mt_extract() {
 eimg="$td"/boot/grub/efi.img
 befi=$(echo "$td"/efi/boot/boot*.efi)
 sz=$(cat "$td"/efi/boot/* | wc -c | awk '{print int($1/1024)+256}')
-ctime=
 
 [ -e "$eimg" ] || { befi=; sz=0; }
 
@@ -124,18 +123,11 @@ ctime=
     done
 
     # update volid in kargs/cmdline too
-    ctime=$(date -u +%Y-%m-%d-%H-%M-%S-00)
+    # even tho nlplug-findfs doesn't see sr0
     cd "$td"/boot
     for f in */syslinux.cfg */grub.cfg; do
-        sed -ri 's/(\bvolid=)[^ ]+/\1'$ctime/ $f || true
+        sed -ri 's/(\bvolid=)[^ ]+/\1'"$vn/" $f || true
     done
-    ctime=$(echo $ctime | tr -d -)
-
-    # actually nevermind, nlplug-findfs doesn't see sr0
-    for f in */syslinux.cfg */grub.cfg; do
-        sed -ri 's/\bvolid=[^ ]+ ?//' $f || true
-    done
-    ctime=
 )
 
 [ $sz -gt 4141 ] && [ "$befi" -nt "$eimg" ] &&
@@ -180,9 +172,6 @@ args=(
     -rational-rock
     -sysid LINUX
     -volid $vn
-)
-[ $ctime ] && args+=(
-    --modification-date=$ctime
 )
 [ "$wl" ] && args+=(
     --sort-weight-list "$wl"
