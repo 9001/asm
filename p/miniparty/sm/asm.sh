@@ -90,7 +90,7 @@ $PRPL${B1}FILESYSTEM-CORRUPTION:$RST loss of entire files, or the entire filesys
 $PRPL${B1}                  \`--:$RST or making it impossible to create new files
 $PRPL${B1}DATA-CORRUPTION:$RST the actual file data; almost no filesystems care/notice
 
-these filesystems can detect data-corruption:$ESC[32m btrfs, zfs $RST
+these filesystems can detect data-corruption:$ESC[32m btrfs, zfs $RST(not xfs)
 
 recommendations:
   4 (ext4) for Linux (...because not everything can read btrfs)
