@@ -426,7 +426,10 @@ fi
 sed -ri 's/for i in \$initrds; do/for i in ${initrds\/\/,\/ }; do/' $(command -v setup-bootable)
 
 if command -v sfdisk; then
-    echo ',,0c,*' | sfdisk -q --label dos $vda
+    echo ',,0c,*' | sfdisk -q --label dos $vda && [ -e $vda1 ] || {
+        [ -e /z ] && log "was probably unable to 'modprobe loop max_part=63'; try losetup -D and verify with losetup -a"
+        exit 1
+    }
 else
     # deadcode -- this branch is never taken --
     # left for reference if you REALLY cant install sfdisk
@@ -515,7 +518,7 @@ if [ "$cb" ]; then
     [ "$dv" ] &&
         qa="-v $dv:/media/dv:z $qa"
 
-    rmmod loop 2>/dev/null || true
+    rmmod loop 2>&1 | grep -v 'not currently load' || true
     modprobe loop max_part=63
     # setup-bootable must be able to losetup inside the container as well,
     # but doing this one out here makes cleanup easier (and shows intent)
