@@ -204,11 +204,11 @@ EOF
 
 		[ $crypt ] && {
 			local mem=$(awk </proc/meminfo '
-				/^MemAvailable:/{print(int(($2-524288)/32768)*8192)}
+				/^MemAvailable:/{print(int($2/3))}
 			')
-			echo "will require $((mem/256)) MiB RAM to decrypt this flashdrive."
+			[ $mem -gt 1048576 ] && mem=1048576  # min(1G, 50%free)
+			echo "will require $((mem/1024)) MiB RAM to decrypt this flashdrive."
 			echo "choose an encryption password; there will be no input feedback:"
-			[ $mem -gt 1048576 ] && mem=1048576
 			cryptsetup \
 				--type=luks2 -c aes-xts-essiv:sha256 -h sha512 -s 512 \
 				--pbkdf=argon2id \
@@ -249,7 +249,7 @@ EOF
 	case $fs in
 		ntfs) ntfslabel -f $d2 HUB_DATA;;
 		vfat) dosfslabel $d2 HUB_DATA;;
-		xfat) tune.exfat $d2 HUB_DATA;;
+		xfat) tune.exfat $d2 -L HUB_DATA;;
 		ext4) e2label $d2 HUB_DATA;;
 		btrf) btrfs fi label $d2 HUB_DATA;;
 	esac

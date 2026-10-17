@@ -156,7 +156,7 @@ EOF
 	case $fs in
 		ntfs) ntfslabel -f $d2 HUB_DATA;;
 		vfat) dosfslabel $d2 HUB_DATA;;
-		xfat) tune.exfat $d2 HUB_DATA;;
+		xfat) tune.exfat $d2 -L HUB_DATA;;
 		ext4) e2label $d2 HUB_DATA;;
 		btrf) btrfs fi label $d2 HUB_DATA;;
 	esac
