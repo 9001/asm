@@ -92,17 +92,19 @@ touch /mnt/.fseventsd/no_log /mnt/.metadata_never_index
 
 cat >>/mnt/boot/*/grub.cfg <<'EOF'
 
-menuentry "memtest64 (x86_64)" {
-linux /boot/memtst64
+menuentry "memtest64.efi" {
+insmod chain
+chainloader /efi/boot/memtst64.efi
 }
-menuentry "memtest64 (x86_64) failsafe" {
-linux /boot/memtst64 nosmp nosm nobench
+menuentry "memtest64.efi safemode" {
+insmod chain
+chainloader /efi/boot/memtst64.efi nosmp nosm nobench
 }
-menuentry "memtest32 (i686)" {
-linux /boot/memtst32
+menuentry "memtest64" {
+linux /efi/boot/memtst64.efi
 }
-menuentry "memtest32 (i686) failsafe" {
-linux /boot/memtst32 nosmp nosm nobench
+menuentry "memtest64 safemode" {
+linux /efi/boot/memtst64.efi nosmp nosm nobench
 }
 EOF
 
@@ -110,19 +112,19 @@ cat >>/mnt/boot/*/syslinux.cfg <<'EOF'
 
 LABEL mt64
 MENU LABEL memtest64 (x86_64)
-LINUX /boot/memtst64
+LINUX /efi/boot/memtst64.efi
 
 LABEL mt64s
-MENU LABEL memtest64 (x86_64) failsafe
-LINUX /boot/memtst64 nosmp nosm nobench
+MENU LABEL memtest64 (x86_64) safemode
+LINUX /efi/boot/memtst64.efi nosmp nosm nobench
 
 LABEL mt32
 MENU LABEL memtest32 (i686)
-LINUX /boot/memtst32
+LINUX /efi/boot/memtst32.efi
 
 LABEL mt32s
-MENU LABEL memtest32 (i686) failsafe
-LINUX /boot/memtst32 nosmp nosm nobench
+MENU LABEL memtest32 (i686) safemode
+LINUX /efi/boot/memtst32.efi nosmp nosm nobench
 EOF
 
 sed -ri 's/^(set timeout=).*/\14/' /mnt/boot/grub/grub.cfg 

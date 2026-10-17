@@ -1,11 +1,12 @@
-b/
-dl/
-am/
+/am/
+/b/
+/dl/
+/m/
+/legal*/
+/winpe/t/
 *.iso
 *.usb
-winpe/t/
 .DS_Store
-/p/hub/boot/
 /p/hub/efi/boot/
 /p/hub/chiptunes/
 /p/hub/kit/
